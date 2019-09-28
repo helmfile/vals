@@ -107,7 +107,7 @@ bar:
 You should use `helm template` and compact-`$ref`s as values to inject references to secrets like:
 
 ```console
-$ helm template mysql-1.3.2.tgz --set mysqlPassword='$ref vals+vault://127.0.0.1:8200/mykv/foo#/mykey' | ksd -o yaml
+$ helm template mysql-1.3.2.tgz --set mysqlPassword='$ref vals+vault://127.0.0.1:8200/mykv/foo#/mykey' | ksd -o yaml | tee manifests.yaml
 apiVersion: v1
 kind: Secret
 metadata:
@@ -124,12 +124,12 @@ stringData:
 type: Opaque
 ```
 
-This manifest is safe to be committed into your version-control system(GitOps!) as it doens't contain actual secrets.
+This manifest is safe to be committed into your version-control system(GitOps!) as it doesn't contain actual secrets.
 
 When you finally deploy the manifests, run `vals eval` to replace all the refs to actual secrets:
 
-```
-$ cat manifests.yaml | ~/p/values/bin/vals eval -f -
+```console
+$ cat manifests.yaml | ~/p/values/bin/vals eval -f - | tee all.yaml
 apiVersion: v1
 kind: Secret
 metadata:
@@ -145,6 +145,16 @@ stringData:
     mysql-root-password: 0A8V1SER9t
 type: Opaque
 ```
+
+Finally run `kubectl apply` to apply manifests:
+
+```console
+$ kubectl apply -f all.yaml
+```
+
+This gives you a solid foundation for building a secure CD system as you need to allow access to a secrets store like Vault only from servers or containers that pulls safe manifests and runs deployments.
+
+In other words, you can safely omit access from the CI to the secrets store.
 
 ### Go
 
