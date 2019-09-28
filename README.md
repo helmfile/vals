@@ -28,7 +28,7 @@ $ vault write mykv/foo mykey=myvalue
 
 Now input the template of your YAML and refer to `vals`' Vault provider by using `vals+vault` in the URI scheme:
 
-```
+```console
 $ vals -t yaml -e '
 foo: {"$ref":"vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey"}
 bar:
@@ -37,7 +37,7 @@ bar:
 
 Voila! `vals`, replacing every reference to your secret value in Vault, produces the output looks like:
 
-```
+```yaml
 foo: FOO
 bar:
   baz: FOO
@@ -45,12 +45,43 @@ bar:
 
 Which is equivalent to that of the following shell script:
 
-```
+```bash
 VAULT_TOKEN=yourtoken  VAULT_ADDR=http://127.0.0.1:8200/ cat <<EOF
 foo: $(vault read mykv/foo -o json | jq -r .mykey)
   bar:
     baz: $(vault read mykv/foo -o json | jq -r .mykey)
 EOF
+```
+
+An another form of the previous usage is to use `$types` for reducing code repetition.
+
+`$types` allows you to define reusable template of `$ref`s as a named `type` which can then be referred from your template by `$name`:
+
+`x.vals.yaml`:
+
+```yaml
+$types:
+  v: vals+vault://127.0.0.1:8200/mykv/foo?proto=http
+
+foo: {"$v":"/mykey"}
+bar:
+  baz: {"$v":"/mykey"}
+```
+
+Running `vals -f x.vals.yaml` does produce output equivalent to the previous one:
+
+```yaml
+foo: FOO
+bar:
+  baz: FOO
+```
+
+Lastly, `vals flatten` can be used to replace all the custom type refs to plain JSON Reference `$refs`:
+
+```yaml
+foo: {"$ref":"vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey"}
+bar:
+  baz: {"$ref":"vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey"}
 ```
 
 ### Go
