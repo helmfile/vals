@@ -61,7 +61,7 @@ func TestValues_AWSSecrets_String(t *testing.T) {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			config := Map(tc.config)
 
-			vals, err := New(config)
+			vals, err := Load(config)
 			if err != nil {
 				t.Fatalf("%v", err)
 			}
@@ -143,7 +143,7 @@ func TestValues_AWSSecrets_Map(t *testing.T) {
 				},
 			})
 
-			vals, err := New(config)
+			vals, err := Load(config)
 			if err != nil {
 				t.Fatalf("%v", err)
 			}
@@ -234,7 +234,7 @@ func TestValues_AWSSecrets_Map_Raw(t *testing.T) {
 				},
 			})
 
-			vals, err := New(config)
+			vals, err := Load(config)
 			if err != nil {
 				t.Fatalf("%v", err)
 			}
@@ -346,7 +346,7 @@ func TestValues_AWSSecrets_Map_YAML(t *testing.T) {
 				},
 			})
 
-			vals, err := New(config)
+			vals, err := Load(config)
 			if err != nil {
 				t.Fatalf("%v", err)
 			}
@@ -454,7 +454,7 @@ func TestValues_AWSSecrets_Map_YAML_Root(t *testing.T) {
 			tc := testcases[i]
 			config := Map(tc.config)
 
-			vals, err := New(config)
+			vals, err := Load(config)
 			if err != nil {
 				t.Fatalf("%v", err)
 			}
@@ -562,7 +562,7 @@ func TestValues_AWSSecrets_Map_Raw_Root(t *testing.T) {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			config := Map(tc.config)
 
-			vals, err := New(config)
+			vals, err := Load(config)
 			if err != nil {
 				t.Fatalf("%v", err)
 			}

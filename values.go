@@ -1,13 +1,16 @@
 package values
 
 import (
+	"crypto/md5"
 	"fmt"
 	"github.com/mumoshu/values/pkg/values/api"
 	"github.com/mumoshu/values/pkg/values/merger"
+	"github.com/mumoshu/values/pkg/values/providers/vault"
 	"github.com/mumoshu/values/pkg/values/stringmapprovider"
 	"github.com/mumoshu/values/pkg/values/stringprovider"
 	"github.com/mumoshu/values/pkg/values/vutil"
 	"gopkg.in/yaml.v3"
+	"net/url"
 	"strings"
 )
 
@@ -59,7 +62,82 @@ func IgnorePrefix(p string) Option {
 	}
 }
 
-func New(config api.StaticConfig, opt ...Option) (map[string]interface{}, error) {
+func Eval(template interface{}) (map[string]interface{}, error) {
+	var m map[string]interface{}
+
+	providers := map[string]api.LazyLoadedStringProvider{}
+
+	uriToProviderHash := func(uri *url.URL) string {
+		bs := []byte{}
+		bs = append(bs, []byte(uri.Scheme)...)
+		bs = append(bs, []byte(uri.Hostname())...)
+		return fmt.Sprintf("%x", md5.Sum(bs))
+	}
+
+	createProvider := func(scheme string, uri *url.URL) (api.LazyLoadedStringProvider, error) {
+		protoI, ok := uri.Query()["proto"]
+		if !ok {
+			protoI = []string{"https"}
+		}
+		proto := protoI[0]
+
+		p := vault.New(mapConfig{m: map[string]interface{}{
+			"address": fmt.Sprintf("%s://%s", proto, uri.Host),
+		}})
+		return p, nil
+	}
+
+	ret, err := vutil.ModifyMapValues(template, vutil.EvalUnaryExprWithTypes("ref", func(key string) (string, error) {
+		uri, err := url.Parse(key)
+		if err != nil {
+			return "", err
+		}
+
+		hash := uriToProviderHash(uri)
+		p, ok := providers[hash]
+		if !ok {
+			valsPrefix := "vals+"
+			if strings.Contains(uri.Scheme, valsPrefix) {
+				var scheme string
+				scheme = uri.Scheme
+				scheme = strings.TrimPrefix(scheme, valsPrefix)
+				scheme = strings.Split(scheme, "://")[0]
+
+				p, err = createProvider(scheme, uri)
+				if err != nil {
+					return "", err
+				}
+
+				providers[hash] = p
+			}
+		}
+
+		var path string
+		path = uri.Path
+		path = strings.TrimPrefix(path, "#")
+		path = strings.TrimPrefix(path, "/")
+		return p.GetString(path)
+		//var frag string
+		//frag = uri.Fragment
+		//frag = strings.TrimPrefix(frag, "#")
+		//frag = strings.TrimPrefix(frag, "/")
+		//frag = strings.ReplaceAll(frag, "/", ".")
+		//return p.GetString(frag)
+	}))
+
+	if err != nil {
+		return nil, err
+	}
+
+	m, ok := ret.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("unexpected result type: expected map[string]interface{}, got %T", ret)
+	}
+
+	return m, nil
+}
+
+func Load(config api.StaticConfig, opt ...Option) (map[string]interface{}, error) {
 	ctx := &ctx{}
 	for _, o := range opt {
 		o(ctx)
@@ -89,7 +167,7 @@ func New(config api.StaticConfig, opt ...Option) (map[string]interface{}, error)
 						if !ok {
 							return nil, fmt.Errorf("valuesFrom entry adapted: unexpected type: value=%v, type=%T", adapted, adapted)
 						}
-						loaded, err := New(Map(m), IgnorePrefix(mgr.IgnorePrefix()))
+						loaded, err := Load(Map(m), IgnorePrefix(mgr.IgnorePrefix()))
 						if err != nil {
 							return nil, fmt.Errorf("merge setup: %v", err)
 						}

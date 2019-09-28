@@ -29,7 +29,7 @@ $ vault write mykv/foo mykey=myvalue
 Now input the template of your YAML and refer to `vals`' Vault provider by using `vals+vault` in the URI scheme:
 
 ```console
-$ vals -t yaml -e '
+$ vals eval -e '
 foo: {"$ref":"vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey"}
 bar:
   baz: {"$ref":"vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey"}
@@ -68,7 +68,7 @@ bar:
   baz: {"$v":"/mykey"}
 ```
 
-Running `vals -f x.vals.yaml` does produce output equivalent to the previous one:
+Running `vals eval -f x.vals.yaml` does produce output equivalent to the previous one:
 
 ```yaml
 foo: FOO
@@ -77,6 +77,10 @@ bar:
 ```
 
 Lastly, `vals flatten` can be used to replace all the custom type refs to plain JSON Reference `$refs`:
+
+```console
+$ vals flatten -f x.vals.yaml`
+```
 
 ```yaml
 foo: {"$ref":"vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey"}
@@ -87,6 +91,8 @@ bar:
 ### Go
 
 ```go
+import "github.com/mumoshu/values"
+
 config := Map(map[string]interface{}{
     "provider": map[string]interface{}{
         "name":     "vault",
@@ -103,7 +109,7 @@ config := Map(map[string]interface{}{
     },
 })
 
-vals, err := New(config)
+vals, err := values.Load(config)
 if err != nil {
     t.Fatalf("%v", err)
 }

@@ -58,7 +58,7 @@ func TestValues_Vault_SpruceMerge(t *testing.T) {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			config := Map(tc.config)
 
-			vals, err := New(config)
+			vals, err := Load(config)
 			if err != nil {
 				t.Fatalf("%v", err)
 			}
@@ -98,6 +98,82 @@ func TestValues_Vault_SpruceMerge(t *testing.T) {
 					}
 				default:
 					t.Fatalf("unexpected type of baz: value=%v, type=%T", actual, actual)
+				}
+			}
+		})
+	}
+}
+
+
+func TestValues_Vault_EvalTemplate(t *testing.T) {
+	// TODO
+	// Pre-requisite:
+	//   vault secrets enable -path=mykv kv
+	//   vault write mykv/foo mykey=myvalue
+	//   vault read mykv/foo
+
+	type testcase struct {
+		config map[string]interface{}
+	}
+
+	testcases := []testcase{
+		{
+			config: map[string]interface{}{
+				"foo": map[string]interface{}{
+					"$ref": "vals+vault://127.0.0.1:8200/mykv/foo/mykey?proto=http",
+				},
+				"bar": map[string]interface{}{
+					"baz": map[string]interface{}{
+						"$ref": "vals+vault://127.0.0.1:8200/mykv/foo/mykey?proto=http",
+					},
+				},
+			},
+		},
+		{
+			config: map[string]interface{}{
+				"$types": map[string]interface{}{
+					"v": "vals+vault+http://127.0.0.1:8200/mykv/foo/",
+				},
+				"foo": map[string]interface{}{
+					"$v": "mykey?proto=http",
+				},
+				"bar": map[string]interface{}{
+					"baz": map[string]interface{}{
+						"$v": "mykey?proto=http",
+					},
+				},
+			},
+		},
+	}
+
+	for i := range testcases {
+		tc := testcases[i]
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			vals, err := Eval(tc.config)
+			if err != nil {
+				t.Fatalf("%v", err)
+			}
+
+			{
+				expected := "myvalue"
+				key := "foo"
+				actual := vals[key]
+				if actual != expected {
+					t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
+				}
+			}
+
+			{
+				switch bar := vals["bar"].(type) {
+				case map[string]interface{}:
+					expected := "myvalue"
+					key := "baz"
+					actual := bar[key]
+					if actual != expected {
+						t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
+					}
+				default:
+					t.Fatalf("unexpected type of bar: value=%v, type=%T", bar, bar)
 				}
 			}
 		})
@@ -158,7 +234,7 @@ func TestValues_Vault_String(t *testing.T) {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			config := Map(tc.config)
 
-			vals, err := New(config)
+			vals, err := Load(config)
 			if err != nil {
 				t.Fatalf("%v", err)
 			}
@@ -324,7 +400,7 @@ func TestValues_Vault_Map(t *testing.T) {
 		t.Run(tcname, func(t *testing.T) {
 			config := Map(tc.config)
 
-			vals, err := New(config)
+			vals, err := Load(config)
 			if err != nil {
 				t.Fatalf("%v", err)
 			}
@@ -414,7 +490,7 @@ func TestValues_Vault_Map_Raw(t *testing.T) {
 				},
 			})
 
-			vals, err := New(config)
+			vals, err := Load(config)
 			if err != nil {
 				t.Fatalf("%v", err)
 			}
@@ -523,7 +599,7 @@ func TestValues_Vault_Map_YAML(t *testing.T) {
 				},
 			})
 
-			vals, err := New(config)
+			vals, err := Load(config)
 			if err != nil {
 				t.Fatalf("%v", err)
 			}
@@ -629,7 +705,7 @@ func TestValues_Vault_Map_YAML_Root(t *testing.T) {
 			tc := testcases[i]
 			config := Map(tc.config)
 
-			vals, err := New(config)
+			vals, err := Load(config)
 			if err != nil {
 				t.Fatalf("%v", err)
 			}
@@ -735,7 +811,7 @@ func TestValues_Vault_Map_Raw_Root(t *testing.T) {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			config := Map(tc.config)
 
-			vals, err := New(config)
+			vals, err := Load(config)
 			if err != nil {
 				t.Fatalf("%v", err)
 			}
