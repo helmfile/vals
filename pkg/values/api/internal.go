@@ -66,6 +66,11 @@ type LazyLoadedStringProvider interface {
 	GetString(string) (string, error)
 }
 
+type Provider interface {
+	LazyLoadedStringProvider
+	LazyLoadedStringMapProvider
+}
+
 type Merger interface {
 	Merge(map[string]interface{}, map[string]interface{}) (map[string]interface{}, error)
 	IgnorePrefix() string

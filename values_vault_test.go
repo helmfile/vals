@@ -120,11 +120,11 @@ func TestValues_Vault_EvalTemplate(t *testing.T) {
 		{
 			config: map[string]interface{}{
 				"foo": map[string]interface{}{
-					"$ref": "vals+vault://127.0.0.1:8200/mykv/foo/mykey?proto=http",
+					"$ref": "vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey",
 				},
 				"bar": map[string]interface{}{
 					"baz": map[string]interface{}{
-						"$ref": "vals+vault://127.0.0.1:8200/mykv/foo/mykey?proto=http",
+						"$ref": "vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey",
 					},
 				},
 			},
@@ -132,14 +132,14 @@ func TestValues_Vault_EvalTemplate(t *testing.T) {
 		{
 			config: map[string]interface{}{
 				"$types": map[string]interface{}{
-					"v": "vals+vault+http://127.0.0.1:8200/mykv/foo/",
+					"v": "vals+vault+http://127.0.0.1:8200/mykv/foo?proto=http#/",
 				},
 				"foo": map[string]interface{}{
-					"$v": "mykey?proto=http",
+					"$v": "mykey",
 				},
 				"bar": map[string]interface{}{
 					"baz": map[string]interface{}{
-						"$v": "mykey?proto=http",
+						"$v": "mykey",
 					},
 				},
 			},

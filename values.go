@@ -65,7 +65,7 @@ func IgnorePrefix(p string) Option {
 func Eval(template interface{}) (map[string]interface{}, error) {
 	var m map[string]interface{}
 
-	providers := map[string]api.LazyLoadedStringProvider{}
+	providers := map[string]api.Provider{}
 
 	uriToProviderHash := func(uri *url.URL) string {
 		bs := []byte{}
@@ -74,7 +74,7 @@ func Eval(template interface{}) (map[string]interface{}, error) {
 		return fmt.Sprintf("%x", md5.Sum(bs))
 	}
 
-	createProvider := func(scheme string, uri *url.URL) (api.LazyLoadedStringProvider, error) {
+	createProvider := func(scheme string, uri *url.URL) (api.Provider, error) {
 		protoI, ok := uri.Query()["proto"]
 		if !ok {
 			protoI = []string{"https"}
@@ -116,15 +116,54 @@ func Eval(template interface{}) (map[string]interface{}, error) {
 		path = uri.Path
 		path = strings.TrimPrefix(path, "#")
 		path = strings.TrimPrefix(path, "/")
-		return p.GetString(path)
-		//var frag string
-		//frag = uri.Fragment
-		//frag = strings.TrimPrefix(frag, "#")
-		//frag = strings.TrimPrefix(frag, "/")
-		//frag = strings.ReplaceAll(frag, "/", ".")
-		//return p.GetString(frag)
+		obj, err := p.GetStringMap(path)
+		if err != nil {
+			return "", err
+		}
+
+		var frag string
+		frag = uri.Fragment
+		frag = strings.TrimPrefix(frag, "#")
+		frag = strings.TrimPrefix(frag, "/")
+
+		keys := strings.Split(frag, "/")
+		for i, k := range keys {
+			newobj := map[string]interface{}{}
+			switch t := obj[k].(type) {
+			case string:
+				if i != len(keys) - 1 {
+					return "", fmt.Errorf("unexpected type of value for key at %d=%s in %v: expected map[string]interface{}, got %v(%T)", i, k, keys, t, t)
+				}
+				return t, nil
+			case map[string]interface{}:
+				newobj = t
+			case map[interface{}]interface{}:
+				for k, v := range t {
+					newobj[fmt.Sprintf("%v", k)] = v
+				}
+			}
+			obj = newobj
+		}
+
+		return "", fmt.Errorf("no value found for key %s", frag)
 	}))
 
+	if err != nil {
+		return nil, err
+	}
+
+	m, ok := ret.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("unexpected result type: expected map[string]interface{}, got %T", ret)
+	}
+
+	return m, nil
+}
+
+func Flatten(template interface{}) (map[string]interface{}, error) {
+	var m map[string]interface{}
+
+	ret, err := vutil.ModifyMapValues(template, vutil.FlattenTypes("ref"))
 	if err != nil {
 		return nil, err
 	}
