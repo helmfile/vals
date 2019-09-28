@@ -104,6 +104,48 @@ bar:
   baz: "$ref vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey"
 ```
 
+You should use `helm template` and compact-`$ref`s as values to inject references to secrets like:
+
+```console
+$ helm template mysql-1.3.2.tgz --set mysqlPassword='$ref vals+vault://127.0.0.1:8200/mykv/foo#/mykey' | ksd -o yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  labels:
+    app: release-name-mysql
+    chart: mysql-1.3.2
+    heritage: Tiller
+    release: release-name
+  name: release-name-mysql
+  namespace: default
+stringData:
+  mysql-password: $ref vals+vault://127.0.0.1:8200/mykv/foo#/mykey
+  mysql-root-password: vZQmqdGw3z
+type: Opaque
+```
+
+This manifest is safe to be committed into your version-control system(GitOps!) as it doens't contain actual secrets.
+
+When you finally deploy the manifests, run `vals eval` to replace all the refs to actual secrets:
+
+```
+$ cat manifests.yaml | ~/p/values/bin/vals eval -f -
+apiVersion: v1
+kind: Secret
+metadata:
+    labels:
+        app: release-name-mysql
+        chart: mysql-1.3.2
+        heritage: Tiller
+        release: release-name
+    name: release-name-mysql
+    namespace: default
+stringData:
+    mysql-password: myvalue
+    mysql-root-password: 0A8V1SER9t
+type: Opaque
+```
+
 ### Go
 
 ```go
