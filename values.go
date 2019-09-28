@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/mumoshu/values/pkg/values/api"
 	"github.com/mumoshu/values/pkg/values/merger"
+	"github.com/mumoshu/values/pkg/values/providers/sops"
+	"github.com/mumoshu/values/pkg/values/providers/ssm"
 	"github.com/mumoshu/values/pkg/values/providers/vault"
 	"github.com/mumoshu/values/pkg/values/stringmapprovider"
 	"github.com/mumoshu/values/pkg/values/stringprovider"
@@ -147,16 +149,30 @@ func Eval(template interface{}) (map[string]interface{}, error) {
 	}
 
 	createProvider := func(scheme string, uri *url.URL) (api.Provider, error) {
-		protoI, ok := uri.Query()["proto"]
-		if !ok {
-			protoI = []string{"https"}
-		}
-		proto := protoI[0]
+		switch scheme {
+		case "vault":
+			protoI, ok := uri.Query()["proto"]
+			if !ok {
+				protoI = []string{"https"}
+			}
+			proto := protoI[0]
 
-		p := vault.New(mapConfig{m: map[string]interface{}{
-			"address": fmt.Sprintf("%s://%s", proto, uri.Host),
-		}})
-		return p, nil
+			p := vault.New(mapConfig{m: map[string]interface{}{
+				"address": fmt.Sprintf("%s://%s", proto, uri.Host),
+			}})
+			return p, nil
+		case "ssm":
+			p := ssm.New(mapConfig{m: map[string]interface{}{
+				"region": uri.Host,
+			}})
+			return p, nil
+		case "sops":
+			p := sops.New(mapConfig{m: map[string]interface{}{
+				"file": uri.Host + uri.Path,
+			}})
+			return p, nil
+		}
+		return nil, fmt.Errorf("no provider registered for scheme %q", scheme)
 	}
 
 	ret, err := vutil.ModifyMapValues(template, vutil.EvalUnaryExprWithTypes("ref", func(key string) (string, error) {

@@ -16,7 +16,7 @@ type provider struct {
 	mapCache map[string]map[string]interface{}
 
 	// AWS SecretsManager global configuration
-	File, Data, Prefix, Name string
+	File, Data, Prefix string
 
 	data map[string]interface{}
 
@@ -30,7 +30,6 @@ func New(cfg api.StaticConfig) *provider {
 	}
 	p.File = cfg.String("file")
 	p.Data = cfg.String("data")
-	p.Name = cfg.String("name")
 	return p
 }
 

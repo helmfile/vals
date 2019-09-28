@@ -21,7 +21,7 @@ type provider struct {
 	mapCache    map[string]map[string]interface{}
 
 	// AWS SSM Parameter store global configuration
-	Region, Prefix, Name string
+	Region string
 
 	Format string
 }
@@ -32,7 +32,6 @@ func New(cfg api.StaticConfig) *provider {
 		mapCache:    map[string]map[string]interface{}{},
 	}
 	p.Region = cfg.String("region")
-	p.Name = cfg.String("name")
 	return p
 }
 
