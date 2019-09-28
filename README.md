@@ -106,6 +106,24 @@ bar:
   baz: {"$ref":"vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey"}
 ```
 
+There's also a shorter syntax:
+
+```
+foo: $ref vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey
+bar:
+  baz: $ref vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey
+
+```
+
+And with string interpolation:
+
+```
+foo: foo${ref vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey}
+bar:
+  baz: baz${ref vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey}
+
+```
+
 ### Helm
 
 When you're using a `vals` template as a values file, `helm` usually fail rendering the release manifests as you can't inject YAML objects like `{"$ref":"vals+vault://..."}` to where `string` values are expected(e.g. `data` and `stringData` kvs of `Secret` resources).
