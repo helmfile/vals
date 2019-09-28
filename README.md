@@ -12,6 +12,10 @@ Helm-like configuration "Values" loader with support for various backends includ
 
 ## Usage
 
+- [CLI](#cli)
+- [Helm](#helm)
+- [Go](#go)
+
 # CLI
 
 ```
@@ -103,7 +107,7 @@ bar:
   baz: {"$ref":"vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey"}
 ```
 
-### Helm Values
+### Helm
 
 When you're using a `vals` template as a values file, `helm` usually fail rendering the release manifests as you can't inject YAML objects like `{"$ref":"vals+vault://..."}` to where `string` values are expected(e.g. `data` and `stringData` kvs of `Secret` resources).
 
