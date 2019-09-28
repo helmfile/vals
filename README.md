@@ -10,9 +10,24 @@ Helm-like configuration "Values" loader with support for various backends includ
 - Terraform outputs(Coming soon)
 - CredHub(Coming soon)
 
-## Usage:
+## Usage
 
 # CLI
+
+```
+ bin/vals
+vals is a Helm-like configuration "Values" loader with support for various sources and merge strategies
+
+Usage:
+  vals [command]
+
+Available Commands:
+  eval		Evaluate a JSON/YAML document and replace any template expressions in it and prints the result
+  flatten	Loads a vals template and replaces every instances of custom types to plain $ref's
+  ksdecode	Decode YAML document(s) by converting Secret resources' "data" to "stringData" for use with "vals eval"
+
+Use "vals [command] --help" for more infomation about a command
+```
 
 `vals -t yaml -e <YAML>` takes any valid YAML and evaluates [JSO Reference](https://json-spec.readthedocs.io/reference.html).
 
