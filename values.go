@@ -162,6 +162,17 @@ func Eval(template interface{}) (map[string]interface{}, error) {
 			}})
 			return p, nil
 		case "ssm":
+			// vals+ssm://ap-northeast-1/foo/bar#/baz
+			// 1. GetParametersByPath for the prefix /foo/bar
+			// 2. Then extracts the value for key baz(=/foo/bar/baz) from the result from step 1.
+			p := ssm.New(mapConfig{m: map[string]interface{}{
+				"region": uri.Host,
+			}})
+			return p, nil
+		case "awssecrets":
+			// vals+awssecrets://ap-northeast-1/foo/bar#/baz
+			// 1. Get secret for key foo/bar, parse it as yaml
+			// 2. Then extracts the value for key baz) from the result from step 1.
 			p := ssm.New(mapConfig{m: map[string]interface{}{
 				"region": uri.Host,
 			}})

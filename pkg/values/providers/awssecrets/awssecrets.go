@@ -22,7 +22,7 @@ type provider struct {
 	mapCache map[string]map[string]interface{}
 
 	// AWS SecretsManager global configuration
-	Region, VersionStage, Prefix, Name string
+	Region, VersionStage, Prefix string
 
 	Format string
 }
@@ -34,7 +34,6 @@ func New(cfg api.StaticConfig) *provider {
 	}
 	p.Region = cfg.String("region")
 	p.VersionStage = cfg.String("versionStage")
-	p.Name = cfg.String("name")
 	return p
 }
 
@@ -75,6 +74,16 @@ func (p *provider) GetString(key string) (string, error) {
 func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 	if cachedVal, ok := p.mapCache[key]; ok {
 		return cachedVal, nil
+	}
+
+	yamlStr, err := p.GetString(key)
+	if err == nil {
+		m := map[string]interface{}{}
+		if err := yaml.Unmarshal([]byte(yamlStr), &m); err != nil {
+			return nil, fmt.Errorf("error while parsing secret for key %q as yaml: %v", key, err)
+		}
+		p.mapCache[key] = m
+		return m, nil
 	}
 
 	meta := map[string]interface{}{}
