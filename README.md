@@ -5,7 +5,7 @@ Helm-like configuration "Values" loader with support for various backends includ
 - Vault
 - AWS SSM Parameter Store
 - AWS Secrets Manager
-- [SOPS](https://github.com/mozilla/sops)-encrypted files
+- [SOPS](https://github.com/mozilla/sops)-encrypted files (Coming soon))
 - Merge with Spruce (e.g. Append/Prepend Arrays In Hash)
 - Terraform outputs(Coming soon)
 - CredHub(Coming soon)
