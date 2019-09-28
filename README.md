@@ -30,9 +30,9 @@ Now input the template of your YAML and refer to `vals`' Vault provider by using
 
 ```
 $ vals -t yaml -e '
-foo: {"$ref":"vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey"
+foo: {"$ref":"vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey"}
 bar:
-  baz: {"$ref":"vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/myket"
+  baz: {"$ref":"vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey"}
 ```
 
 Voila! `vals`, replacing every reference to your secret value in Vault, produces the output looks like:
