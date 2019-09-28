@@ -107,7 +107,7 @@ bar:
 You should use `helm template` and compact-`$ref`s as values to inject references to secrets like:
 
 ```console
-$ helm template mysql-1.3.2.tgz --set mysqlPassword='$ref vals+vault://127.0.0.1:8200/mykv/foo#/mykey' | ksd -o yaml | tee manifests.yaml
+$ helm template mysql-1.3.2.tgz --set mysqlPassword='$ref vals+vault://127.0.0.1:8200/mykv/foo#/mykey' | vals ksdecode -o yaml -f - | tee manifests.yaml
 apiVersion: v1
 kind: Secret
 metadata:

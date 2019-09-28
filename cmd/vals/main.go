@@ -1,9 +1,13 @@
 package main
 
 import (
+	"bytes"
+	"encoding/base64"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/mumoshu/values"
+	"gopkg.in/yaml.v3"
 	"os"
 )
 
@@ -14,7 +18,9 @@ Usage:
   vals [command]
 
 Available Commands:
-  eval	Evaluate a JSON/YAML document and replace any template expressions in it and prints the result
+  eval		Evaluate a JSON/YAML document and replace any template expressions in it and prints the result
+  flatten	Loads a vals template and replaces every instances of custom types to plain $ref's
+  ksdecode	Decode YAML document(s) by converting Secret resources' "data" to "stringData" for use with "vals eval"
 
 Use "vals [command] --help" for more infomation about a command
 `
@@ -23,10 +29,9 @@ Use "vals [command] --help" for more infomation about a command
 }
 
 func fatal(format string, args ...interface{}) {
-	fmt.Fprintf(os.Stderr, format + "\n", args...)
+	fmt.Fprintf(os.Stderr, format+"\n", args...)
 	os.Exit(1)
 }
-
 
 func readOrFail(f *string) map[string]interface{} {
 	m, err := values.Input(*f)
@@ -36,7 +41,7 @@ func readOrFail(f *string) map[string]interface{} {
 	return m
 }
 
-func writeOrFail(o *string, res map[string]interface{}) {
+func writeOrFail(o *string, res interface{}) {
 	out, err := values.Output(*o, res)
 	if err != nil {
 		fatal("%v", err)
@@ -49,6 +54,7 @@ func main() {
 
 	CmdEval := "eval"
 	CmdFlatten := "flatten"
+	CmdKsDecode := "ksdecode"
 
 	if len(os.Args) == 1 {
 		flag.Usage()
@@ -85,7 +91,107 @@ func main() {
 		}
 
 		writeOrFail(o, res)
+	case CmdKsDecode:
+		evalCmd := flag.NewFlagSet(CmdKsDecode, flag.ExitOnError)
+		f := evalCmd.String("f", "", "YAML/JSON file to be decoded")
+		o := evalCmd.String("o", "yaml", "Output type which is either \"yaml\" or \"json\"")
+		evalCmd.Parse(os.Args[2:])
+
+		nodes, err := values.Inputs(*f)
+		if err != nil {
+			fatal("%v", err)
+		}
+
+		var res []yaml.Node
+		for _, node := range nodes {
+			n, err := KsDecode(node)
+			if err != nil {
+				fatal("%v", err)
+			}
+			res = append(res, *n)
+		}
+
+		for i, node := range res {
+			buf := &bytes.Buffer{}
+			encoder := yaml.NewEncoder(buf)
+			encoder.SetIndent(2)
+
+			if err := encoder.Encode(&node); err != nil {
+				fatal("%v", err)
+			}
+			if *o == "json" {
+				var v interface{}
+				if err := json.Unmarshal(buf.Bytes(), &v); err != nil {
+					fatal("%v", err)
+				}
+				bs, err := json.Marshal(v)
+				if err != nil {
+					fatal("%v", err)
+				}
+				print(string(bs))
+			} else {
+				print(buf.String())
+			}
+			if i != len(res)-1 {
+				fmt.Println("---")
+			}
+		}
 	default:
 		flag.Usage()
 	}
+}
+
+func KsDecode(node yaml.Node) (*yaml.Node, error) {
+	if node.Kind != yaml.DocumentNode {
+		return nil, fmt.Errorf("unexpected kind of node: expected %d, got %d", yaml.DocumentNode, node.Kind)
+	}
+
+	var res yaml.Node
+	res = node
+
+	var kk yaml.Node
+	var vv yaml.Node
+	var ii int
+
+	isSecret := false
+	mappings := node.Content[0].Content
+	for i := 0; i < len(mappings); i += 2 {
+		j := i + 1
+		k := mappings[i]
+		v := mappings[j]
+
+		if k.Value == "kind" && v.Value == "Secret" {
+			isSecret = true
+		}
+
+		if k.Value == "data" {
+			ii = i
+			kk = *k
+			vv = *v
+		}
+	}
+
+	if isSecret {
+		kk.Value = "stringData"
+
+		v := vv
+		nestedMappings := v.Content
+		v.Content = make([]*yaml.Node, len(v.Content))
+		for i := 0; i < len(nestedMappings); i += 2 {
+			b64 := nestedMappings[i+1].Value
+			decoded, err := base64.StdEncoding.DecodeString(b64)
+			if err != nil {
+				return nil, err
+			}
+			nestedMappings[i+1].Value = string(decoded)
+
+			v.Content[i] = nestedMappings[i]
+			v.Content[i+1] = nestedMappings[i+1]
+		}
+
+		res.Content[0].Content[ii] = &kk
+		res.Content[0].Content[ii+1] = &v
+	}
+
+	return &res, nil
 }
