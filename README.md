@@ -19,7 +19,6 @@ Helm-like configuration "Values" loader with support for various backends includ
 # CLI
 
 ```
- bin/vals
 vals is a Helm-like configuration "Values" loader with support for various sources and merge strategies
 
 Usage:
