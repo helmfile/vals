@@ -1,2 +1,2 @@
 build:
-	go build -o bin/vals ./cmd
+	go build -o bin/vals ./cmd/vals
