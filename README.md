@@ -79,13 +79,29 @@ bar:
 Lastly, `vals flatten` can be used to replace all the custom type refs to plain JSON Reference `$refs`:
 
 ```console
-$ vals flatten -f x.vals.yaml`
+$ vals flatten -f x.vals.yaml
 ```
 
 ```yaml
 foo: {"$ref":"vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey"}
 bar:
   baz: {"$ref":"vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey"}
+```
+
+### Helm Values
+
+When you're using a `vals` template as a values file, `helm` usually fail rendering the release manifests as you can't inject YAML objects like `{"$ref":"vals+vault://..."}` to where `string` values are expected(e.g. `data` and `stringData` kvs of `Secret` resources).
+
+To deal with it, use `vals flatten -c` to use the compact format so that JSON references are transformed to vals' own `string` representations, which is safe to be used as values.
+
+```console
+$ vals flatten -f x.vals.yaml -c
+```
+
+```yaml
+foo: "$ref vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey"
+bar:
+  baz: "$ref vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey"
 ```
 
 ### Go

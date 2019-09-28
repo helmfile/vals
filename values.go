@@ -62,7 +62,79 @@ func IgnorePrefix(p string) Option {
 	}
 }
 
+func restoreJSONRefs(in interface{}) (interface{}, error) {
+	var template map[string]interface{}
+	switch t := in.(type) {
+	case map[string]interface{}:
+		template = t
+	case map[interface{}]interface{}:
+		template = make(map[string]interface{})
+		for k, v := range t {
+			template[fmt.Sprintf("%v", k)] = v
+		}
+	case string:
+		mark := "$ref "
+		if strings.HasPrefix(t, mark) {
+			ref := strings.Split(t, mark)[1]
+			return map[string]interface{}{"$ref": ref}, nil
+		}
+		return t, nil
+	default:
+		return t, nil
+	}
+
+	res := map[string]interface{}{}
+	for k, v := range template {
+		var err error
+		res[k], err = restoreJSONRefs(v)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return res, nil
+}
+
+func compactJSONRefs(in interface{}) (interface{}, error) {
+	var template map[string]interface{}
+	switch t := in.(type) {
+	case map[string]interface{}:
+		template = t
+	case map[interface{}]interface{}:
+		template = make(map[string]interface{})
+		for k, v := range t {
+			template[fmt.Sprintf("%v", k)] = v
+		}
+	default:
+		return t, nil
+	}
+
+	if len(template) == 1 {
+		ref, ok := template["$ref"]
+		if ok {
+			return fmt.Sprintf("$ref %v", ref), nil
+		}
+	}
+
+	res := map[string]interface{}{}
+	for k, v := range template {
+		var err error
+		res[k], err = compactJSONRefs(v)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return res, nil
+}
+
 func Eval(template interface{}) (map[string]interface{}, error) {
+	var err error
+	template, err = restoreJSONRefs(template)
+	if err != nil {
+		return nil, err
+	}
+
 	var m map[string]interface{}
 
 	providers := map[string]api.Provider{}
@@ -131,7 +203,7 @@ func Eval(template interface{}) (map[string]interface{}, error) {
 			newobj := map[string]interface{}{}
 			switch t := obj[k].(type) {
 			case string:
-				if i != len(keys) - 1 {
+				if i != len(keys)-1 {
 					return "", fmt.Errorf("unexpected type of value for key at %d=%s in %v: expected map[string]interface{}, got %v(%T)", i, k, keys, t, t)
 				}
 				return t, nil
@@ -160,12 +232,25 @@ func Eval(template interface{}) (map[string]interface{}, error) {
 	return m, nil
 }
 
-func Flatten(template interface{}) (map[string]interface{}, error) {
+func Flatten(template interface{}, compact bool) (map[string]interface{}, error) {
+	var err error
+	template, err = restoreJSONRefs(template)
+	if err != nil {
+		return nil, err
+	}
+
 	var m map[string]interface{}
 
 	ret, err := vutil.ModifyMapValues(template, vutil.FlattenTypes("ref"))
 	if err != nil {
 		return nil, err
+	}
+
+	if compact {
+		ret, err = compactJSONRefs(ret)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	m, ok := ret.(map[string]interface{})

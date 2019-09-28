@@ -100,11 +100,12 @@ func main() {
 		evalCmd := flag.NewFlagSet(CmdFlatten, flag.ExitOnError)
 		f := evalCmd.String("f", "", "YAML/JSON file to be flattened")
 		o := evalCmd.String("o", "yaml", "Output type which is either \"yaml\" or \"json\"")
+		c := evalCmd.Bool("c", false, "Use vals' own compact format of $ref")
 		evalCmd.Parse(os.Args[2:])
 
 		m := input(f)
 
-		res, err := values.Flatten(m)
+		res, err := values.Flatten(m, *c)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
 			os.Exit(1)

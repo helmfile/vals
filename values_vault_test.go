@@ -129,6 +129,15 @@ func TestValues_Vault_EvalTemplate(t *testing.T) {
 				},
 			},
 		},
+		// Compact and type friendly format for integration with Helm and Helmfile
+		{
+			config: map[string]interface{}{
+				"foo": "$ref vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey",
+				"bar": map[string]interface{}{
+					"baz": "$ref vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey",
+				},
+			},
+		},
 		{
 			config: map[string]interface{}{
 				"$types": map[string]interface{}{
