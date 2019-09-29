@@ -115,14 +115,6 @@ bar:
 
 ```
 
-And with string interpolation:
-
-```
-foo: xx${{ref "vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey" }}
-bar:
-  baz: yy${{ref "vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey" }}
-```
-
 ### Helm
 
 When you're using a `vals` template as a values file, `helm` usually fail rendering the release manifests as you can't inject YAML objects like `{"$ref":"vals+vault://..."}` to where `string` values are expected(e.g. `data` and `stringData` kvs of `Secret` resources).
@@ -227,3 +219,20 @@ foo: $(vault read mykv/foo -o json | jq -r .mykey)
     baz: $(vault read mykv/foo -o json | jq -r .mykey)
 EOF
 ```
+
+## Non-Goals
+
+### String-Interpolation / Template Functions
+
+In the early days of this project, the original author has investigated if it was a good idea to introduce string interpolation like feature to vals:
+
+```
+foo: xx${{ref "vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey" }}
+bar:
+  baz: yy${{ref "vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey" }}
+```
+
+But the idea had abandoned due to that it seemed to drive the momentum to vals being a full-fledged YAML templating engine. What if some users started wanting to use `vals` for transforming values with functions?
+That's not the business of vals.
+
+Instead, use vals solely for composing sets of values that are then input to another templating engine or data manipulation language like Jsonnet and CUE.
