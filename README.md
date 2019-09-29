@@ -118,10 +118,9 @@ bar:
 And with string interpolation:
 
 ```
-foo: foo${ref vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey}
+foo: xx${{ref "vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey" }}
 bar:
-  baz: baz${ref vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey}
-
+  baz: yy${{ref "vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey" }}
 ```
 
 ### Helm

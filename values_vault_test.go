@@ -138,6 +138,15 @@ func TestValues_Vault_EvalTemplate(t *testing.T) {
 				},
 			},
 		},
+		// String interpolation-friendly format
+		{
+			config: map[string]interface{}{
+				"foo": "${{ref \"vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey\"}}",
+				"bar": map[string]interface{}{
+					"baz": "${{ref \"vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey\"}}",
+				},
+			},
+		},
 		{
 			config: map[string]interface{}{
 				"$types": map[string]interface{}{

@@ -1,6 +1,11 @@
 package vutil
 
-import "fmt"
+import (
+	"bytes"
+	"fmt"
+	"strings"
+	"text/template"
+)
 
 func transformUnaryExpr(tpe, toType string, f func(string) (string, error)) (func(map[string]interface{}) (interface{}, bool, error)) {
 	return func(v map[string]interface{}) (interface{}, bool, error) {
@@ -44,6 +49,60 @@ func evalUnaryExpr(tpe string, f func(string) (string, error)) (func(map[string]
 		}
 
 		res, err := f(str)
+		if err != nil {
+			return nil, false, err
+		}
+
+		return res, true, nil
+	}
+}
+
+func EvaluateStringInterpolationLikeGoTemplateValues(v interface{}, funcs template.FuncMap) (interface{}, error) {
+	return ModifyStringValues(v, func(p string) (interface{}, error) {
+		var res string
+		for {
+			markStart := "{{"
+			markEnd := "}}"
+			controlMark := "$"
+			start := strings.Index(p, controlMark+markStart)
+			if start < 0 {
+				res += p
+				break
+			}
+			res += p[0:start]
+			p = p[start+len(controlMark):]
+			exprEnd := strings.Index(p, markEnd)
+			if exprEnd < 0 {
+				return nil, fmt.Errorf("missing closing }} in %q", p)
+			}
+
+			expr := p[0:exprEnd + len(markEnd)]
+
+			tmpl := template.New("expr")
+			tmpl = tmpl.Funcs(funcs)
+
+			tmpl, err := tmpl.Parse(expr)
+			if err != nil {
+				return nil, err
+			}
+
+			buf := &bytes.Buffer{}
+			if err := tmpl.Execute(buf, nil); err != nil {
+				return nil, err
+			}
+
+			res += buf.String()
+
+			p = p[exprEnd + len(markEnd):]
+		}
+		return res, nil
+	})
+}
+
+func evalStrInterpolationExpr(funcs template.FuncMap) (func(map[string]interface{}) (interface{}, bool, error)) {
+	return func(v map[string]interface{}) (interface{}, bool, error) {
+		res, err := EvaluateStringInterpolationLikeGoTemplateValues(v, funcs)
+
 		if err != nil {
 			return nil, false, err
 		}

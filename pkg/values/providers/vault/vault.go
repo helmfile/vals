@@ -74,6 +74,10 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 		return nil, err
 	}
 
+	if secret == nil {
+		return nil, fmt.Errorf("no secret found for path %q", key)
+	}
+
 	for k, v := range secret.Data {
 		res[k] = fmt.Sprintf("%v", v)
 	}
