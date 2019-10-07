@@ -2,7 +2,7 @@ package values
 
 import (
 	"fmt"
-	"github.com/mumoshu/vals/pkg/values/api"
+	"github.com/mumoshu/vals/pkg/api"
 )
 
 type mapConfig struct {

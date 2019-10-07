@@ -2,7 +2,7 @@ package sops
 
 import (
 	"fmt"
-	"github.com/mumoshu/vals/pkg/values/api"
+	"github.com/mumoshu/vals/pkg/api"
 	"gopkg.in/yaml.v3"
 	"os"
 	"strings"

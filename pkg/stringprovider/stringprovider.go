@@ -2,11 +2,11 @@ package stringprovider
 
 import (
 	"fmt"
-	"github.com/mumoshu/vals/pkg/values/api"
-	"github.com/mumoshu/vals/pkg/values/providers/awssecrets"
-	"github.com/mumoshu/vals/pkg/values/providers/sops"
-	"github.com/mumoshu/vals/pkg/values/providers/ssm"
-	"github.com/mumoshu/vals/pkg/values/providers/vault"
+	"github.com/mumoshu/vals/pkg/api"
+	"github.com/mumoshu/vals/pkg/providers/awssecrets"
+	"github.com/mumoshu/vals/pkg/providers/sops"
+	"github.com/mumoshu/vals/pkg/providers/ssm"
+	"github.com/mumoshu/vals/pkg/providers/vault"
 )
 
 func New(provider api.StaticConfig) (api.LazyLoadedStringProvider, error) {
