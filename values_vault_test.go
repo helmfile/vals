@@ -5,106 +5,6 @@ import (
 	"testing"
 )
 
-func TestValues_Vault_SpruceMerge(t *testing.T) {
-	// TODO
-	// Pre-requisite: vault write mykv/foo mykey=myvalue
-
-	type testcase struct {
-		config map[string]interface{}
-	}
-
-	testcases := []testcase{
-		{
-			config: map[string]interface{}{
-				"spruce": map[string]interface{}{
-					"appendByDefault": false,
-					"valuesFrom": []interface{}{
-						map[string]interface{}{
-							// implies name=vault and type=string
-							"vault": map[string]interface{}{
-								"path":    "mykv/foo",
-								"address": "http://127.0.0.1:8200",
-								"set": map[string]interface{}{
-									"foo": "mykey",
-									"bar": []string{
-										"mykey",
-									},
-								},
-							},
-						},
-						map[string]interface{}{
-							// implies name=vault and type=string
-							"vault": map[string]interface{}{
-								"path":    "mykv/foo",
-								"address": "http://127.0.0.1:8200",
-								"set": map[string]interface{}{
-									"foo": "mykey",
-									"bar": []string{
-										"(( prepend ))",
-										"mykey",
-									},
-									"baz": "mykey",
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	for i := range testcases {
-		tc := testcases[i]
-		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			config := Map(tc.config)
-
-			vals, err := Load(config)
-			if err != nil {
-				t.Fatalf("%v", err)
-			}
-
-			{
-				expected := "myvalue"
-				key := "foo"
-				actual := vals[key]
-				if actual != expected {
-					t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
-				}
-			}
-
-			{
-				switch bar := vals["bar"].(type) {
-				case []interface{}:
-					expected := "myvalue"
-					if len(bar) != 2 {
-						t.Fatalf("unexpected length: expected=2, got=%d", len(bar))
-					}
-					for i := range bar {
-						if bar[i] != expected {
-							t.Errorf("bar[%d] != %v: expected %v, got %v", i, expected, expected, bar[i])
-						}
-					}
-				default:
-					t.Fatalf("unexpected type of bar: value=%v, type=%T", bar, bar)
-				}
-			}
-
-			{
-				switch actual := vals["baz"].(type) {
-				case string:
-					expected := "myvalue"
-					if actual != expected {
-						t.Errorf("unepected value for key %q: expected=%q, got=%q", "baz", expected, actual)
-					}
-				default:
-					t.Fatalf("unexpected type of baz: value=%v, type=%T", actual, actual)
-				}
-			}
-		})
-	}
-}
-
-
 func TestValues_Vault_EvalTemplate(t *testing.T) {
 	// TODO
 	// Pre-requisite:
@@ -119,46 +19,9 @@ func TestValues_Vault_EvalTemplate(t *testing.T) {
 	testcases := []testcase{
 		{
 			config: map[string]interface{}{
-				"foo": map[string]interface{}{
-					"$ref": "vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey",
-				},
+				"foo": "ref+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey",
 				"bar": map[string]interface{}{
-					"baz": map[string]interface{}{
-						"$ref": "vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey",
-					},
-				},
-			},
-		},
-		// Compact and type friendly format for integration with Helm and Helmfile
-		{
-			config: map[string]interface{}{
-				"foo": "$ref vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey",
-				"bar": map[string]interface{}{
-					"baz": "$ref vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey",
-				},
-			},
-		},
-		// String interpolation-friendly format
-		{
-			config: map[string]interface{}{
-				"foo": "${{ref \"vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey\"}}",
-				"bar": map[string]interface{}{
-					"baz": "${{ref \"vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey\"}}",
-				},
-			},
-		},
-		{
-			config: map[string]interface{}{
-				"$types": map[string]interface{}{
-					"v": "vals+vault+http://127.0.0.1:8200/mykv/foo?proto=http#/",
-				},
-				"foo": map[string]interface{}{
-					"$v": "mykey",
-				},
-				"bar": map[string]interface{}{
-					"baz": map[string]interface{}{
-						"$v": "mykey",
-					},
+					"baz": "ref+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey",
 				},
 			},
 		},

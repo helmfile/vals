@@ -4,13 +4,12 @@ import (
 	"crypto/md5"
 	"fmt"
 	"github.com/mumoshu/values/pkg/values/api"
-	"github.com/mumoshu/values/pkg/values/merger"
+	"github.com/mumoshu/values/pkg/values/expansion"
 	"github.com/mumoshu/values/pkg/values/providers/sops"
 	"github.com/mumoshu/values/pkg/values/providers/ssm"
 	"github.com/mumoshu/values/pkg/values/providers/vault"
 	"github.com/mumoshu/values/pkg/values/stringmapprovider"
 	"github.com/mumoshu/values/pkg/values/stringprovider"
-	"github.com/mumoshu/values/pkg/values/vutil"
 	"gopkg.in/yaml.v3"
 	"net/url"
 	"strings"
@@ -50,7 +49,6 @@ func cloneMap(m map[string]interface{}) map[string]interface{} {
 }
 
 var KnownValuesTypes = []string{"vault", "ssm", "awssecrets"}
-var KnownMergerTypes = []string{"spruce"}
 
 type ctx struct {
 	ignorePrefix string
@@ -64,80 +62,8 @@ func IgnorePrefix(p string) Option {
 	}
 }
 
-func restoreJSONRefs(in interface{}) (interface{}, error) {
-	var template map[string]interface{}
-	switch t := in.(type) {
-	case map[string]interface{}:
-		template = t
-	case map[interface{}]interface{}:
-		template = make(map[string]interface{})
-		for k, v := range t {
-			template[fmt.Sprintf("%v", k)] = v
-		}
-	case string:
-		mark := "$ref "
-		if strings.HasPrefix(t, mark) {
-			ref := strings.Split(t, mark)[1]
-			return map[string]interface{}{"$ref": ref}, nil
-		}
-		return t, nil
-	default:
-		return t, nil
-	}
-
-	res := map[string]interface{}{}
-	for k, v := range template {
-		var err error
-		res[k], err = restoreJSONRefs(v)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return res, nil
-}
-
-func compactJSONRefs(in interface{}) (interface{}, error) {
-	var template map[string]interface{}
-	switch t := in.(type) {
-	case map[string]interface{}:
-		template = t
-	case map[interface{}]interface{}:
-		template = make(map[string]interface{})
-		for k, v := range t {
-			template[fmt.Sprintf("%v", k)] = v
-		}
-	default:
-		return t, nil
-	}
-
-	if len(template) == 1 {
-		ref, ok := template["$ref"]
-		if ok {
-			return fmt.Sprintf("$ref %v", ref), nil
-		}
-	}
-
-	res := map[string]interface{}{}
-	for k, v := range template {
-		var err error
-		res[k], err = compactJSONRefs(v)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return res, nil
-}
-
-func Eval(template interface{}) (map[string]interface{}, error) {
+func Eval(template map[string]interface{}) (map[string]interface{}, error) {
 	var err error
-	template, err = restoreJSONRefs(template)
-	if err != nil {
-		return nil, err
-	}
-
-	var m map[string]interface{}
 
 	providers := map[string]api.Provider{}
 
@@ -186,20 +112,19 @@ func Eval(template interface{}) (map[string]interface{}, error) {
 		return nil, fmt.Errorf("no provider registered for scheme %q", scheme)
 	}
 
-	ret, err := vutil.ModifyMapValues(template, vutil.EvalUnaryExprWithTypes("ref", func(key string) (string, error) {
-		uri, err := url.Parse(key)
-		if err != nil {
-			return "", err
-		}
+	expand := expansion.ExpandRegexMatch{
+		Target: expansion.DefaultRefRegexp,
+		Lookup: func(key string) (string, error) {
+			uri, err := url.Parse(key)
+			if err != nil {
+				return "", err
+			}
 
-		hash := uriToProviderHash(uri)
-		p, ok := providers[hash]
-		if !ok {
-			valsPrefix := "vals+"
-			if strings.Contains(uri.Scheme, valsPrefix) {
+			hash := uriToProviderHash(uri)
+			p, ok := providers[hash]
+			if !ok {
 				var scheme string
 				scheme = uri.Scheme
-				scheme = strings.TrimPrefix(scheme, valsPrefix)
 				scheme = strings.Split(scheme, "://")[0]
 
 				p, err = createProvider(scheme, uri)
@@ -209,138 +134,61 @@ func Eval(template interface{}) (map[string]interface{}, error) {
 
 				providers[hash] = p
 			}
-		}
 
-		var frag string
-		frag = uri.Fragment
-		frag = strings.TrimPrefix(frag, "#")
-		frag = strings.TrimPrefix(frag, "/")
+			var frag string
+			frag = uri.Fragment
+			frag = strings.TrimPrefix(frag, "#")
+			frag = strings.TrimPrefix(frag, "/")
 
-		var path string
-		path = uri.Path
-		path = strings.TrimPrefix(path, "#")
-		path = strings.TrimPrefix(path, "/")
+			var path string
+			path = uri.Path
+			path = strings.TrimPrefix(path, "#")
+			path = strings.TrimPrefix(path, "/")
 
-		if len(frag) == 0 {
-			return p.GetString(path)
-		} else {
-			obj, err := p.GetStringMap(path)
-			if err != nil {
-				return "", err
-			}
-
-			keys := strings.Split(frag, "/")
-			for i, k := range keys {
-				newobj := map[string]interface{}{}
-				switch t := obj[k].(type) {
-				case string:
-					if i != len(keys)-1 {
-						return "", fmt.Errorf("unexpected type of value for key at %d=%s in %v: expected map[string]interface{}, got %v(%T)", i, k, keys, t, t)
-					}
-					return t, nil
-				case map[string]interface{}:
-					newobj = t
-				case map[interface{}]interface{}:
-					for k, v := range t {
-						newobj[fmt.Sprintf("%v", k)] = v
-					}
+			if len(frag) == 0 {
+				return p.GetString(path)
+			} else {
+				obj, err := p.GetStringMap(path)
+				if err != nil {
+					return "", err
 				}
-				obj = newobj
+
+				keys := strings.Split(frag, "/")
+				for i, k := range keys {
+					newobj := map[string]interface{}{}
+					switch t := obj[k].(type) {
+					case string:
+						if i != len(keys)-1 {
+							return "", fmt.Errorf("unexpected type of value for key at %d=%s in %v: expected map[string]interface{}, got %v(%T)", i, k, keys, t, t)
+						}
+						return t, nil
+					case map[string]interface{}:
+						newobj = t
+					case map[interface{}]interface{}:
+						for k, v := range t {
+							newobj[fmt.Sprintf("%v", k)] = v
+						}
+					}
+					obj = newobj
+				}
+
+				return "", fmt.Errorf("no value found for key %s", frag)
 			}
+		},
+	}
 
-			return "", fmt.Errorf("no value found for key %s", frag)
-		}
-	}))
-
+	ret, err := expand.InMap(template)
 	if err != nil {
 		return nil, err
 	}
 
-	m, ok := ret.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("unexpected result type: expected map[string]interface{}, got %T", ret)
-	}
-
-	return m, nil
-}
-
-func Flatten(template interface{}, compact bool) (map[string]interface{}, error) {
-	var err error
-	template, err = restoreJSONRefs(template)
-	if err != nil {
-		return nil, err
-	}
-
-	var m map[string]interface{}
-
-	ret, err := vutil.ModifyMapValues(template, vutil.FlattenTypes("ref"))
-	if err != nil {
-		return nil, err
-	}
-
-	if compact {
-		ret, err = compactJSONRefs(ret)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	m, ok := ret.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("unexpected result type: expected map[string]interface{}, got %T", ret)
-	}
-
-	return m, nil
+	return ret, nil
 }
 
 func Load(config api.StaticConfig, opt ...Option) (map[string]interface{}, error) {
 	ctx := &ctx{}
 	for _, o := range opt {
 		o(ctx)
-	}
-
-	for _, tpe := range KnownMergerTypes {
-		if config.Exists(tpe) {
-			cfg := Map(config.Map(tpe))
-			mgr, err := merger.New(tpe, cfg)
-			if err != nil {
-				return nil, err
-			}
-
-			vf := cfg.Map()[KeyValuesFrom]
-			switch typed := vf.(type) {
-			case []interface{}:
-				merged := map[string]interface{}{}
-
-				for _, entry := range typed {
-					switch entryTyped := entry.(type) {
-					case map[string]interface{}:
-						adapted, err := vutil.ModifyStringValues(entryTyped, func(v string) (interface{}, error) { return v, nil })
-						if err != nil {
-							return nil, err
-						}
-						m, ok := adapted.(map[string]interface{})
-						if !ok {
-							return nil, fmt.Errorf("valuesFrom entry adapted: unexpected type: value=%v, type=%T", adapted, adapted)
-						}
-						loaded, err := Load(Map(m), IgnorePrefix(mgr.IgnorePrefix()))
-						if err != nil {
-							return nil, fmt.Errorf("merge setup: %v", err)
-						}
-						merged, err = mgr.Merge(merged, loaded)
-						if err != nil {
-							return nil, fmt.Errorf("merge: %v", err)
-						}
-					default:
-						return nil, fmt.Errorf("valuesFrom entry: unexpected type: value=%v, type=%T", entryTyped, entryTyped)
-					}
-				}
-
-				return merged, nil
-			default:
-				return nil, fmt.Errorf("valuesFrom: unexpected type: value=%v, type=%T", typed, typed)
-			}
-		}
 	}
 
 	type ValuesProvider struct {
@@ -474,7 +322,7 @@ func Load(config api.StaticConfig, opt ...Option) (map[string]interface{}, error
 		if err != nil {
 			return nil, err
 		}
-		res, err := vutil.ModifyStringValues(keymap, func(path string) (interface{}, error) {
+		res, err := expansion.ModifyStringValues(keymap, func(path string) (interface{}, error) {
 			if ctx.ignorePrefix != "" && strings.HasPrefix(path, ctx.ignorePrefix) {
 				return path, nil
 			}
@@ -562,7 +410,7 @@ func Load(config api.StaticConfig, opt ...Option) (map[string]interface{}, error
 				return built, nil
 			}
 		} else {
-			res, err = vutil.ModifyStringValues(keymap, func(path string) (interface{}, error) {
+			res, err = expansion.ModifyStringValues(keymap, func(path string) (interface{}, error) {
 				if prefix != "" {
 					path = strings.TrimRight(prefix, "/") + "/" + strings.TrimLeft(path, "/")
 				}

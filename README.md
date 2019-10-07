@@ -6,7 +6,6 @@ Helm-like configuration "Values" loader with support for various backends includ
 - AWS SSM Parameter Store
 - AWS Secrets Manager
 - [SOPS](https://github.com/mozilla/sops)-encrypted files
-- Merge with Spruce (e.g. Append/Prepend Arrays In Hash)
 - Terraform outputs(Coming soon)
 - CredHub(Coming soon)
 
@@ -48,9 +47,9 @@ Now input the template of your YAML and refer to `vals`' Vault provider by using
 
 ```console
 $ vals eval -e '
-foo: {"$ref":"vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey"}
+foo: ref+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey
 bar:
-  baz: {"$ref":"vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey"}
+  baz: ref+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey
 ```
 
 Voila! `vals`, replacing every reference to your secret value in Vault, produces the output looks like:
@@ -71,22 +70,7 @@ foo: $(vault read mykv/foo -o json | jq -r .mykey)
 EOF
 ```
 
-An another form of the previous usage is to use `$types` for reducing code repetition.
-
-`$types` allows you to define reusable template of `$ref`s as a named `type` which can then be referred from your template by `$name`:
-
-`x.vals.yaml`:
-
-```yaml
-$types:
-  v: vals+vault://127.0.0.1:8200/mykv/foo?proto=http
-
-foo: {"$v":"/mykey"}
-bar:
-  baz: {"$v":"/mykey"}
-```
-
-Running `vals eval -f x.vals.yaml` does produce output equivalent to the previous one:
+Save the YAML content to `x.vals.yaml` and running `vals eval -f x.vals.yaml` does produce output equivalent to the previous one:
 
 ```yaml
 foo: FOO
@@ -94,47 +78,12 @@ bar:
   baz: FOO
 ```
 
-Lastly, `vals flatten` can be used to replace all the custom type refs to plain JSON Reference `$refs`:
-
-```console
-$ vals flatten -f x.vals.yaml
-```
-
-```yaml
-foo: {"$ref":"vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey"}
-bar:
-  baz: {"$ref":"vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey"}
-```
-
-There's also a shorter syntax:
-
-```
-foo: $ref vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey
-bar:
-  baz: $ref vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey
-
-```
-
 ### Helm
 
-When you're using a `vals` template as a values file, `helm` usually fail rendering the release manifests as you can't inject YAML objects like `{"$ref":"vals+vault://..."}` to where `string` values are expected(e.g. `data` and `stringData` kvs of `Secret` resources).
-
-To deal with it, use `vals flatten -c` to use the compact format so that JSON references are transformed to vals' own `string` representations, which is safe to be used as values.
+Use value references as Helm Chart values, so that you can feed the `helm template` output to `vals -f -` for transforming the refs to secrets.
 
 ```console
-$ vals flatten -f x.vals.yaml -c
-```
-
-```yaml
-foo: "$ref vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey"
-bar:
-  baz: "$ref vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey"
-```
-
-You should use `helm template` and compact-`$ref`s as values to inject references to secrets like:
-
-```console
-$ helm template mysql-1.3.2.tgz --set mysqlPassword='$ref vals+vault://127.0.0.1:8200/mykv/foo#/mykey' | vals ksdecode -o yaml -f - | tee manifests.yaml
+$ helm template mysql-1.3.2.tgz --set mysqlPassword='ref+vault://127.0.0.1:8200/mykv/foo#/mykey' | vals ksdecode -o yaml -f - | tee manifests.yaml
 apiVersion: v1
 kind: Secret
 metadata:
@@ -146,7 +95,7 @@ metadata:
   name: release-name-mysql
   namespace: default
 stringData:
-  mysql-password: $ref vals+vault://127.0.0.1:8200/mykv/foo#/mykey
+  mysql-password: refs+vault://127.0.0.1:8200/mykv/foo#/mykey
   mysql-root-password: vZQmqdGw3z
 type: Opaque
 ```
@@ -188,26 +137,14 @@ In other words, you can safely omit access from the CI to the secrets store.
 ```go
 import "github.com/mumoshu/values"
 
-config := Map(map[string]interface{}{
-    "provider": map[string]interface{}{
-        "name":     "vault",
-        "type":     "map",
-        "path":     "mykv",
-        "address":  "http://127.0.0.1:8200",
-        "strategy": "raw",
-    },
+vals, err := values.Eval(map[string]interface{}{
     "inline": map[string]interface{}{
-        "foo": "foo",
+        "foo": "ref+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey",
         "bar": map[string]interface{}{
-            "baz": "foo",
+            "baz": "ref+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey",
         },
     },
 })
-
-vals, err := values.Load(config)
-if err != nil {
-    t.Fatalf("%v", err)
-}
 ```
 
 Now, `vals` contains a `map[string]interface{}` representation of the below:
@@ -219,6 +156,14 @@ foo: $(vault read mykv/foo -o json | jq -r .mykey)
     baz: $(vault read mykv/foo -o json | jq -r .mykey)
 EOF
 ```
+
+## Suported Backends
+
+- Vault: `ref+vault://VAULT_ADDR:PORT/PATH/TO/KVBACKEND#/fieldkey`
+- AWS SSM Parameter Store: `ref+awsssm://REGION/PREFIX/TO/PARAMS#/PATH/TO/PARAM`
+  - `vals` uses `GetParametersByPath(/PREFIX/TO/PARAMS)` caches the result per prefix rather than each single path to reduce number of API calls
+- AWS Secrets Manager `ref+awsssm://REGION/PATH/TO/SECRET`
+- [SOPS](https://github.com/mozilla/sops)-encrypted files `ref+sops://`
 
 ## Non-Goals
 
@@ -236,3 +181,7 @@ But the idea had abandoned due to that it seemed to drive the momentum to vals b
 That's not the business of vals.
 
 Instead, use vals solely for composing sets of values that are then input to another templating engine or data manipulation language like Jsonnet and CUE.
+
+### Merge
+
+Merging YAMLs is out of the scope of `vals`. There're better alternatives like Jsonnet, Sprig, and CUE for the job.

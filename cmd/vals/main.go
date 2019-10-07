@@ -53,7 +53,6 @@ func main() {
 	flag.Usage = flagUsage
 
 	CmdEval := "eval"
-	CmdFlatten := "flatten"
 	CmdKsDecode := "ksdecode"
 
 	if len(os.Args) == 1 {
@@ -71,21 +70,6 @@ func main() {
 		m := readOrFail(f)
 
 		res, err := values.Eval(m)
-		if err != nil {
-			fatal("%v", err)
-		}
-
-		writeOrFail(o, res)
-	case CmdFlatten:
-		evalCmd := flag.NewFlagSet(CmdFlatten, flag.ExitOnError)
-		f := evalCmd.String("f", "", "YAML/JSON file to be flattened")
-		o := evalCmd.String("o", "yaml", "Output type which is either \"yaml\" or \"json\"")
-		c := evalCmd.Bool("c", false, "Use vals' own compact format of $ref")
-		evalCmd.Parse(os.Args[2:])
-
-		m := readOrFail(f)
-
-		res, err := values.Flatten(m, *c)
 		if err != nil {
 			fatal("%v", err)
 		}
