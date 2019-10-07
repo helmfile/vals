@@ -135,7 +135,7 @@ In other words, you can safely omit access from the CI to the secrets store.
 ### Go
 
 ```go
-import "github.com/mumoshu/values"
+import "github.com/mumoshu/vals"
 
 vals, err := values.Eval(map[string]interface{}{
     "inline": map[string]interface{}{

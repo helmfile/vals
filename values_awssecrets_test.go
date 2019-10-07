@@ -95,7 +95,7 @@ func TestValues_AWSSecrets_String(t *testing.T) {
 func TestValues_AWSSecrets_Map(t *testing.T) {
 	// TODO
 	// Pre-requisite:
-	//   aws secretsmanager create-secret --name /mykv/foo/meta --secret-string '{"github.com/mumoshu/values":["mykey"]}'
+	//   aws secretsmanager create-secret --name /mykv/foo/meta --secret-string '{"github.com/mumoshu/vals":["mykey"]}'
 	//   aws secretsmanager create-secret --name /mykv/foo/mykey --secret-string myvalue
 
 	type testcase struct {

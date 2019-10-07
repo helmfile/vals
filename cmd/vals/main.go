@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/mumoshu/values"
+	"github.com/mumoshu/vals"
 	"gopkg.in/yaml.v3"
 	"os"
 )
