@@ -78,7 +78,17 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 		return nil, fmt.Errorf("no secret found for path %q", key)
 	}
 
-	for k, v := range secret.Data {
+	// Vault KV Version 1
+	secrets := secret.Data
+
+	// Vault KV Version 2
+	if _, ok := secret.Data["data"]; ok {
+		if m, ok := secret.Data["data"].(map[string]interface{}); ok {
+			secrets = m
+		}
+	}
+
+	for k, v := range secrets {
 		res[k] = fmt.Sprintf("%v", v)
 	}
 
