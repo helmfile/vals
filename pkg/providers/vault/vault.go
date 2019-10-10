@@ -3,6 +3,7 @@ package vault
 import (
 	"fmt"
 	"github.com/mumoshu/vals/pkg/api"
+	"io/ioutil"
 	"os"
 	"strings"
 
@@ -107,6 +108,17 @@ func (p *provider) ensureClient() (*vault.Client, error) {
 		if err != nil {
 			p.debugf("Vault connections failed")
 			return nil, fmt.Errorf("Cannot create Vault Client: %v", err)
+		}
+
+		// By default Vault token is set from VAULT_TOKEN env var by NewClient()
+		// But if VAULT_TOKEN isn't set, token can be retrieved from ~/.vault-token file
+		if cli.Token() == "" {
+			homeDir := os.Getenv("HOME")
+			if homeDir != "" {
+				if buff, err := ioutil.ReadFile(homeDir + "/.vault-token"); err == nil {
+					cli.SetToken(string(buff))
+				}
+			}
 		}
 		p.client = cli
 	}
