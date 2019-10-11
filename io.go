@@ -1,4 +1,4 @@
-package values
+package vals
 
 import (
 	"bufio"

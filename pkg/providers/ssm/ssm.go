@@ -3,7 +3,7 @@ package ssm
 import (
 	"errors"
 	"fmt"
-	"github.com/mumoshu/vals/pkg/api"
+	"github.com/variantdev/vals/pkg/api"
 	"os"
 	"strings"
 

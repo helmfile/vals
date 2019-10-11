@@ -36,7 +36,7 @@ Use "vals [command] --help" for more infomation about a command
 `vals` has its own provider which can be reffered with a URI scheme looks `vals+<TYPE>`.
 
 For this example, use the [Vault](https://www.terraform.io/docs/providers/vault/index.html) provider.
- 
+
 Let's start by writing some secret value to `Vault`:
 
 ```console
@@ -135,7 +135,7 @@ In other words, you can safely omit access from the CI to the secrets store.
 ### Go
 
 ```go
-import "github.com/mumoshu/vals"
+import "github.com/variantdev/vals"
 
 vals, err := values.Eval(map[string]interface{}{
     "inline": map[string]interface{}{

@@ -1,8 +1,8 @@
-package values
+package vals
 
 import (
 	"fmt"
-	"github.com/mumoshu/vals/pkg/api"
+	"github.com/variantdev/vals/pkg/api"
 )
 
 type mapConfig struct {
@@ -174,4 +174,3 @@ func Map(m map[string]interface{}) mapConfig {
 		m: m,
 	}
 }
-
