@@ -22,15 +22,11 @@ const (
 type provider struct {
 	client *vault.Client
 
-	mapCache map[string]map[string]interface{}
-
 	Address string
 }
 
 func New(cfg api.StaticConfig) *provider {
-	p := &provider{
-		mapCache: map[string]map[string]interface{}{},
-	}
+	p := &provider{}
 	p.Address = cfg.String("address")
 	return p
 }
@@ -58,10 +54,6 @@ func (p *provider) GetString(key string) (string, error) {
 }
 
 func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
-	if cachedVal, ok := p.mapCache[key]; ok {
-		return cachedVal, nil
-	}
-
 	cli, err := p.ensureClient()
 	if err != nil {
 		return nil, fmt.Errorf("Cannot create Vault Client: %v", err)
@@ -92,8 +84,6 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 	for k, v := range secrets {
 		res[k] = fmt.Sprintf("%v", v)
 	}
-
-	p.mapCache[key] = res
 
 	return res, nil
 }

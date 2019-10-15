@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/variantdev/vals/pkg/api"
 	"os"
-	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -16,10 +15,6 @@ type provider struct {
 	// Keeping track of SSM services since we need a SSM service per region
 	ssmClient *ssm.SSM
 
-	// Adding caching for SSM parameters since templates are rendered twice and would do 2x network calls
-	paramsCache map[string]string
-	mapCache    map[string]map[string]interface{}
-
 	// AWS SSM Parameter store global configuration
 	Region string
 
@@ -27,20 +22,13 @@ type provider struct {
 }
 
 func New(cfg api.StaticConfig) *provider {
-	p := &provider{
-		paramsCache: map[string]string{},
-		mapCache:    map[string]map[string]interface{}{},
-	}
+	p := &provider{}
 	p.Region = cfg.String("region")
 	return p
 }
 
 // Get gets an AWS SSM Parameter Store value
 func (p *provider) GetString(key string) (string, error) {
-	if cachedVal, ok := p.paramsCache[key]; ok && strings.TrimSpace(cachedVal) != "" {
-		return cachedVal, nil
-	}
-
 	ssmClient := p.getSSMClient()
 
 	in := ssm.GetParameterInput{
@@ -59,21 +47,12 @@ func (p *provider) GetString(key string) (string, error) {
 	if out.Parameter.Value == nil {
 		return "", errors.New("datasource.ssm.Get() out.Parameter.Value is nil")
 	}
-
-	// Cache the value
-	p.paramsCache[key] = *out.Parameter.Value
-	val := p.paramsCache[key]
-
 	p.debugf("SSM: successfully retrieved key=%s", key)
 
-	return val, nil
+	return *out.Parameter.Value, nil
 }
 
 func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
-	if cachedVal, ok := p.mapCache[key]; ok {
-		return cachedVal, nil
-	}
-
 	ssmClient := p.getSSMClient()
 
 	res := map[string]interface{}{}
@@ -96,14 +75,9 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 		name = name[len(key)+1:]
 		res[name] = *param.Value
 	}
-
-	// Cache the value
-	p.mapCache[key] = res
-	val := p.mapCache[key]
-
 	p.debugf("SSM: successfully retrieved key=%s", key)
 
-	return val, nil
+	return res, nil
 }
 
 func (p *provider) debugf(msg string, args ...interface{}) {

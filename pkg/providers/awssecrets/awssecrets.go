@@ -17,10 +17,6 @@ type provider struct {
 	// Keeping track of secretsmanager services since we need a service per region
 	client *secretsmanager.SecretsManager
 
-	// Adding caching for secretsmanager
-	strCache map[string]string
-	mapCache map[string]map[string]interface{}
-
 	// AWS SecretsManager global configuration
 	Region, VersionStage, Prefix string
 
@@ -28,10 +24,7 @@ type provider struct {
 }
 
 func New(cfg api.StaticConfig) *provider {
-	p := &provider{
-		strCache: map[string]string{},
-		mapCache: map[string]map[string]interface{}{},
-	}
+	p := &provider{}
 	p.Region = cfg.String("region")
 	p.VersionStage = cfg.String("versionStage")
 	return p
@@ -39,10 +32,6 @@ func New(cfg api.StaticConfig) *provider {
 
 // Get gets an AWS SSM Parameter Store value
 func (p *provider) GetString(key string) (string, error) {
-	if cachedVal, ok := p.strCache[key]; ok && strings.TrimSpace(cachedVal) != "" {
-		return cachedVal, nil
-	}
-
 	cli := p.getClient()
 
 	in := secretsmanager.GetSecretValueInput{
@@ -62,19 +51,12 @@ func (p *provider) GetString(key string) (string, error) {
 		return "", errors.New("awssecrets: get secret value: no SecretString nor SecretBinary is set")
 	}
 
-	// Cache the value
-	p.strCache[key] = v
-	val := p.strCache[key]
-
 	p.debugf("awssecrets: successfully retrieved key=%s", key)
 
-	return val, nil
+	return v, nil
 }
 
 func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
-	if cachedVal, ok := p.mapCache[key]; ok {
-		return cachedVal, nil
-	}
 
 	yamlStr, err := p.GetString(key)
 	if err == nil {
@@ -82,7 +64,6 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 		if err := yaml.Unmarshal([]byte(yamlStr), &m); err != nil {
 			return nil, fmt.Errorf("error while parsing secret for key %q as yaml: %v", key, err)
 		}
-		p.mapCache[key] = m
 		return m, nil
 	}
 
@@ -133,13 +114,9 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 		res[sufKey] = str
 	}
 
-	// Cache the value
-	p.mapCache[key] = res
-	val := p.mapCache[key]
-
 	p.debugf("SSM: successfully retrieved key=%s", key)
 
-	return val, nil
+	return res, nil
 }
 
 func (p *provider) debugf(msg string, args ...interface{}) {
