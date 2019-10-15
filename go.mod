@@ -1,4 +1,4 @@
-module github.com/mumoshu/vals
+module github.com/variantdev/vals
 
 go 1.12
 

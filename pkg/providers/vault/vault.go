@@ -2,7 +2,7 @@ package vault
 
 import (
 	"fmt"
-	"github.com/mumoshu/vals/pkg/api"
+	"github.com/variantdev/vals/pkg/api"
 	"io/ioutil"
 	"os"
 	"strings"

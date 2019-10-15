@@ -1,15 +1,15 @@
-package values
+package vals
 
 import (
 	"crypto/md5"
 	"fmt"
-	"github.com/mumoshu/vals/pkg/api"
-	"github.com/mumoshu/vals/pkg/expansion"
-	"github.com/mumoshu/vals/pkg/providers/sops"
-	"github.com/mumoshu/vals/pkg/providers/ssm"
-	"github.com/mumoshu/vals/pkg/providers/vault"
-	"github.com/mumoshu/vals/pkg/stringmapprovider"
-	"github.com/mumoshu/vals/pkg/stringprovider"
+	"github.com/variantdev/vals/pkg/api"
+	"github.com/variantdev/vals/pkg/expansion"
+	"github.com/variantdev/vals/pkg/providers/sops"
+	"github.com/variantdev/vals/pkg/providers/ssm"
+	"github.com/variantdev/vals/pkg/providers/vault"
+	"github.com/variantdev/vals/pkg/stringmapprovider"
+	"github.com/variantdev/vals/pkg/stringprovider"
 	"gopkg.in/yaml.v3"
 	"net/url"
 	"strings"

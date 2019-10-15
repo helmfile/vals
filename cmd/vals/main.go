@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/mumoshu/vals"
+	"github.com/variantdev/vals"
 	"gopkg.in/yaml.v3"
 	"os"
 )
@@ -34,7 +34,7 @@ func fatal(format string, args ...interface{}) {
 }
 
 func readOrFail(f *string) map[string]interface{} {
-	m, err := values.Input(*f)
+	m, err := vals.Input(*f)
 	if err != nil {
 		fatal("%v", err)
 	}
@@ -42,7 +42,7 @@ func readOrFail(f *string) map[string]interface{} {
 }
 
 func writeOrFail(o *string, res interface{}) {
-	out, err := values.Output(*o, res)
+	out, err := vals.Output(*o, res)
 	if err != nil {
 		fatal("%v", err)
 	}
@@ -69,7 +69,7 @@ func main() {
 
 		m := readOrFail(f)
 
-		res, err := values.Eval(m)
+		res, err := vals.Eval(m)
 		if err != nil {
 			fatal("%v", err)
 		}
@@ -81,7 +81,7 @@ func main() {
 		o := evalCmd.String("o", "yaml", "Output type which is either \"yaml\" or \"json\"")
 		evalCmd.Parse(os.Args[2:])
 
-		nodes, err := values.Inputs(*f)
+		nodes, err := vals.Inputs(*f)
 		if err != nil {
 			fatal("%v", err)
 		}

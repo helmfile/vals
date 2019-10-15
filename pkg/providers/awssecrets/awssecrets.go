@@ -3,7 +3,7 @@ package awssecrets
 import (
 	"errors"
 	"fmt"
-	"github.com/mumoshu/vals/pkg/api"
+	"github.com/variantdev/vals/pkg/api"
 	"gopkg.in/yaml.v3"
 	"os"
 	"strings"
@@ -99,7 +99,7 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 		return nil, err
 	}
 
-	metaKeysField := "github.com/mumoshu/vals"
+	metaKeysField := "github.com/variantdev/vals"
 	f, ok := meta[metaKeysField]
 	if !ok {
 		return nil, fmt.Errorf("%q not found", metaKeysField)
@@ -116,7 +116,7 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 			suffixes = append(suffixes, fmt.Sprintf("%v", v))
 		}
 	default:
-		return nil, fmt.Errorf("%q was not a kind of array: value=%v, type=%T", suffixes, suffixes)
+		return nil, fmt.Errorf("%q was not a kind of array: value=%v, type=%T", suffixes, suffixes, suffixes)
 	}
 	if !ok {
 		return nil, fmt.Errorf("%q was not a string array", metaKeysField)
