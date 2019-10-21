@@ -5,16 +5,11 @@ import (
 	"github.com/variantdev/vals/pkg/api"
 	"gopkg.in/yaml.v3"
 	"os"
-	"strings"
 
 	"go.mozilla.org/sops/decrypt"
 )
 
 type provider struct {
-	// Adding caching for secretsmanager
-	strCache map[string]string
-	mapCache map[string]map[string]interface{}
-
 	// AWS SecretsManager global configuration
 	File, Data, Prefix string
 
@@ -24,10 +19,7 @@ type provider struct {
 }
 
 func New(cfg api.StaticConfig) *provider {
-	p := &provider{
-		strCache: map[string]string{},
-		mapCache: map[string]map[string]interface{}{},
-	}
+	p := &provider{}
 	p.File = cfg.String("file")
 	p.Data = cfg.String("data")
 	return p
@@ -35,10 +27,6 @@ func New(cfg api.StaticConfig) *provider {
 
 // Get gets an AWS SSM Parameter Store value
 func (p *provider) GetString(key string) (string, error) {
-	if cachedVal, ok := p.strCache[key]; ok && strings.TrimSpace(cachedVal) != "" {
-		return cachedVal, nil
-	}
-
 	m, err := p.Map()
 	if err != nil {
 		return "", err
@@ -50,21 +38,12 @@ func (p *provider) GetString(key string) (string, error) {
 	}
 
 	v := fmt.Sprintf("%v", raw)
-
-	// Cache the value
-	p.strCache[key] = v
-	val := p.strCache[key]
-
 	p.debugf("sops: successfully retrieved key=%s", key)
 
-	return val, nil
+	return v, nil
 }
 
 func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
-	if cachedVal, ok := p.mapCache[key]; ok {
-		return cachedVal, nil
-	}
-
 	str, err := p.GetString(key)
 	if err != nil {
 		return nil, err
@@ -76,13 +55,9 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 		return nil, err
 	}
 
-	// Cache the value
-	p.mapCache[key] = res
-	val := p.mapCache[key]
-
 	p.debugf("sops: successfully retrieved key=%s", key)
 
-	return val, nil
+	return res, nil
 }
 
 func (p *provider) debugf(msg string, args ...interface{}) {

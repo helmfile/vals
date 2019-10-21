@@ -13,6 +13,8 @@ import (
 	"gopkg.in/yaml.v3"
 	"net/url"
 	"strings"
+
+	lru "github.com/hashicorp/golang-lru"
 )
 
 const (
@@ -34,38 +36,37 @@ const (
 	KeySetForKey  = "setForKeys"
 	KeySet        = "set"
 	KeyValuesFrom = "valuesFrom"
+
+	// secret cache size
+	defaultCacheSize = 512
 )
 
-func cloneMap(m map[string]interface{}) map[string]interface{} {
-	bs, err := yaml.Marshal(m)
-	if err != nil {
-		panic(err)
-	}
-	out := map[string]interface{}{}
-	if err := yaml.Unmarshal(bs, &out); err != nil {
-		panic(err)
-	}
-	return out
+type Evaluator interface {
+	Eval(map[string]interface{}) (map[string]interface{}, error)
 }
 
-var KnownValuesTypes = []string{"vault", "ssm", "awssecrets"}
-
-type ctx struct {
-	ignorePrefix string
+// Runtime an object for secrets rendering
+type Runtime struct {
+	providers map[string]api.Provider
+	cache     *lru.Cache // secrets are cached to improve performance
 }
 
-type Option func(*ctx)
-
-func IgnorePrefix(p string) Option {
-	return func(ctx *ctx) {
-		ctx.ignorePrefix = p
+// New returns an instance of Runtime
+func New(cacheSize int) (*Runtime, error) {
+	r := &Runtime{
+		providers: map[string]api.Provider{},
 	}
-}
-
-func Eval(template map[string]interface{}) (map[string]interface{}, error) {
 	var err error
+	r.cache, err = lru.New(cacheSize)
+	if err != nil {
+		return nil, err
+	}
+	return r, nil
+}
 
-	providers := map[string]api.Provider{}
+// Eval replaces 'ref+<provider>://xxxxx' entries by their actual values
+func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{}, error) {
+	var err error
 
 	uriToProviderHash := func(uri *url.URL) string {
 		bs := []byte{}
@@ -115,13 +116,21 @@ func Eval(template map[string]interface{}) (map[string]interface{}, error) {
 	expand := expansion.ExpandRegexMatch{
 		Target: expansion.DefaultRefRegexp,
 		Lookup: func(key string) (string, error) {
+			if val, ok := r.cache.Get(key); ok {
+				valStr, ok := val.(string)
+				if !ok {
+					return "", fmt.Errorf("error reading string from cache: unsupported value type %T", val)
+				}
+				return valStr, nil
+			}
+
 			uri, err := url.Parse(key)
 			if err != nil {
 				return "", err
 			}
 
 			hash := uriToProviderHash(uri)
-			p, ok := providers[hash]
+			p, ok := r.providers[hash]
 			if !ok {
 				var scheme string
 				scheme = uri.Scheme
@@ -132,7 +141,7 @@ func Eval(template map[string]interface{}) (map[string]interface{}, error) {
 					return "", err
 				}
 
-				providers[hash] = p
+				r.providers[hash] = p
 			}
 
 			var frag string
@@ -148,9 +157,19 @@ func Eval(template map[string]interface{}) (map[string]interface{}, error) {
 			if len(frag) == 0 {
 				return p.GetString(path)
 			} else {
-				obj, err := p.GetStringMap(path)
-				if err != nil {
-					return "", err
+				mapRequestURI := key[:strings.LastIndex(key, uri.Fragment)-1]
+				var obj map[string]interface{}
+				if cachedMap, ok := r.cache.Get(mapRequestURI); ok {
+					obj, ok = cachedMap.(map[string]interface{})
+					if !ok {
+						return "", fmt.Errorf("error reading map from cache: unsupported value type %T", cachedMap)
+					}
+				} else {
+					obj, err = p.GetStringMap(path)
+					if err != nil {
+						return "", err
+					}
+					r.cache.Add(mapRequestURI, obj)
 				}
 
 				keys := strings.Split(frag, "/")
@@ -161,6 +180,7 @@ func Eval(template map[string]interface{}) (map[string]interface{}, error) {
 						if i != len(keys)-1 {
 							return "", fmt.Errorf("unexpected type of value for key at %d=%s in %v: expected map[string]interface{}, got %v(%T)", i, k, keys, t, t)
 						}
+						r.cache.Add(key, t)
 						return t, nil
 					case map[string]interface{}:
 						newobj = t
@@ -183,6 +203,40 @@ func Eval(template map[string]interface{}) (map[string]interface{}, error) {
 	}
 
 	return ret, nil
+}
+
+func cloneMap(m map[string]interface{}) map[string]interface{} {
+	bs, err := yaml.Marshal(m)
+	if err != nil {
+		panic(err)
+	}
+	out := map[string]interface{}{}
+	if err := yaml.Unmarshal(bs, &out); err != nil {
+		panic(err)
+	}
+	return out
+}
+
+var KnownValuesTypes = []string{"vault", "ssm", "awssecrets"}
+
+type ctx struct {
+	ignorePrefix string
+}
+
+type Option func(*ctx)
+
+func IgnorePrefix(p string) Option {
+	return func(ctx *ctx) {
+		ctx.ignorePrefix = p
+	}
+}
+
+func Eval(template map[string]interface{}) (map[string]interface{}, error) {
+	runtime, err := New(defaultCacheSize)
+	if err != nil {
+		return nil, err
+	}
+	return runtime.Eval(template)
 }
 
 func Load(config api.StaticConfig, opt ...Option) (map[string]interface{}, error) {

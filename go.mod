@@ -9,6 +9,7 @@ require (
 	github.com/Azure/go-autorest/autorest/validation v0.2.0 // indirect
 	github.com/aws/aws-sdk-go v1.22.2
 	github.com/goware/prefixer v0.0.0-20160118172347-395022866408 // indirect
+	github.com/hashicorp/golang-lru v0.5.1
 	github.com/hashicorp/vault/api v1.0.4
 	github.com/howeyc/gopass v0.0.0-20170109162249-bf9dde6d0d2c // indirect
 	github.com/lib/pq v1.2.0 // indirect

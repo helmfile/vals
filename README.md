@@ -137,7 +137,13 @@ In other words, you can safely omit access from the CI to the secrets store.
 ```go
 import "github.com/variantdev/vals"
 
-vals, err := values.Eval(map[string]interface{}{
+secretsToCache := 256 // how many secrets to keep in LRU cache
+runtime, err := vals.New(secretsToCache)
+if err != nil {
+  return nil, err
+}
+
+valsRendered, err := runtime.Eval(map[string]interface{}{
     "inline": map[string]interface{}{
         "foo": "ref+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey",
         "bar": map[string]interface{}{
