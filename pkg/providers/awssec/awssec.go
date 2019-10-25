@@ -1,4 +1,4 @@
-package awssecrets
+package awssec
 
 import (
 	"errors"
@@ -18,7 +18,7 @@ type provider struct {
 	client *secretsmanager.SecretsManager
 
 	// AWS SecretsManager global configuration
-	Region, VersionStage, Prefix string
+	Region, VersionStage, VersionId string
 
 	Format string
 }
@@ -26,7 +26,8 @@ type provider struct {
 func New(cfg api.StaticConfig) *provider {
 	p := &provider{}
 	p.Region = cfg.String("region")
-	p.VersionStage = cfg.String("versionStage")
+	p.VersionStage = cfg.String("version_stage")
+	p.VersionId = cfg.String("version_id")
 	return p
 }
 
@@ -34,10 +35,19 @@ func New(cfg api.StaticConfig) *provider {
 func (p *provider) GetString(key string) (string, error) {
 	cli := p.getClient()
 
-	in := secretsmanager.GetSecretValueInput{
+	in := &secretsmanager.GetSecretValueInput{
 		SecretId: aws.String(key),
 	}
-	out, err := cli.GetSecretValue(&in)
+
+	if p.VersionStage != "" {
+		in = in.SetVersionStage(p.VersionStage)
+	}
+
+	if p.VersionId != "" {
+		in = in.SetVersionId(p.VersionId)
+	}
+
+	out, err := cli.GetSecretValue(in)
 	if err != nil {
 		return "", fmt.Errorf("get parameter: %v", err)
 	}

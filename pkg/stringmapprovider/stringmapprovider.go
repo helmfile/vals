@@ -3,6 +3,7 @@ package stringmapprovider
 import (
 	"fmt"
 	"github.com/variantdev/vals/pkg/api"
+	"github.com/variantdev/vals/pkg/providers/awssec"
 	"github.com/variantdev/vals/pkg/providers/awssecrets"
 	"github.com/variantdev/vals/pkg/providers/sops"
 	"github.com/variantdev/vals/pkg/providers/ssm"
@@ -18,7 +19,7 @@ func New(provider api.StaticConfig) (api.LazyLoadedStringMapProvider, error) {
 	case "vault":
 		return vault.New(provider), nil
 	case "awssecrets":
-		return awssecrets.New(provider), nil
+		return awssec.New(provider), nil
 	case "sops":
 		return sops.New(provider), nil
 	}

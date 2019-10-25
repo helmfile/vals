@@ -19,9 +19,9 @@ func TestValues_Vault_EvalTemplate(t *testing.T) {
 	testcases := []testcase{
 		{
 			config: map[string]interface{}{
-				"foo": "ref+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey",
+				"foo": "ref+vault://mykv/foo?address=http://127.0.0.1:8200#/mykey",
 				"bar": map[string]interface{}{
-					"baz": "ref+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey",
+					"baz": "ref+vault://mykv/foo??address=http://127.0.0.1:8200#/mykey",
 				},
 			},
 		},

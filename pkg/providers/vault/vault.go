@@ -23,11 +23,25 @@ type provider struct {
 	client *vault.Client
 
 	Address string
+	Proto string
+	Host string
 }
 
 func New(cfg api.StaticConfig) *provider {
 	p := &provider{}
+	p.Proto = cfg.String("proto")
+	if p.Proto == "" {
+		p.Proto = "https"
+	}
+	p.Host = cfg.String("host")
 	p.Address = cfg.String("address")
+	if p.Address == "" {
+		if p.Host != "" {
+			p.Address = fmt.Sprintf("%s://%s", p.Proto, p.Host)
+		}
+	} else {
+		p.Address = os.Getenv("VAULT_ADDR")
+	}
 	return p
 }
 

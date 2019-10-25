@@ -48,7 +48,8 @@ type Evaluator interface {
 // Runtime an object for secrets rendering
 type Runtime struct {
 	providers map[string]api.Provider
-	cache     *lru.Cache // secrets are cached to improve performance
+	docCache  *lru.Cache // secret documents are cached to improve performance
+	strCache  *lru.Cache // secrets are cached to improve performance
 }
 
 // New returns an instance of Runtime
@@ -57,7 +58,11 @@ func New(cacheSize int) (*Runtime, error) {
 		providers: map[string]api.Provider{},
 	}
 	var err error
-	r.cache, err = lru.New(cacheSize)
+	r.docCache, err = lru.New(cacheSize)
+	if err != nil {
+		return nil, err
+	}
+	r.strCache, err = lru.New(cacheSize)
 	if err != nil {
 		return nil, err
 	}
@@ -76,38 +81,35 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 	}
 
 	createProvider := func(scheme string, uri *url.URL) (api.Provider, error) {
+		query := uri.Query()
+
+		m := map[string]interface{}{}
+		for key, params := range query {
+			if len(params) > 0 {
+				m[key] = params[0]
+			}
+		}
+
+		conf := mapConfig{m: m}
+
 		switch scheme {
 		case "vault":
-			protoI, ok := uri.Query()["proto"]
-			if !ok {
-				protoI = []string{"https"}
-			}
-			proto := protoI[0]
-
-			p := vault.New(mapConfig{m: map[string]interface{}{
-				"address": fmt.Sprintf("%s://%s", proto, uri.Host),
-			}})
+			p := vault.New(conf)
 			return p, nil
 		case "ssm":
-			// vals+ssm://ap-northeast-1/foo/bar#/baz
+			// vals+ssm://foo/bar?region=ap-northeast-1#/baz
 			// 1. GetParametersByPath for the prefix /foo/bar
 			// 2. Then extracts the value for key baz(=/foo/bar/baz) from the result from step 1.
-			p := ssm.New(mapConfig{m: map[string]interface{}{
-				"region": uri.Host,
-			}})
+			p := ssm.New(conf)
 			return p, nil
 		case "awssecrets":
-			// vals+awssecrets://ap-northeast-1/foo/bar#/baz
+			// vals+awssecrets://foo/bar?region=ap-northeast-1#/baz
 			// 1. Get secret for key foo/bar, parse it as yaml
 			// 2. Then extracts the value for key baz) from the result from step 1.
-			p := ssm.New(mapConfig{m: map[string]interface{}{
-				"region": uri.Host,
-			}})
+			p := ssm.New(conf)
 			return p, nil
 		case "sops":
-			p := sops.New(mapConfig{m: map[string]interface{}{
-				"file": uri.Host + uri.Path,
-			}})
+			p := sops.New(conf)
 			return p, nil
 		}
 		return nil, fmt.Errorf("no provider registered for scheme %q", scheme)
@@ -116,7 +118,7 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 	expand := expansion.ExpandRegexMatch{
 		Target: expansion.DefaultRefRegexp,
 		Lookup: func(key string) (string, error) {
-			if val, ok := r.cache.Get(key); ok {
+			if val, ok := r.docCache.Get(key); ok {
 				valStr, ok := val.(string)
 				if !ok {
 					return "", fmt.Errorf("error reading string from cache: unsupported value type %T", val)
@@ -154,12 +156,31 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 			path = strings.TrimPrefix(path, "#")
 			path = strings.TrimPrefix(path, "/")
 
+			if uri.Host != "" {
+				path = strings.Join([]string{uri.Host, path}, "/")
+			}
+
 			if len(frag) == 0 {
-				return p.GetString(path)
+				var str string
+				cacheKey := key
+				if cachedStr, ok := r.strCache.Get(cacheKey); ok {
+					str, ok = cachedStr.(string)
+					if !ok {
+						return "", fmt.Errorf("error reading str from cache: unsupported value type %T", cachedStr)
+					}
+				} else {
+					str, err = p.GetString(path)
+					if err != nil {
+						return "", err
+					}
+					r.strCache.Add(cacheKey, str)
+				}
+
+				return str, nil
 			} else {
 				mapRequestURI := key[:strings.LastIndex(key, uri.Fragment)-1]
 				var obj map[string]interface{}
-				if cachedMap, ok := r.cache.Get(mapRequestURI); ok {
+				if cachedMap, ok := r.docCache.Get(mapRequestURI); ok {
 					obj, ok = cachedMap.(map[string]interface{})
 					if !ok {
 						return "", fmt.Errorf("error reading map from cache: unsupported value type %T", cachedMap)
@@ -169,7 +190,7 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 					if err != nil {
 						return "", err
 					}
-					r.cache.Add(mapRequestURI, obj)
+					r.docCache.Add(mapRequestURI, obj)
 				}
 
 				keys := strings.Split(frag, "/")
@@ -180,7 +201,7 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 						if i != len(keys)-1 {
 							return "", fmt.Errorf("unexpected type of value for key at %d=%s in %v: expected map[string]interface{}, got %v(%T)", i, k, keys, t, t)
 						}
-						r.cache.Add(key, t)
+						r.docCache.Add(key, t)
 						return t, nil
 					case map[string]interface{}:
 						newobj = t

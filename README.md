@@ -165,11 +165,55 @@ EOF
 
 ## Suported Backends
 
-- Vault: `ref+vault://VAULT_ADDR:PORT/PATH/TO/KVBACKEND#/fieldkey`
-- AWS SSM Parameter Store: `ref+awsssm://REGION/PREFIX/TO/PARAMS#/PATH/TO/PARAM`
-  - `vals` uses `GetParametersByPath(/PREFIX/TO/PARAMS)` caches the result per prefix rather than each single path to reduce number of API calls
-- AWS Secrets Manager `ref+awsssm://REGION/PATH/TO/SECRET`
-- [SOPS](https://github.com/mozilla/sops)-encrypted files `ref+sops://`
+- Vault
+- AWS SSM Parameter Store
+- AWS Secrets Manager
+- [SOPS](https://github.com/mozilla/sops)
+
+Please see [pkg/providers](https://github.com/variantdev/vals/tree/master/pkg/providers) for the implementations of all the providers. The package names corresponds to the URI schemes.
+
+### Vault
+
+- `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT]#/fieldkey`
+- `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT]#/fieldkey`
+
+`adddress` defaults to the value of the `VAULT_ADDR` envvar.
+
+### AWS SSM Parameter Store
+
+- `ref+awsssm://PATH/TO/PARAM[?region=REGION]`
+- `ref+awsssm://PREFIX/TO/PARAMS[?region=REGION]#/PATH/TO/PARAM`
+
+In the latter case, `vals` uses `GetParametersByPath(/PREFIX/TO/PARAMS)` caches the result per prefix rather than each single path to reduce number of API calls
+
+Examples:
+
+- `ref+awsssm://myteam/mykey`
+- `ref+awsssm://myteam/mydoc#/foo/bar`
+- `ref+awsssm://myteam/mykey?region=us-west-2`
+
+### AWS Secrets Manager
+
+- `ref+awssec://PATH/TO/SECRET[?region=REGION&version_stage=STAGE&version_id=ID]`
+- `ref+awssec://PATH/TO/SECRET[?region=REGION&version_stage=STAGE&version_id=ID]#/yaml_or_json_key/in/secret`
+
+Examples:
+
+- `ref+awssec://myteam/mykey`
+- `ref+awssec://myteam/mydoc#/foo/bar`
+- `ref+awssec://myteam/mykey?region=us-west-2`
+
+### SOPS
+
+- The whole content of a SOPS-encrypted file: `ref+sops://base64_data_or_path_to_file?key_type=[filepath|base64]&format=[binary|dotenv|yaml]`
+- The value for the specific path in an encrypted YAML/JSON document: `ref+sops://base64_data_or_path_to_file#/json_or_yaml_key/in/the_encrypted_doc`
+
+Examples:
+
+- `ref+sops://path/to/file` reads `path/to/file` as `binary` input
+- `ref+sops://<base64>?key_type=base64` reads `<base64>` as the base64-encoded data to be decrypted by sops as `binary`
+- `ref+sops://path/to/file#/foo/bar` reads `path/to/file` as a `yaml` file and returns the value at `foo.bar`.
+- `ref+sops://path/to/file?format=json#/foo/bar` reads `path/to/file` as a `json` file and returns the value at `foo.bar`.
 
 ## Non-Goals
 
