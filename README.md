@@ -174,10 +174,16 @@ Please see [pkg/providers](https://github.com/variantdev/vals/tree/master/pkg/pr
 
 ### Vault
 
-- `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT]#/fieldkey`
-- `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT]#/fieldkey`
+- `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT&token_file=PATH/TO/FILE&token_env=VAULT_TOKEN]#/fieldkey`
+- `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT&token_file=PATH/TO/FILE&token_env=VAULT_TOKEN]#/fieldkey`
 
 `adddress` defaults to the value of the `VAULT_ADDR` envvar.
+
+Examples:
+
+- `ref+vault://mykv/foo#/bar?address=https://vault1.example.com:8200` reads the value for the field `bar` in the kv `foo` on Vault listening on `https://vault1.example.com` with the Vault token read from **the envvar `VAULT_TOKEN`, or the file `~/.vault_token` when the envvar is not set**
+- `ref+vault://mykv/foo#/bar?token_env=VAULT_TOKEN_VAULT1&address=https://vault1.example.com:8200` reads the value for the field `bar` in the kv `foo` on Vault listening on `https://vault1.example.com` with the Vault token read from **the envvar `VAULT_TOKEN_VAULT1`**
+- `ref+vault://mykv/foo#/bar?token_file=~/.vault_token_vault1&address=https://vault1.example.com:8200` reads the value for the field `bar` in the kv `foo` on Vault listening on `https://vault1.example.com` with the Vault token read from **the file `~/.vault_token_vault1`**
 
 ### AWS SSM Parameter Store
 

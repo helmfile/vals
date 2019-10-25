@@ -5,6 +5,7 @@ import (
 	"github.com/variantdev/vals/pkg/api"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 
 	vault "github.com/hashicorp/vault/api"
@@ -22,9 +23,11 @@ const (
 type provider struct {
 	client *vault.Client
 
-	Address string
-	Proto string
-	Host string
+	Address   string
+	Proto     string
+	Host      string
+	TokenEnv  string
+	TokenFile string
 }
 
 func New(cfg api.StaticConfig) *provider {
@@ -42,6 +45,8 @@ func New(cfg api.StaticConfig) *provider {
 	} else {
 		p.Address = os.Getenv("VAULT_ADDR")
 	}
+	p.TokenEnv = cfg.String("token_env")
+	p.TokenFile = cfg.String("token_file")
 	return p
 }
 
@@ -114,19 +119,48 @@ func (p *provider) ensureClient() (*vault.Client, error) {
 			return nil, fmt.Errorf("Cannot create Vault Client: %v", err)
 		}
 
+		if p.TokenEnv != "" {
+			token := os.Getenv(p.TokenEnv)
+			if token == "" {
+				return nil, fmt.Errorf("token_env configured to read vault token from envvar %q, but it isn't set", p.TokenEnv)
+			}
+			cli.SetToken(token)
+		}
+
+		if p.TokenFile != "" {
+			token, err := p.readTokenFile(p.TokenFile)
+			if err != nil {
+				return nil, err
+			}
+			cli.SetToken(token)
+		}
+
 		// By default Vault token is set from VAULT_TOKEN env var by NewClient()
 		// But if VAULT_TOKEN isn't set, token can be retrieved from ~/.vault-token file
 		if cli.Token() == "" {
 			homeDir := os.Getenv("HOME")
 			if homeDir != "" {
-				if buff, err := ioutil.ReadFile(homeDir + "/.vault-token"); err == nil {
-					cli.SetToken(string(buff))
+				token, _ := p.readTokenFile(filepath.Join(homeDir, ".vault-token"))
+				if token != "" {
+					cli.SetToken(token)
 				}
 			}
 		}
 		p.client = cli
 	}
 	return p.client, nil
+}
+
+func (p *provider) readTokenFile(path string) (string, error) {
+	homeDir := os.Getenv("HOME")
+	if homeDir != "" {
+		buff, err := ioutil.ReadFile(filepath.Join(homeDir, path))
+		if err != nil {
+			return "", err
+		}
+		return string(buff), nil
+	}
+	return "", nil
 }
 
 func (p *provider) debugf(msg string, args ...interface{}) {
