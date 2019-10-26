@@ -2,15 +2,76 @@ package vals
 
 import (
 	"fmt"
+	"os"
 	"testing"
+
+	kv "github.com/hashicorp/vault-plugin-secrets-kv"
+	"github.com/hashicorp/vault/api"
+	"github.com/hashicorp/vault/http"
+	"github.com/hashicorp/vault/sdk/logical"
+	"github.com/hashicorp/vault/vault"
 )
 
+type Conn struct {
+	Client *api.Client
+	Token  string
+}
+
+func StartVault(t *testing.T, mountPath, mountInputType string) (Conn, func()) {
+	t.Helper()
+
+	conf := &vault.CoreConfig{
+		LogicalBackends: map[string]logical.Factory{
+			"kv": kv.Factory,
+		},
+	}
+
+	cluster := vault.NewTestCluster(t, conf, &vault.TestClusterOptions{
+		HandlerFunc: http.Handler,
+		NumCores:    1,
+	})
+	cluster.Start()
+
+	core := cluster.Cores[0].Core
+	vault.TestWaitActive(t, core)
+
+	client := cluster.Cores[0].Client
+	client.SetToken(cluster.RootToken)
+
+	client.Sys().Mount(mountPath, &api.MountInput{
+		Type: mountInputType,
+	})
+
+	return Conn{Client: client, Token: cluster.RootToken}, func() { defer cluster.Cleanup() }
+}
+
+func SetupVaultKV(t *testing.T, writes map[string]map[string]interface{}) (string, func()) {
+	// TODO v2 api support where mountInputType should be "kv-v2" rather than "kv"
+	conn, stop := StartVault(t, "mykv", "kv")
+
+	client := conn.Client
+	addr := conn.Client.Address()
+	for path, data := range writes {
+		sec, err := client.Logical().Write(path, data)
+		if err != nil {
+			t.Logf("%v", sec)
+			t.Fatalf("%v", err)
+		}
+	}
+	// TODO Mock os.Getenv so that this won't result in data race when multiple tests are run concurrently
+	os.Setenv("VAULT_TOKEN", conn.Token)
+
+	return addr, stop
+}
+
 func TestValues_Vault_EvalTemplate(t *testing.T) {
-	// TODO
 	// Pre-requisite:
 	//   vault secrets enable -path=mykv kv
 	//   vault write mykv/foo mykey=myvalue
 	//   vault read mykv/foo
+
+	addr, stop := SetupVaultKV(t, map[string]map[string]interface{}{"mykv/foo": map[string]interface{}{"mykey": "myvalue"}})
+	defer stop()
 
 	type testcase struct {
 		config map[string]interface{}
@@ -19,9 +80,9 @@ func TestValues_Vault_EvalTemplate(t *testing.T) {
 	testcases := []testcase{
 		{
 			config: map[string]interface{}{
-				"foo": "ref+vault://mykv/foo?address=http://127.0.0.1:8200#/mykey",
+				"foo": fmt.Sprintf("ref+vault://mykv/foo?address=%s#/mykey", addr),
 				"bar": map[string]interface{}{
-					"baz": "ref+vault://mykv/foo??address=http://127.0.0.1:8200#/mykey",
+					"baz": fmt.Sprintf("ref+vault://mykv/foo?address=%s#/mykey", addr),
 				},
 			},
 		},

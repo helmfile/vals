@@ -76,7 +76,8 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 	uriToProviderHash := func(uri *url.URL) string {
 		bs := []byte{}
 		bs = append(bs, []byte(uri.Scheme)...)
-		bs = append(bs, []byte(uri.Hostname())...)
+		query := uri.Query().Encode()
+		bs = append(bs, []byte(query)...)
 		return fmt.Sprintf("%x", md5.Sum(bs))
 	}
 

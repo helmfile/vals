@@ -2,11 +2,12 @@ package vault
 
 import (
 	"fmt"
-	"github.com/variantdev/vals/pkg/api"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/variantdev/vals/pkg/api"
 
 	vault "github.com/hashicorp/vault/api"
 )
@@ -41,9 +42,9 @@ func New(cfg api.StaticConfig) *provider {
 	if p.Address == "" {
 		if p.Host != "" {
 			p.Address = fmt.Sprintf("%s://%s", p.Proto, p.Host)
+		} else {
+			p.Address = os.Getenv("VAULT_ADDR")
 		}
-	} else {
-		p.Address = os.Getenv("VAULT_ADDR")
 	}
 	p.TokenEnv = cfg.String("token_env")
 	p.TokenFile = cfg.String("token_file")
@@ -112,6 +113,9 @@ func (p *provider) ensureClient() (*vault.Client, error) {
 		cfg := vault.DefaultConfig()
 		if p.Address != "" {
 			cfg.Address = p.Address
+		}
+		if strings.Contains(p.Address, "127.0.0.1") {
+			cfg.ConfigureTLS(&vault.TLSConfig{Insecure: true})
 		}
 		cli, err := vault.NewClient(cfg)
 		if err != nil {
