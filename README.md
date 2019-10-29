@@ -187,16 +187,16 @@ Examples:
 
 ### AWS SSM Parameter Store
 
-- `ref+awsssm://PATH/TO/PARAM[?region=REGION]`
-- `ref+awsssm://PREFIX/TO/PARAMS[?region=REGION]#/PATH/TO/PARAM`
+- `ref+ssm://PATH/TO/PARAM[?region=REGION]`
+- `ref+ssm://PREFIX/TO/PARAMS[?region=REGION]#/PATH/TO/PARAM`
 
 In the latter case, `vals` uses `GetParametersByPath(/PREFIX/TO/PARAMS)` caches the result per prefix rather than each single path to reduce number of API calls
 
 Examples:
 
-- `ref+awsssm://myteam/mykey`
-- `ref+awsssm://myteam/mydoc#/foo/bar`
-- `ref+awsssm://myteam/mykey?region=us-west-2`
+- `ref+ssm://myteam/mykey`
+- `ref+ssm://myteam/mydoc#/foo/bar`
+- `ref+ssm://myteam/mykey?region=us-west-2`
 
 ### AWS Secrets Manager
 
