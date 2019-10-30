@@ -39,6 +39,11 @@ const (
 
 	// secret cache size
 	defaultCacheSize = 512
+
+	ProviderVault          = "vault"
+	ProviderSSM            = "awsssm"
+	ProviderSecretsManager = "awssecrets"
+	ProviderSOPS           = "sops"
 )
 
 type Evaluator interface {
@@ -94,22 +99,22 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 		conf := mapConfig{m: m}
 
 		switch scheme {
-		case "vault":
+		case ProviderVault:
 			p := vault.New(conf)
 			return p, nil
-		case "ssm":
-			// vals+ssm://foo/bar?region=ap-northeast-1#/baz
+		case ProviderSSM:
+			// vals+awsssm://foo/bar?region=ap-northeast-1#/baz
 			// 1. GetParametersByPath for the prefix /foo/bar
 			// 2. Then extracts the value for key baz(=/foo/bar/baz) from the result from step 1.
 			p := ssm.New(conf)
 			return p, nil
-		case "awssecrets":
+		case ProviderSecretsManager:
 			// vals+awssecrets://foo/bar?region=ap-northeast-1#/baz
 			// 1. Get secret for key foo/bar, parse it as yaml
 			// 2. Then extracts the value for key baz) from the result from step 1.
 			p := ssm.New(conf)
 			return p, nil
-		case "sops":
+		case ProviderSOPS:
 			p := sops.New(conf)
 			return p, nil
 		}
@@ -239,7 +244,7 @@ func cloneMap(m map[string]interface{}) map[string]interface{} {
 	return out
 }
 
-var KnownValuesTypes = []string{"vault", "ssm", "awssecrets"}
+var KnownValuesTypes = []string{ProviderVault, ProviderSSM, ProviderSecretsManager, ProviderSOPS}
 
 type ctx struct {
 	ignorePrefix string

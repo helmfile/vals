@@ -17,8 +17,6 @@ type provider struct {
 
 	// AWS SSM Parameter store global configuration
 	Region string
-
-	Format string
 }
 
 func New(cfg api.StaticConfig) *provider {
@@ -29,6 +27,10 @@ func New(cfg api.StaticConfig) *provider {
 
 // Get gets an AWS SSM Parameter Store value
 func (p *provider) GetString(key string) (string, error) {
+	if key != "" && key[0] != '/' {
+		key = "/" + key
+	}
+
 	ssmClient := p.getSSMClient()
 
 	in := ssm.GetParameterInput{
@@ -53,6 +55,10 @@ func (p *provider) GetString(key string) (string, error) {
 }
 
 func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
+	if key != "" && key[0] != '/' {
+		key = "/" + key
+	}
+
 	ssmClient := p.getSSMClient()
 
 	res := map[string]interface{}{}
