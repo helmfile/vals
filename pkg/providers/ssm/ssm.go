@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/variantdev/vals/pkg/api"
 	"os"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -78,7 +79,7 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 
 	for _, param := range out.Parameters {
 		name := *param.Name
-		name = name[len(key)+1:]
+		name = strings.TrimPrefix(name, key)
 		res[name] = *param.Value
 	}
 	p.debugf("SSM: successfully retrieved key=%s", key)
