@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/variantdev/vals/pkg/api"
 	"github.com/variantdev/vals/pkg/expansion"
+	"github.com/variantdev/vals/pkg/providers/awssec"
 	"github.com/variantdev/vals/pkg/providers/sops"
 	"github.com/variantdev/vals/pkg/providers/ssm"
 	"github.com/variantdev/vals/pkg/providers/vault"
@@ -112,7 +113,7 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 			// vals+awssecrets://foo/bar?region=ap-northeast-1#/baz
 			// 1. Get secret for key foo/bar, parse it as yaml
 			// 2. Then extracts the value for key baz) from the result from step 1.
-			p := ssm.New(conf)
+			p := awssec.New(conf)
 			return p, nil
 		case ProviderSOPS:
 			p := sops.New(conf)
