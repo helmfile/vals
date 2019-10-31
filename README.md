@@ -221,6 +221,17 @@ Examples:
 - `ref+sops://path/to/file#/foo/bar` reads `path/to/file` as a `yaml` file and returns the value at `foo.bar`.
 - `ref+sops://path/to/file?format=json#/foo/bar` reads `path/to/file` as a `json` file and returns the value at `foo.bar`.
 
+### Echo
+
+Echo provider echoes the string for testing purpose. Please read [the original proposal](https://github.com/roboll/helmfile/pull/920#issuecomment-548213738) to get why we might need this.
+
+- `ref+echo://KEY1/KEY2/VALUE[#/path/to/the/value]`
+
+Examples:
+
+- `ref+echo://foo/bar` generates `foo/bar`
+- `ref+echo://foo/bar/baz#/foo/bar` generates `baz`. This works by the host and the path part `foo/bar/baz` generating an object `{"foo":{"bar":"baz"}}` and the fragment part `#/foo/bar` results in digging the object to obtain the value at `$.foo.bar`.
+
 ## Non-Goals
 
 ### String-Interpolation / Template Functions
