@@ -15,7 +15,6 @@ func New(cfg api.StaticConfig) *provider {
 	return p
 }
 
-// Get gets an AWS SSM Parameter Store value
 func (p *provider) GetString(key string) (string, error) {
 	return key, nil
 }
@@ -29,8 +28,6 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 	if len(keys) < 2 {
 		return nil, fmt.Errorf("key must have two or more components separated by \"/\": got %q", key)
 	}
-
-	return res, nil
 
 	for i := 0; i < len(keys)-1; i++ {
 		k := keys[i]

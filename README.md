@@ -169,6 +169,8 @@ EOF
 - AWS SSM Parameter Store
 - AWS Secrets Manager
 - [SOPS](https://github.com/mozilla/sops)
+- Echo
+- File
 
 Please see [pkg/providers](https://github.com/variantdev/vals/tree/master/pkg/providers) for the implementations of all the providers. The package names corresponds to the URI schemes.
 
@@ -231,6 +233,19 @@ Examples:
 
 - `ref+echo://foo/bar` generates `foo/bar`
 - `ref+echo://foo/bar/baz#/foo/bar` generates `baz`. This works by the host and the path part `foo/bar/baz` generating an object `{"foo":{"bar":"baz"}}` and the fragment part `#/foo/bar` results in digging the object to obtain the value at `$.foo.bar`.
+
+
+### File
+
+File provider reads a local text file, or the value for the specific path in a YAML/JSON file.
+
+- `ref+file://path/to/file[#/path/to/the/value]`
+
+Examples:
+
+- `ref+file://foo/bar` loads the file at `foo/bar`
+- `ref+file://some.yaml#/foo/bar` loads the YAML file at `some.yaml` and reads the value for the path `$.foo.bar`.
+  Let's say `some.yaml` contains `{"foo":{"bar":"BAR"}}`, `key1: ref+file://some.yaml#/foo/bar` results in `key1: BAR`.
 
 ## Advanced Usages
 
