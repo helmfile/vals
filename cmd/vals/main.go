@@ -19,7 +19,7 @@ Usage:
 
 Available Commands:
   eval		Evaluate a JSON/YAML document and replace any template expressions in it and prints the result
-  flatten	Loads a vals template and replaces every instances of custom types to plain $ref's
+  exec      Populates the environment variables and executes the command 
   ksdecode	Decode YAML document(s) by converting Secret resources' "data" to "stringData" for use with "vals eval"
 
 Use "vals [command] --help" for more infomation about a command
@@ -53,6 +53,7 @@ func main() {
 	flag.Usage = flagUsage
 
 	CmdEval := "eval"
+	CmdExec := "exec"
 	CmdKsDecode := "ksdecode"
 
 	if len(os.Args) == 1 {
@@ -76,6 +77,17 @@ func main() {
 		}
 
 		writeOrFail(o, res)
+	case CmdExec:
+		execCmd := flag.NewFlagSet(CmdExec, flag.ExitOnError)
+		f := execCmd.String("f", "", "YAML/JSON file to be loaded to set envvars")
+		execCmd.Parse(os.Args[2:])
+
+		m := readOrFail(f)
+
+		err := vals.Exec(m, execCmd.Args())
+		if err != nil {
+			fatal("%v", err)
+		}
 	case CmdKsDecode:
 		evalCmd := flag.NewFlagSet(CmdKsDecode, flag.ExitOnError)
 		f := evalCmd.String("f", "", "YAML/JSON file to be decoded")

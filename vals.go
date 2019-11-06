@@ -2,6 +2,7 @@ package vals
 
 import (
 	"crypto/md5"
+	"errors"
 	"fmt"
 	"github.com/variantdev/vals/pkg/api"
 	"github.com/variantdev/vals/pkg/expansion"
@@ -15,6 +16,8 @@ import (
 	"github.com/variantdev/vals/pkg/stringprovider"
 	"gopkg.in/yaml.v3"
 	"net/url"
+	"os"
+	"os/exec"
 	"strings"
 
 	lru "github.com/hashicorp/golang-lru"
@@ -285,6 +288,31 @@ func IgnorePrefix(p string) Option {
 type Options struct {
 	CacheSize     int
 	ExcludeSecret bool
+}
+
+func Exec(template map[string]interface{}, args []string) error {
+	if len(args) == 0 {
+		return errors.New("missing args")
+	}
+	m, err := Eval(template)
+	if err != nil {
+		return err
+	}
+	var env []string
+	for k, v := range m {
+		switch s := v.(type) {
+		case string:
+			env = append(env, fmt.Sprintf("%s=%s", k, s))
+		default:
+			return fmt.Errorf("unexpected type of value: %v(%T)", v, v)
+		}
+	}
+	cmd := exec.Command(args[0], args[1:]...)
+	cmd.Env = env
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }
 
 func Eval(template map[string]interface{}, o ...Options) (map[string]interface{}, error) {

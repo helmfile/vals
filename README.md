@@ -1,6 +1,8 @@
-# values
+# vals
 
-Helm-like configuration "Values" loader with support for various backends including:
+`vals` is a tool for managing configuration values and secrets.
+
+It supports various backends including:
 
 - Vault
 - AWS SSM Parameter Store
@@ -8,6 +10,9 @@ Helm-like configuration "Values" loader with support for various backends includ
 - [SOPS](https://github.com/mozilla/sops)-encrypted files
 - Terraform outputs(Coming soon)
 - CredHub(Coming soon)
+
+- Use `vals eval -f refs.yaml` to replace all the `ref`s in the file to actual values and secrets.
+- Use `vals exec -f env.yaml -- <COMMAND>` to populate envvars and execute the command.
 
 ## Usage
 
@@ -25,15 +30,13 @@ Usage:
 
 Available Commands:
   eval		Evaluate a JSON/YAML document and replace any template expressions in it and prints the result
-  flatten	Loads a vals template and replaces every instances of custom types to plain $ref's
+  exec      Populates the environment variables and executes the command
   ksdecode	Decode YAML document(s) by converting Secret resources' "data" to "stringData" for use with "vals eval"
 
 Use "vals [command] --help" for more infomation about a command
 ```
 
-`vals -t yaml -e <YAML>` takes any valid YAML and evaluates [JSO Reference](https://json-spec.readthedocs.io/reference.html).
-
-`vals` has its own provider which can be reffered with a URI scheme looks `vals+<TYPE>`.
+`vals` has a collection of providers that each an be referred with a URI scheme looks `vals+<TYPE>`.
 
 For this example, use the [Vault](https://www.terraform.io/docs/providers/vault/index.html) provider.
 
