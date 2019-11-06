@@ -11,13 +11,48 @@ func TestExpandRegexpMatchInString(t *testing.T) {
 	testcases := []struct {
 		name     string
 		regex    *regexp.Regexp
+		only     []string
 		input    string
 		expected string
 	}{
 		{
-			name:     "basic",
+			name:     "ref",
 			regex:    DefaultRefRegexp,
 			input:    "ref+vault://srv/foo/bar",
+			expected: "vault-srv-/foo/bar",
+		},
+		{
+			name:     "ref + only ref",
+			regex:    DefaultRefRegexp,
+			only:     []string{"ref"},
+			input:    "ref+vault://srv/foo/bar",
+			expected: "vault-srv-/foo/bar",
+		},
+		{
+			name:     "ref + only ref and secretref",
+			regex:    DefaultRefRegexp,
+			only:     []string{"ref", "secretref"},
+			input:    "ref+vault://srv/foo/bar",
+			expected: "vault-srv-/foo/bar",
+		},
+		{
+			name:     "secretref",
+			regex:    DefaultRefRegexp,
+			input:    "secretref+vault://srv/foo/bar",
+			expected: "vault-srv-/foo/bar",
+		},
+		{
+			name:     "secretref + only ref",
+			regex:    DefaultRefRegexp,
+			only:     []string{"ref"},
+			input:    "secretref+vault://srv/foo/bar",
+			expected: "secretref+vault://srv/foo/bar",
+		},
+		{
+			name:     "secretref",
+			regex:    DefaultRefRegexp,
+			only:     []string{"ref", "secretref"},
+			input:    "secretref+vault://srv/foo/bar",
 			expected: "vault-srv-/foo/bar",
 		},
 	}
@@ -38,6 +73,7 @@ func TestExpandRegexpMatchInString(t *testing.T) {
 			expand := ExpandRegexMatch{
 				Target: tc.regex,
 				Lookup: lookup,
+				Only:   tc.only,
 			}
 
 			actual, err := expand.InString(tc.input)

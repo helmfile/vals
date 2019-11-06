@@ -232,6 +232,36 @@ Examples:
 - `ref+echo://foo/bar` generates `foo/bar`
 - `ref+echo://foo/bar/baz#/foo/bar` generates `baz`. This works by the host and the path part `foo/bar/baz` generating an object `{"foo":{"bar":"baz"}}` and the fragment part `#/foo/bar` results in digging the object to obtain the value at `$.foo.bar`.
 
+## Advanced Usages
+
+### Discriminating config and secrets
+
+`vals` has an advanced feature that helps you to do GitOps.
+
+`GitOps` is a good practice that helps you to review how your change would affect the production environment.
+
+To best leverage GitOps, it is important to remove dynamic aspects of your config before reviewing.
+
+On the other hand, `vals`'s primary purpose is to defer retrieval of values until the time of deployment, so that we won't accidentally git-commit secrets. The flip-side of this is, obviously, that you can't review the values themselves.
+
+Using `ref+<value uri>` and `secretref+<value uri>` in combination with `vals eval --exclude-secretref` helps it.
+
+By using the `secretref+<uri>` notation, you tell `vals` that it is a secret and regular `ref+<uri>` instances are for config values.
+
+```yaml
+myconfigvalue: ref+awsssm://myconfig/value
+mysecretvalue: secretref+awssec://mysecret/value
+```
+
+To leverage `GitOps` most by allowing you to review the content of `ref+awsssm://myconfig/value` only, you run `vals eval --exclude-secretref` to generate the following:
+
+```yaml
+myconfigvalue: MYCONFIG_VALUE
+mysecretvalue: secretref+awssec://mysecret/value
+```
+
+This is safe to be committed into git because, as you've told to `vals`, `awsssm://myconfig/value` is a config value that can be shared publicly.
+
 ## Non-Goals
 
 ### String-Interpolation / Template Functions

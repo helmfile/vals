@@ -9,9 +9,10 @@ import (
 type ExpandRegexMatch struct {
 	Target *regexp.Regexp
 	Lookup func(string) (string, error)
+	Only   []string
 }
 
-var DefaultRefRegexp = regexp.MustCompile(`ref\+?([^\+:]*://.+)`)
+var DefaultRefRegexp = regexp.MustCompile(`((secret)?ref)\+?([^\+:]*://.+)`)
 
 func (e *ExpandRegexMatch) InString(s string) (string, error) {
 	var sb strings.Builder
@@ -21,7 +22,21 @@ func (e *ExpandRegexMatch) InString(s string) (string, error) {
 			sb.WriteString(s)
 			return sb.String(), nil
 		}
-		ref := s[ixs[2]:ixs[3]]
+		kind := s[ixs[2]:ixs[3]]
+		if len(e.Only) > 0 {
+			var shouldExpand bool
+			for _, k := range e.Only {
+				if k == kind {
+					shouldExpand = true
+					break
+				}
+			}
+			if !shouldExpand {
+				sb.WriteString(s)
+				return sb.String(), nil
+			}
+		}
+		ref := s[ixs[6]:ixs[7]]
 		val, err := e.Lookup(ref)
 		if err != nil {
 			return "", fmt.Errorf("expand %s: %v", ref, err)

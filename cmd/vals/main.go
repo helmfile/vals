@@ -65,11 +65,12 @@ func main() {
 		evalCmd := flag.NewFlagSet(CmdEval, flag.ExitOnError)
 		f := evalCmd.String("f", "", "YAML/JSON file to be evaluated")
 		o := evalCmd.String("o", "yaml", "Output type which is either \"yaml\" or \"json\"")
+		e := evalCmd.Bool("exclude-secret", false, "Leave secretref+<uri> as-is and only replace ref+<uri>")
 		evalCmd.Parse(os.Args[2:])
 
 		m := readOrFail(f)
 
-		res, err := vals.Eval(m)
+		res, err := vals.Eval(m, vals.Options{ExcludeSecret: *e})
 		if err != nil {
 			fatal("%v", err)
 		}

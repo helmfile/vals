@@ -58,12 +58,19 @@ type Runtime struct {
 	providers map[string]api.Provider
 	docCache  *lru.Cache // secret documents are cached to improve performance
 	strCache  *lru.Cache // secrets are cached to improve performance
+
+	Options Options
 }
 
 // New returns an instance of Runtime
-func New(cacheSize int) (*Runtime, error) {
+func New(opts Options) (*Runtime, error) {
+	cacheSize := opts.CacheSize
+	if cacheSize == 0 {
+		cacheSize = defaultCacheSize
+	}
 	r := &Runtime{
 		providers: map[string]api.Provider{},
+		Options:   opts,
 	}
 	var err error
 	r.docCache, err = lru.New(cacheSize)
@@ -127,7 +134,13 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 		return nil, fmt.Errorf("no provider registered for scheme %q", scheme)
 	}
 
+	var only []string
+	if r.Options.ExcludeSecret {
+		only = []string{"ref"}
+	}
+
 	expand := expansion.ExpandRegexMatch{
+		Only:   only,
 		Target: expansion.DefaultRefRegexp,
 		Lookup: func(key string) (string, error) {
 			if val, ok := r.docCache.Get(key); ok {
@@ -264,8 +277,17 @@ func IgnorePrefix(p string) Option {
 	}
 }
 
-func Eval(template map[string]interface{}) (map[string]interface{}, error) {
-	runtime, err := New(defaultCacheSize)
+type Options struct {
+	CacheSize     int
+	ExcludeSecret bool
+}
+
+func Eval(template map[string]interface{}, o ...Options) (map[string]interface{}, error) {
+	opts := Options{}
+	if len(o) > 0 {
+		opts = o[0]
+	}
+	runtime, err := New(opts)
 	if err != nil {
 		return nil, err
 	}

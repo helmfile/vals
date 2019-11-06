@@ -23,7 +23,7 @@ func (p *provider) GetString(key string) (string, error) {
 func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 	keys := strings.Split(key, "/")
 
-	res := map[string]interface{}
+	res := map[string]interface{}{}
 	cur := res
 
 	if len(keys) < 2 {
