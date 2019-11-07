@@ -64,7 +64,7 @@ func main() {
 	switch os.Args[1] {
 	case CmdEval:
 		evalCmd := flag.NewFlagSet(CmdEval, flag.ExitOnError)
-		f := evalCmd.String("f", "", "YAML/JSON file to be evaluated")
+		f := evalCmd.String("f", "-", "YAML/JSON file to be evaluated. When set to \"-\", vals reads from STDIN")
 		o := evalCmd.String("o", "yaml", "Output type which is either \"yaml\" or \"json\"")
 		e := evalCmd.Bool("exclude-secret", false, "Leave secretref+<uri> as-is and only replace ref+<uri>")
 		evalCmd.Parse(os.Args[2:])
