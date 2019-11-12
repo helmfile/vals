@@ -13,6 +13,7 @@ It supports various backends including:
 
 - Use `vals eval -f refs.yaml` to replace all the `ref`s in the file to actual values and secrets.
 - Use `vals exec -f env.yaml -- <COMMAND>` to populate envvars and execute the command.
+- Use `vals env -f env.yaml` to render envvars that are consumable by `eval` or a tool like `direnv`
 
 ## Usage
 
