@@ -290,13 +290,10 @@ type Options struct {
 	ExcludeSecret bool
 }
 
-func Exec(template map[string]interface{}, args []string) error {
-	if len(args) == 0 {
-		return errors.New("missing args")
-	}
+func Env(template map[string]interface{}) ([]string, error) {
 	m, err := Eval(template)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	var env []string
 	for k, v := range m {
@@ -304,8 +301,19 @@ func Exec(template map[string]interface{}, args []string) error {
 		case string:
 			env = append(env, fmt.Sprintf("%s=%s", k, s))
 		default:
-			return fmt.Errorf("unexpected type of value: %v(%T)", v, v)
+			return nil, fmt.Errorf("unexpected type of value: %v(%T)", v, v)
 		}
+	}
+	return env, nil
+}
+
+func Exec(template map[string]interface{}, args []string) error {
+	if len(args) == 0 {
+		return errors.New("missing args")
+	}
+	env, err := Env(template)
+	if err != nil {
+		return err
 	}
 	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Env = env

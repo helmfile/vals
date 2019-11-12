@@ -30,7 +30,8 @@ Usage:
 
 Available Commands:
   eval		Evaluate a JSON/YAML document and replace any template expressions in it and prints the result
-  exec      Populates the environment variables and executes the command
+  exec		Populates the environment variables and executes the command
+  env		Renders environment variables to be consumed by eval or a tool like direnv
   ksdecode	Decode YAML document(s) by converting Secret resources' "data" to "stringData" for use with "vals eval"
 
 Use "vals [command] --help" for more infomation about a command

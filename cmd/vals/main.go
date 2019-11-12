@@ -19,7 +19,8 @@ Usage:
 
 Available Commands:
   eval		Evaluate a JSON/YAML document and replace any template expressions in it and prints the result
-  exec      Populates the environment variables and executes the command 
+  exec		Populates the environment variables and executes the command
+  env		Renders environment variables to be consumed by eval or a tool like direnv
   ksdecode	Decode YAML document(s) by converting Secret resources' "data" to "stringData" for use with "vals eval"
 
 Use "vals [command] --help" for more infomation about a command
@@ -54,6 +55,7 @@ func main() {
 
 	CmdEval := "eval"
 	CmdExec := "exec"
+	CmdEnv := "env"
 	CmdKsDecode := "ksdecode"
 
 	if len(os.Args) == 1 {
@@ -87,6 +89,24 @@ func main() {
 		err := vals.Exec(m, execCmd.Args())
 		if err != nil {
 			fatal("%v", err)
+		}
+	case CmdEnv:
+		execEnv := flag.NewFlagSet(CmdEnv, flag.ExitOnError)
+		f := execEnv.String("f", "", "YAML/JSON file to be loaded to set envvars")
+		export := execEnv.Bool("export", false, "Prepend `export`s to each line")
+		execEnv.Parse(os.Args[2:])
+
+		m := readOrFail(f)
+
+		env, err := vals.Env(m)
+		if err != nil {
+			fatal("%v", err)
+		}
+		for _, l := range env {
+			if *export {
+				l = "export " + l
+			}
+			fmt.Fprintln(os.Stdout, l)
 		}
 	case CmdKsDecode:
 		evalCmd := flag.NewFlagSet(CmdKsDecode, flag.ExitOnError)

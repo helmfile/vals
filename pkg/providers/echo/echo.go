@@ -16,7 +16,7 @@ func New(cfg api.StaticConfig) *provider {
 }
 
 func (p *provider) GetString(key string) (string, error) {
-	return key, nil
+	return strings.TrimRight(key, "/"), nil
 }
 
 func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
