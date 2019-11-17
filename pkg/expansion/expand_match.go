@@ -12,7 +12,7 @@ type ExpandRegexMatch struct {
 	Only   []string
 }
 
-var DefaultRefRegexp = regexp.MustCompile(`((secret)?ref)\+?([^\+:]*://.+)`)
+var DefaultRefRegexp = regexp.MustCompile(`((secret)?ref)\+([^\+:]*://.+)`)
 
 func (e *ExpandRegexMatch) InString(s string) (string, error) {
 	var sb strings.Builder

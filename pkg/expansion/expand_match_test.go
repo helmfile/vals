@@ -55,6 +55,14 @@ func TestExpandRegexpMatchInString(t *testing.T) {
 			input:    "secretref+vault://srv/foo/bar",
 			expected: "vault-srv-/foo/bar",
 		},
+		{
+			// see https://github.com/roboll/helmfile/issues/973
+			name:     "this shouldn't be expanded",
+			regex:    DefaultRefRegexp,
+			only:     []string{"ref", "secretref"},
+			input:    "\"no-referrer\" always;\nreturn 301 $scheme://$host:$server_port/remote.php/dav;",
+			expected: "\"no-referrer\" always;\nreturn 301 $scheme://$host:$server_port/remote.php/dav;",
+		},
 	}
 
 	for i := range testcases {
