@@ -189,6 +189,17 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 			path = strings.TrimPrefix(path, "#")
 			path = strings.TrimPrefix(path, "/")
 
+			stopCharacter, ok := uri.Query()["stopChar"]
+			var fragAfter = ""
+			if ok {
+				var stopCharacterIndex = strings.Index(frag, stopCharacter[0])
+				if (stopCharacterIndex < 0) {
+					return "", fmt.Errorf("stop character %s not found in %s", stopCharacter[0], frag)
+				}
+				fragAfter=frag[strings.Index(frag, stopCharacter[0]):]
+				frag=frag[:strings.Index(frag, stopCharacter[0])]
+			}
+
 			if uri.Host != "" {
 				path = strings.Join([]string{uri.Host, path}, "/")
 			}
@@ -209,7 +220,7 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 					r.strCache.Add(cacheKey, str)
 				}
 
-				return str, nil
+				return str + fragAfter, nil
 			} else {
 				mapRequestURI := key[:strings.LastIndex(key, uri.Fragment)-1]
 				var obj map[string]interface{}
@@ -235,7 +246,7 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 							return "", fmt.Errorf("unexpected type of value for key at %d=%s in %v: expected map[string]interface{}, got %v(%T)", i, k, keys, t, t)
 						}
 						r.docCache.Add(key, t)
-						return t, nil
+						return t + fragAfter, nil
 					case map[string]interface{}:
 						newobj = t
 					case map[interface{}]interface{}:
