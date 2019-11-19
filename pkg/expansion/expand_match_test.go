@@ -56,6 +56,30 @@ func TestExpandRegexpMatchInString(t *testing.T) {
 			expected: "vault-srv-/foo/bar",
 		},
 		{
+			// two or more refs
+			name:     "multi refs",
+			regex:    DefaultRefRegexp,
+			only:     []string{"ref", "secretref"},
+			input:    "secretref+vault://srv/foo/bar+, secretref+vault://srv/foo/bar",
+			expected: "vault-srv-/foo/bar, vault-srv-/foo/bar",
+		},
+		{
+			// two or more refs ending with +
+			name:     "multi refs",
+			regex:    DefaultRefRegexp,
+			only:     []string{"ref", "secretref"},
+			input:    "secretref+vault://srv/foo/bar+, secretref+vault://srv/foo/bar+ ",
+			expected: "vault-srv-/foo/bar, vault-srv-/foo/bar ",
+		},
+		{
+			// one ref with trailing string containing +
+			name:     "multi refs",
+			regex:    DefaultRefRegexp,
+			only:     []string{"ref", "secretref"},
+			input:    "secretref+vault://srv/foo/bar+ + + ",
+			expected: "vault-srv-/foo/bar + + ",
+		},
+		{
 			// see https://github.com/roboll/helmfile/issues/973
 			name:     "this shouldn't be expanded",
 			regex:    DefaultRefRegexp,
