@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	kv "github.com/hashicorp/vault-plugin-secrets-kv"
 	"github.com/hashicorp/vault/api"
 	"github.com/hashicorp/vault/http"
@@ -70,11 +71,25 @@ func TestValues_Vault_EvalTemplate(t *testing.T) {
 	//   vault write mykv/foo mykey=myvalue
 	//   vault read mykv/foo
 
-	addr, stop := SetupVaultKV(t, map[string]map[string]interface{}{"mykv/foo": map[string]interface{}{"mykey": "myvalue"}})
+	addr, stop := SetupVaultKV(
+		t,
+		map[string]map[string]interface{}{
+			"mykv/foo": map[string]interface{}{
+				"mykey": "myvalue",
+			},
+			"mykv/objs": map[string]interface{}{
+				"myyaml": `yamlkey1: yamlval1
+`,
+				"myjson": `{"jsonkey1":"jsonval1"}
+`,
+			},
+		},
+	)
 	defer stop()
 
 	type testcase struct {
 		config map[string]interface{}
+		expected map[string]interface{}
 	}
 
 	testcases := []testcase{
@@ -84,6 +99,24 @@ func TestValues_Vault_EvalTemplate(t *testing.T) {
 				"bar": map[string]interface{}{
 					"baz": fmt.Sprintf("ref+vault://mykv/foo?address=%s#/mykey", addr),
 				},
+			},
+			expected: map[string]interface{}{
+				"foo": "myvalue",
+				"bar": map[string]interface{}{
+					"baz": "myvalue",
+				},
+			},
+		},
+		{
+			config: map[string]interface{}{
+				"foo": "FOO",
+				fmt.Sprintf("ref+vault://mykv/objs?address=%s#/myyaml", addr): map[string]interface{}{},
+				fmt.Sprintf("ref+vault://mykv/objs?address=%s#/myjson", addr): map[string]interface{}{},
+			},
+			expected: map[string]interface{}{
+				"foo": "FOO",
+				"yamlkey1": "yamlval1",
+				"jsonkey1": "jsonval1",
 			},
 		},
 	}
@@ -96,27 +129,9 @@ func TestValues_Vault_EvalTemplate(t *testing.T) {
 				t.Fatalf("%v", err)
 			}
 
-			{
-				expected := "myvalue"
-				key := "foo"
-				actual := vals[key]
-				if actual != expected {
-					t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
-				}
-			}
-
-			{
-				switch bar := vals["bar"].(type) {
-				case map[string]interface{}:
-					expected := "myvalue"
-					key := "baz"
-					actual := bar[key]
-					if actual != expected {
-						t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
-					}
-				default:
-					t.Fatalf("unexpected type of bar: value=%v, type=%T", bar, bar)
-				}
+			diff := cmp.Diff(tc.expected, vals)
+			if diff != "" {
+				t.Errorf("unxpected diff: %s", diff)
 			}
 		})
 	}
