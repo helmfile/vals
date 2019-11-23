@@ -53,6 +53,9 @@ func ModifyStringValues(v interface{}, f func(path string) (interface{}, error))
 				deleted = append(deleted, k)
 				continue
 			}
+			if err != nil {
+				return nil, err
+			}
 
 			v2, err := ModifyStringValues(v, f)
 			if err != nil {
