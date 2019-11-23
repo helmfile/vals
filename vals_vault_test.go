@@ -119,6 +119,19 @@ func TestValues_Vault_EvalTemplate(t *testing.T) {
 				"jsonkey1": "jsonval1",
 			},
 		},
+		{
+			config: map[string]interface{}{
+				"foo": "FOO",
+				// See https://github.com/roboll/helmfile/issues/990#issuecomment-557753645
+				fmt.Sprintf("ref+vault://mykv/objs?address=%s#/myyaml", addr): map[interface{}]interface{}{},
+				fmt.Sprintf("ref+vault://mykv/objs?address=%s#/myjson", addr): map[interface{}]interface{}{},
+			},
+			expected: map[string]interface{}{
+				"foo": "FOO",
+				"yamlkey1": "yamlval1",
+				"jsonkey1": "jsonval1",
+			},
+		},
 	}
 
 	for i := range testcases {

@@ -8,8 +8,9 @@ import (
 
 func ModifyStringValues(v interface{}, f func(path string) (interface{}, error)) (interface{}, error) {
 	merge := func(strmap map[string]interface{}, k string, opts interface{}) (bool, error) {
-		_, ok := opts.(map[string]interface{})
-		if !ok {
+		switch opts.(type) {
+		case map[string]interface{}, map[interface{}]interface{}:
+		default:
 			return false, nil
 		}
 
