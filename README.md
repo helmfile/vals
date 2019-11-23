@@ -45,42 +45,34 @@ For this example, use the [Vault](https://www.terraform.io/docs/providers/vault/
 Let's start by writing some secret value to `Vault`:
 
 ```console
-$ vault write mykv/foo mykey=myvalue
+$ vault kv put secret/foo mykey=myvalue
 ```
 
 Now input the template of your YAML and refer to `vals`' Vault provider by using `vals+vault` in the URI scheme:
 
 ```console
-$ vals eval -e '
-foo: ref+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey
-bar:
-  baz: ref+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey
+$ VAULT_TOKEN=yourtoken VAULT_ADDR=http://127.0.0.1:8200/ \
+  echo "foo: ref+vault://secret/data/foo?proto=http#/mykey" | vals eval -f -
 ```
 
 Voila! `vals`, replacing every reference to your secret value in Vault, produces the output looks like:
 
 ```yaml
-foo: FOO
-bar:
-  baz: FOO
+foo: myvalue
 ```
 
 Which is equivalent to that of the following shell script:
 
 ```bash
 VAULT_TOKEN=yourtoken  VAULT_ADDR=http://127.0.0.1:8200/ cat <<EOF
-foo: $(vault read mykv/foo -o json | jq -r .mykey)
-  bar:
-    baz: $(vault read mykv/foo -o json | jq -r .mykey)
+foo: $(vault kv get -format json secret/foo | jq -r .data.data.mykey)
 EOF
 ```
 
 Save the YAML content to `x.vals.yaml` and running `vals eval -f x.vals.yaml` does produce output equivalent to the previous one:
 
 ```yaml
-foo: FOO
-bar:
-  baz: FOO
+foo: myvalue
 ```
 
 ### Helm
@@ -88,7 +80,7 @@ bar:
 Use value references as Helm Chart values, so that you can feed the `helm template` output to `vals -f -` for transforming the refs to secrets.
 
 ```console
-$ helm template mysql-1.3.2.tgz --set mysqlPassword='ref+vault://127.0.0.1:8200/mykv/foo#/mykey' | vals ksdecode -o yaml -f - | tee manifests.yaml
+$ helm template mysql-1.3.2.tgz --set mysqlPassword='ref+vault://secret/data/foo#/mykey' | vals ksdecode -o yaml -f - | tee manifests.yaml
 apiVersion: v1
 kind: Secret
 metadata:
@@ -100,7 +92,7 @@ metadata:
   name: release-name-mysql
   namespace: default
 stringData:
-  mysql-password: refs+vault://127.0.0.1:8200/mykv/foo#/mykey
+  mysql-password: refs+vault://secret/data/foo#/mykey
   mysql-root-password: vZQmqdGw3z
 type: Opaque
 ```
