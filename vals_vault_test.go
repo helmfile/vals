@@ -88,7 +88,7 @@ func TestValues_Vault_EvalTemplate(t *testing.T) {
 	defer stop()
 
 	type testcase struct {
-		config map[string]interface{}
+		config   map[string]interface{}
 		expected map[string]interface{}
 	}
 
@@ -114,7 +114,7 @@ func TestValues_Vault_EvalTemplate(t *testing.T) {
 				fmt.Sprintf("ref+vault://mykv/objs?address=%s#/myjson", addr): map[string]interface{}{},
 			},
 			expected: map[string]interface{}{
-				"foo": "FOO",
+				"foo":      "FOO",
 				"yamlkey1": "yamlval1",
 				"jsonkey1": "jsonval1",
 			},
@@ -127,7 +127,7 @@ func TestValues_Vault_EvalTemplate(t *testing.T) {
 				fmt.Sprintf("ref+vault://mykv/objs?address=%s#/myjson", addr): map[interface{}]interface{}{},
 			},
 			expected: map[string]interface{}{
-				"foo": "FOO",
+				"foo":      "FOO",
 				"yamlkey1": "yamlval1",
 				"jsonkey1": "jsonval1",
 			},

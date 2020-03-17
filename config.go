@@ -94,7 +94,7 @@ func setValue(m map[string]interface{}, v interface{}, path ...string) error {
 				}
 				cur = typed[k]
 			case map[interface{}]interface{}:
-				if _, ok :=  typed[k]; !ok {
+				if _, ok := typed[k]; !ok {
 					typed[k] = map[string]interface{}{}
 				}
 				cur = typed[k]

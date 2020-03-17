@@ -3,6 +3,7 @@ package awssec
 import (
 	"errors"
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/variantdev/vals/pkg/api"
 	"gopkg.in/yaml.v3"
 	"os"
@@ -145,10 +146,12 @@ func (p *provider) getClient() *secretsmanager.SecretsManager {
 		cfg = aws.NewConfig()
 	}
 
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		panic(err)
-	}
+	sess := session.Must(session.NewSessionWithOptions(session.Options{
+		AssumeRoleTokenProvider: stscreds.StdinTokenProvider,
+		SharedConfigState: session.SharedConfigEnable,
+		Config: *cfg,
+	}))
+
 	p.client = secretsmanager.New(sess)
 	return p.client
 }

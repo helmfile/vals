@@ -3,6 +3,7 @@ package ssm
 import (
 	"errors"
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/variantdev/vals/pkg/api"
 	"os"
 	"strings"
@@ -103,7 +104,13 @@ func (p *provider) getSSMClient() *ssm.SSM {
 		cfg = aws.NewConfig()
 	}
 
-	sess := session.New(cfg)
+
+	sess := session.Must(session.NewSessionWithOptions(session.Options{
+		AssumeRoleTokenProvider: stscreds.StdinTokenProvider,
+		SharedConfigState: session.SharedConfigEnable,
+		Config: *cfg,
+	}))
+
 	p.ssmClient = ssm.New(sess)
 	return p.ssmClient
 }
