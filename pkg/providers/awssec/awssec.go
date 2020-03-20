@@ -3,14 +3,13 @@ package awssec
 import (
 	"errors"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/variantdev/vals/pkg/api"
+	"github.com/variantdev/vals/pkg/awsclicompat"
 	"gopkg.in/yaml.v3"
 	"os"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 )
 
@@ -139,18 +138,7 @@ func (p *provider) getClient() *secretsmanager.SecretsManager {
 		return p.client
 	}
 
-	var cfg *aws.Config
-	if p.Region != "" {
-		cfg = aws.NewConfig().WithRegion(p.Region)
-	} else {
-		cfg = aws.NewConfig()
-	}
-
-	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		AssumeRoleTokenProvider: stscreds.StdinTokenProvider,
-		SharedConfigState: session.SharedConfigEnable,
-		Config: *cfg,
-	}))
+	sess := awsclicompat.NewSession(p.Region)
 
 	p.client = secretsmanager.New(sess)
 	return p.client

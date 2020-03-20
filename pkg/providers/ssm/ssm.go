@@ -3,13 +3,12 @@ package ssm
 import (
 	"errors"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/variantdev/vals/pkg/api"
+	"github.com/variantdev/vals/pkg/awsclicompat"
 	"os"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ssm"
 )
 
@@ -97,19 +96,7 @@ func (p *provider) getSSMClient() *ssm.SSM {
 		return p.ssmClient
 	}
 
-	var cfg *aws.Config
-	if p.Region != "" {
-		cfg = aws.NewConfig().WithRegion(p.Region)
-	} else {
-		cfg = aws.NewConfig()
-	}
-
-
-	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		AssumeRoleTokenProvider: stscreds.StdinTokenProvider,
-		SharedConfigState: session.SharedConfigEnable,
-		Config: *cfg,
-	}))
+	sess := awsclicompat.NewSession(p.Region)
 
 	p.ssmClient = ssm.New(sess)
 	return p.ssmClient
