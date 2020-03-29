@@ -7,6 +7,7 @@ It supports various backends including:
 - Vault
 - AWS SSM Parameter Store
 - AWS Secrets Manager
+- GCP Secrets Manager
 - [SOPS](https://github.com/mozilla/sops)-encrypted files
 - Terraform outputs(Coming soon)
 - CredHub(Coming soon)
@@ -165,6 +166,7 @@ EOF
 - [Vault](#vault)
 - [AWS SSM Parameter Store](#aws-ssm-parameter-store)
 - [AWS Secrets Manager](#aws-secrets-manager)
+- [GCP Secrets Manager](#gcp-secrets-manager)
 - [SOPS](#sops) powered by [sops](https://github.com/mozilla/sops))
 - [Terraform (tfstate)](#terraform-tfstate) powered by [tfstate-lookup](https://github.com/fujiwara/tfstate-lookup)
 - [Echo](#echo)
@@ -208,6 +210,17 @@ Examples:
 - `ref+awssec://myteam/mykey`
 - `ref+awssec://myteam/mydoc#/foo/bar`
 - `ref+awssec://myteam/mykey?region=us-west-2`
+
+### GCP Secrets Manager
+
+- `ref+gcpsecrets://PROJECT/SECRET[?version=VERSION]`
+- `ref+gcpsecrets://PROJECT/SECRET[?version=VERSION]#/yaml_or_json_key/in/secret`
+
+Examples:
+
+- `ref+gcpsecrets://myproject/mysecret`
+- `ref+gcpsecrets://myproject/mysecret?version=3`
+- `ref+gcpsecrets://myproject/mysecret?version=3#/yaml_or_json_key/in/secret`
 
 ### Terraform (tfstate)
 
