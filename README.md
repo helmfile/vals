@@ -162,12 +162,13 @@ EOF
 
 ## Suported Backends
 
-- Vault
-- AWS SSM Parameter Store
-- AWS Secrets Manager
-- [SOPS](https://github.com/mozilla/sops)
-- Echo
-- File
+- [Vault](#vault)
+- [AWS SSM Parameter Store](#aws-ssm-parameter-store)
+- [AWS Secrets Manager](#aws-secrets-manager)
+- [SOPS](#sops) powered by [sops](https://github.com/mozilla/sops))
+- [Terraform (tfstate)](#terraform-tfstate) powered by [tfstate-lookup](https://github.com/fujiwara/tfstate-lookup)
+- [Echo](#echo)
+- [File](#file)
 
 Please see [pkg/providers](https://github.com/variantdev/vals/tree/master/pkg/providers) for the implementations of all the providers. The package names corresponds to the URI schemes.
 
@@ -207,6 +208,16 @@ Examples:
 - `ref+awssec://myteam/mykey`
 - `ref+awssec://myteam/mydoc#/foo/bar`
 - `ref+awssec://myteam/mykey?region=us-west-2`
+
+### Terraform (tfstate)
+
+- `ref+tfstate://path/to/some.tfstate/RESOURCE_NAME`
+  
+Examples:
+
+- `ref+tfstate://path/to/some.tfstate/aws_vpc.main.id`
+- `ref+tfstate://path/to/some.tfstate/module.mymodule.aws_vpc.main.id`
+- `ref+tfstate://path/to/some.tfstate/data.thetype.name.foo.bar`
 
 ### SOPS
 
