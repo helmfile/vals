@@ -4,21 +4,23 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
+	"net/url"
+	"os"
+	"os/exec"
+	"strings"
+
 	"github.com/variantdev/vals/pkg/api"
 	"github.com/variantdev/vals/pkg/expansion"
 	"github.com/variantdev/vals/pkg/providers/awssec"
 	"github.com/variantdev/vals/pkg/providers/echo"
 	"github.com/variantdev/vals/pkg/providers/file"
+	"github.com/variantdev/vals/pkg/providers/gcpsecrets"
 	"github.com/variantdev/vals/pkg/providers/sops"
 	"github.com/variantdev/vals/pkg/providers/ssm"
 	"github.com/variantdev/vals/pkg/providers/vault"
 	"github.com/variantdev/vals/pkg/stringmapprovider"
 	"github.com/variantdev/vals/pkg/stringprovider"
 	"gopkg.in/yaml.v3"
-	"net/url"
-	"os"
-	"os/exec"
-	"strings"
 
 	lru "github.com/hashicorp/golang-lru"
 )
@@ -46,12 +48,13 @@ const (
 	// secret cache size
 	defaultCacheSize = 512
 
-	ProviderVault          = "vault"
-	ProviderSSM            = "awsssm"
-	ProviderSecretsManager = "awssecrets"
-	ProviderSOPS           = "sops"
-	ProviderEcho           = "echo"
-	ProviderFile           = "file"
+	ProviderVault            = "vault"
+	ProviderSSM              = "awsssm"
+	ProviderSecretsManager   = "awssecrets"
+	ProviderSOPS             = "sops"
+	ProviderEcho             = "echo"
+	ProviderFile             = "file"
+	ProviderGCPSecretManager = "gcpsecrets"
 )
 
 type Evaluator interface {
@@ -137,6 +140,9 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 			return p, nil
 		case ProviderFile:
 			p := file.New(conf)
+			return p, nil
+		case ProviderGCPSecretManager:
+			p := gcpsecrets.New(conf)
 			return p, nil
 		}
 		return nil, fmt.Errorf("no provider registered for scheme %q", scheme)

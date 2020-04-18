@@ -3,6 +3,7 @@ module github.com/variantdev/vals
 go 1.12
 
 require (
+	cloud.google.com/go v0.56.0
 	github.com/Azure/azure-sdk-for-go v33.1.0+incompatible // indirect
 	github.com/Azure/go-autorest v13.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest/adal v0.8.0 // indirect
@@ -11,7 +12,7 @@ require (
 	github.com/Azure/go-autorest/autorest/validation v0.2.0 // indirect
 	github.com/aws/aws-sdk-go v1.29.34
 	github.com/fujiwara/tfstate-lookup v0.0.4
-	github.com/google/go-cmp v0.3.1
+	github.com/google/go-cmp v0.4.0
 	github.com/goware/prefixer v0.0.0-20160118172347-395022866408 // indirect
 	github.com/hashicorp/golang-lru v0.5.3
 	github.com/hashicorp/vault v1.2.3
@@ -22,10 +23,6 @@ require (
 	github.com/mozilla-services/yaml v0.0.0-20180922153656-28ffe5d0cafb // indirect
 	go.mozilla.org/gopgagent v0.0.0-20170926210634-4d7ea76ff71a // indirect
 	go.mozilla.org/sops v0.0.0-20190611200209-e9e1e87723c8
-	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect
-	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
-	golang.org/x/tools v0.0.0-20191026034945-b2104f82a97d // indirect
-	golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898 // indirect
-	google.golang.org/api v0.10.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20200121175148-a6ecf24a6d71
+	google.golang.org/genproto v0.0.0-20200403120447-c50568487044
+	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
 )
