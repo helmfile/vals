@@ -1,0 +1,39 @@
+project_name: vals
+before:
+  hooks:
+    # You may remove this if you don't use go modules.
+    - go mod vendor
+builds:
+  - env:
+      - CGO_ENABLED=0
+      - GOFLAGS=-mod=vendor
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+    binary: vals
+archives:
+  - replacements:
+      darwin: Darwin
+      linux: Linux
+      386: i386
+      amd64: x86_64
+    format_overrides:
+      - goos: darwin
+        format: zip
+checksum:
+  name_template: 'checksums.txt'
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+release:
+  github:
+    name: vals
+    owner:  variantdev
+  name_template: "{{ .Tag }}"
+snapshot:
+  name_template: "SNAPSHOT-{{ .Commit }}"
