@@ -163,14 +163,25 @@ EOF
 
 ## Suported Backends
 
-- [Vault](#vault)
-- [AWS SSM Parameter Store](#aws-ssm-parameter-store)
-- [AWS Secrets Manager](#aws-secrets-manager)
-- [GCP Secrets Manager](#gcp-secrets-manager)
-- [SOPS](#sops) powered by [sops](https://github.com/mozilla/sops))
-- [Terraform (tfstate)](#terraform-tfstate) powered by [tfstate-lookup](https://github.com/fujiwara/tfstate-lookup)
-- [Echo](#echo)
-- [File](#file)
+- [vals](#vals)
+  - [Usage](#usage)
+- [CLI](#cli)
+    - [Helm](#helm)
+    - [Go](#go)
+  - [Suported Backends](#suported-backends)
+    - [Vault](#vault)
+    - [AWS SSM Parameter Store](#aws-ssm-parameter-store)
+    - [AWS Secrets Manager](#aws-secrets-manager)
+    - [GCP Secrets Manager](#gcp-secrets-manager)
+    - [Terraform (tfstate)](#terraform-tfstate)
+    - [SOPS](#sops)
+    - [Echo](#echo)
+    - [File](#file)
+  - [Advanced Usages](#advanced-usages)
+    - [Discriminating config and secrets](#discriminating-config-and-secrets)
+  - [Non-Goals](#non-goals)
+    - [String-Interpolation / Template Functions](#string-interpolation--template-functions)
+    - [Merge](#merge)
 
 Please see [pkg/providers](https://github.com/variantdev/vals/tree/master/pkg/providers) for the implementations of all the providers. The package names corresponds to the URI schemes.
 
@@ -178,8 +189,14 @@ Please see [pkg/providers](https://github.com/variantdev/vals/tree/master/pkg/pr
 
 - `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT&token_file=PATH/TO/FILE&token_env=VAULT_TOKEN]#/fieldkey`
 - `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT&token_file=PATH/TO/FILE&token_env=VAULT_TOKEN]#/fieldkey`
+- `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT&auth_method=approle&role_id=ce5e571a-f7d4-4c73-93dd-fd6922119839&secret_id=5c9194b9-585e-4539-a865-f45604bd6f56]#/fieldkey`
+- `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT&token_file=PATH/TO/FILE&token_env=VAULT_TOKEN]#/fieldkey`
+- `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT&token_file=PATH/TO/FILE&token_env=VAULT_TOKEN]#/fieldkey`
 
-`adddress` defaults to the value of the `VAULT_ADDR` envvar.
+`address` defaults to the value of the `VAULT_ADDR` envvar.
+`auth_method` default to `token` and can also be set to the value of the `VAULT_AUTH_METHOD` envar.
+`role_id` defaults to the value of the `VAULT_ROLE_ID` envvar.
+`secret_id` defaults to the value of the `VAULT_SECRET_ID` envvar.
 
 Examples:
 
@@ -225,7 +242,7 @@ Examples:
 ### Terraform (tfstate)
 
 - `ref+tfstate://path/to/some.tfstate/RESOURCE_NAME`
-  
+
 Examples:
 
 - `ref+tfstate://path/to/some.tfstate/aws_vpc.main.id`
