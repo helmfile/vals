@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	// "encoding/json"
 	"path/filepath"
 	"strings"
 
@@ -24,11 +25,19 @@ const (
 type provider struct {
 	client *vault.Client
 
-	Address   string
-	Proto     string
-	Host      string
-	TokenEnv  string
-	TokenFile string
+	Address    string
+	Proto      string
+	Host       string
+	TokenEnv   string
+	TokenFile  string
+	AuthMethod string
+	RoleId     string
+	SecretId   string
+}
+
+type appRoleLogin struct {
+	RoleID    string `json:"role_id,omitempty"`
+	SecretID  string `json:"secret_id,omitempty"`
 }
 
 func New(cfg api.StaticConfig) *provider {
@@ -48,6 +57,30 @@ func New(cfg api.StaticConfig) *provider {
 	}
 	p.TokenEnv = cfg.String("token_env")
 	p.TokenFile = cfg.String("token_file")
+	p.AuthMethod = cfg.String("auth_method")
+	if p.AuthMethod == "" {
+		if os.Getenv("VAULT_AUTH_METHOD") == "approle" {
+			p.AuthMethod = "approle"
+		} else {
+			p.AuthMethod = "token"
+		}
+	}
+	p.RoleId = cfg.String("role_id")
+	if p.RoleId == "" {
+		if os.Getenv("VAULT_ROLE_ID") != "" {
+			p.RoleId = os.Getenv("VAULT_ROLE_ID")
+		} else {
+			p.RoleId = ""
+		}
+	}
+	p.SecretId = cfg.String("secret_id")
+	if p.SecretId == "" {
+		if os.Getenv("VAULT_SECRET_ID") != "" {
+			p.SecretId = os.Getenv("VAULT_SECRET_ID")
+		} else {
+			p.SecretId = ""
+		}
+	}
 	return p
 }
 
@@ -123,31 +156,38 @@ func (p *provider) ensureClient() (*vault.Client, error) {
 			return nil, fmt.Errorf("Cannot create Vault Client: %v", err)
 		}
 
-		if p.TokenEnv != "" {
-			token := os.Getenv(p.TokenEnv)
-			if token == "" {
-				return nil, fmt.Errorf("token_env configured to read vault token from envvar %q, but it isn't set", p.TokenEnv)
-			}
-			cli.SetToken(token)
-		}
-
-		if p.TokenFile != "" {
-			token, err := p.readTokenFile(p.TokenFile)
-			if err != nil {
-				return nil, err
-			}
-			cli.SetToken(token)
-		}
-
-		// By default Vault token is set from VAULT_TOKEN env var by NewClient()
-		// But if VAULT_TOKEN isn't set, token can be retrieved from ~/.vault-token file
-		if cli.Token() == "" {
-			homeDir := os.Getenv("HOME")
-			if homeDir != "" {
-				token, _ := p.readTokenFile(filepath.Join(homeDir, ".vault-token"))
-				if token != "" {
-					cli.SetToken(token)
+		if p.AuthMethod == "token" {
+			if p.TokenEnv != "" {
+				token := os.Getenv(p.TokenEnv)
+				if token == "" {
+					return nil, fmt.Errorf("token_env configured to read vault token from envvar %q, but it isn't set", p.TokenEnv)
 				}
+				cli.SetToken(token)
+			}
+
+			if p.TokenFile != "" {
+				token, err := p.readTokenFile(p.TokenFile)
+				if err != nil {
+					return nil, err
+				}
+				cli.SetToken(token)
+			}
+
+			// By default Vault token is set from VAULT_TOKEN env var by NewClient()
+			// But if VAULT_TOKEN isn't set, token can be retrieved from ~/.vault-token file
+			if cli.Token() == "" {
+				homeDir := os.Getenv("HOME")
+				if homeDir != "" {
+					token, _ := p.readTokenFile(filepath.Join(homeDir, ".vault-token"))
+					if token != "" {
+						cli.SetToken(token)
+					}
+				}
+			}
+		} else if p.AuthMethod == "approle" {
+			token, _ := p.createAppRoleLogin()
+			if token != "" {
+				cli.SetToken(token)
 			}
 		}
 		p.client = cli
@@ -165,6 +205,31 @@ func (p *provider) readTokenFile(path string) (string, error) {
 		return string(buff), nil
 	}
 	return "", nil
+}
+
+// Create a approle plugin with the secret id and role id provided
+func (p *provider) createAppRoleLogin() (string, error) {
+	// step: create the token request
+	request := p.client.NewRequest("POST", "/v1/auth/approle/login")
+	login := appRoleLogin{SecretID: p.SecretId, RoleID: p.RoleId}
+
+	if err := request.SetJSONBody(login); err != nil {
+		return "", err
+	}
+	// step: make the request
+	resp, err := p.client.RawRequest(request)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	// step: parse and return auth
+	secret, err := vault.ParseSecret(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	return secret.Auth.ClientToken, nil
 }
 
 func (p *provider) debugf(msg string, args ...interface{}) {

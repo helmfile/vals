@@ -12,6 +12,7 @@ require (
 	github.com/Azure/go-autorest/autorest/validation v0.2.0 // indirect
 	github.com/aws/aws-sdk-go v1.29.34
 	github.com/fujiwara/tfstate-lookup v0.0.4
+	github.com/google/btree v1.0.0 // indirect
 	github.com/google/go-cmp v0.4.0
 	github.com/goware/prefixer v0.0.0-20160118172347-395022866408 // indirect
 	github.com/hashicorp/golang-lru v0.5.3
