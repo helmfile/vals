@@ -185,10 +185,22 @@ func (p *provider) ensureClient() (*vault.Client, error) {
 				}
 			}
 		} else if p.AuthMethod == "approle" {
-			token, _ := p.createAppRoleLogin()
-			if token != "" {
-				cli.SetToken(token)
+
+			data := map[string]interface{}{
+				"role_id":   p.RoleId,
+				"secret_id": p.SecretId,
 			}
+
+			resp, err := cli.Logical().Write("auth/approle/login", data)
+			if err != nil {
+					return nil, err
+			}
+
+			if resp.Auth == nil {
+					return nil, fmt.Errorf("no auth info returned")
+			}
+
+			cli.SetToken(resp.Auth.ClientToken)
 		}
 		p.client = cli
 	}
@@ -205,31 +217,6 @@ func (p *provider) readTokenFile(path string) (string, error) {
 		return string(buff), nil
 	}
 	return "", nil
-}
-
-// Create a approle plugin with the secret id and role id provided
-func (p *provider) createAppRoleLogin() (string, error) {
-	// step: create the token request
-	request := p.client.NewRequest("POST", "/v1/auth/approle/login")
-	login := appRoleLogin{SecretID: p.SecretId, RoleID: p.RoleId}
-
-	if err := request.SetJSONBody(login); err != nil {
-		return "", err
-	}
-	// step: make the request
-	resp, err := p.client.RawRequest(request)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	// step: parse and return auth
-	secret, err := vault.ParseSecret(resp.Body)
-	if err != nil {
-		return "", err
-	}
-
-	return secret.Auth.ClientToken, nil
 }
 
 func (p *provider) debugf(msg string, args ...interface{}) {
