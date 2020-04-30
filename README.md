@@ -188,10 +188,7 @@ Please see [pkg/providers](https://github.com/variantdev/vals/tree/master/pkg/pr
 ### Vault
 
 - `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT&token_file=PATH/TO/FILE&token_env=VAULT_TOKEN]#/fieldkey`
-- `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT&token_file=PATH/TO/FILE&token_env=VAULT_TOKEN]#/fieldkey`
 - `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT&auth_method=approle&role_id=ce5e571a-f7d4-4c73-93dd-fd6922119839&secret_id=5c9194b9-585e-4539-a865-f45604bd6f56]#/fieldkey`
-- `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT&token_file=PATH/TO/FILE&token_env=VAULT_TOKEN]#/fieldkey`
-- `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT&token_file=PATH/TO/FILE&token_env=VAULT_TOKEN]#/fieldkey`
 
 `address` defaults to the value of the `VAULT_ADDR` envvar.
 `auth_method` default to `token` and can also be set to the value of the `VAULT_AUTH_METHOD` envar.
