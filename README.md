@@ -163,25 +163,14 @@ EOF
 
 ## Suported Backends
 
-- [vals](#vals)
-  - [Usage](#usage)
-- [CLI](#cli)
-    - [Helm](#helm)
-    - [Go](#go)
-  - [Suported Backends](#suported-backends)
-    - [Vault](#vault)
-    - [AWS SSM Parameter Store](#aws-ssm-parameter-store)
-    - [AWS Secrets Manager](#aws-secrets-manager)
-    - [GCP Secrets Manager](#gcp-secrets-manager)
-    - [Terraform (tfstate)](#terraform-tfstate)
-    - [SOPS](#sops)
-    - [Echo](#echo)
-    - [File](#file)
-  - [Advanced Usages](#advanced-usages)
-    - [Discriminating config and secrets](#discriminating-config-and-secrets)
-  - [Non-Goals](#non-goals)
-    - [String-Interpolation / Template Functions](#string-interpolation--template-functions)
-    - [Merge](#merge)
+- [Vault](#vault)
+- [AWS SSM Parameter Store](#aws-ssm-parameter-store)
+- [AWS Secrets Manager](#aws-secrets-manager)
+- [GCP Secrets Manager](#gcp-secrets-manager)
+- [SOPS](#sops) powered by [sops](https://github.com/mozilla/sops))
+- [Terraform (tfstate)](#terraform-tfstate) powered by [tfstate-lookup](https://github.com/fujiwara/tfstate-lookup)
+- [Echo](#echo)
+- [File](#file)
 
 Please see [pkg/providers](https://github.com/variantdev/vals/tree/master/pkg/providers) for the implementations of all the providers. The package names corresponds to the URI schemes.
 
