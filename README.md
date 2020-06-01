@@ -183,6 +183,7 @@ Please see [pkg/providers](https://github.com/variantdev/vals/tree/master/pkg/pr
 `auth_method` default to `token` and can also be set to the value of the `VAULT_AUTH_METHOD` envar.
 `role_id` defaults to the value of the `VAULT_ROLE_ID` envvar.
 `secret_id` defaults to the value of the `VAULT_SECRET_ID` envvar.
+`version` is the specific version of the secret to be obtained. Used when you want to get a previous content of the secret.
 
 Examples:
 

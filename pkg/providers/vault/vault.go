@@ -32,11 +32,12 @@ type provider struct {
 	AuthMethod string
 	RoleId     string
 	SecretId   string
+	Version    string
 }
 
 type appRoleLogin struct {
-	RoleID    string `json:"role_id,omitempty"`
-	SecretID  string `json:"secret_id,omitempty"`
+	RoleID   string `json:"role_id,omitempty"`
+	SecretID string `json:"secret_id,omitempty"`
 }
 
 func New(cfg api.StaticConfig) *provider {
@@ -80,6 +81,8 @@ func New(cfg api.StaticConfig) *provider {
 			p.SecretId = ""
 		}
 	}
+	p.Version = cfg.String("version")
+
 	return p
 }
 
@@ -113,7 +116,12 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 
 	res := map[string]interface{}{}
 
-	secret, err := cli.Logical().Read(key)
+	data := map[string][]string{}
+	if p.Version != "" {
+		data["version"] = []string{p.Version}
+	}
+
+	secret, err := cli.Logical().ReadWithData(key, data)
 	if err != nil {
 		p.debugf("vault: read: key=%q", key)
 		return nil, err
@@ -192,11 +200,11 @@ func (p *provider) ensureClient() (*vault.Client, error) {
 
 			resp, err := cli.Logical().Write("auth/approle/login", data)
 			if err != nil {
-					return nil, err
+				return nil, err
 			}
 
 			if resp.Auth == nil {
-					return nil, fmt.Errorf("no auth info returned")
+				return nil, fmt.Errorf("no auth info returned")
 			}
 
 			cli.SetToken(resp.Auth.ClientToken)

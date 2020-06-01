@@ -9,6 +9,8 @@ type mapConfig struct {
 	m map[string]interface{}
 }
 
+var _ api.StaticConfig = &mapConfig{}
+
 func (m mapConfig) String(path ...string) string {
 	var cur interface{}
 
