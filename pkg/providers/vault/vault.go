@@ -142,7 +142,7 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 	}
 
 	for k, v := range secrets {
-		res[k] = fmt.Sprintf("%v", v)
+		res[k] = v
 	}
 
 	return res, nil
