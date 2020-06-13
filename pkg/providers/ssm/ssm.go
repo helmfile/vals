@@ -147,7 +147,7 @@ func (p *provider) getSSMClient() *ssm.SSM {
 		return p.ssmClient
 	}
 
-	sess := awsclicompat.NewSession(p.Region,p.Profile)
+	sess := awsclicompat.NewSession(p.Region, p.Profile)
 
 	p.ssmClient = ssm.New(sess)
 	return p.ssmClient

@@ -18,7 +18,7 @@ import (
 //
 // The fourth option of using FORCE_AWS_PROFILE=true and AWS_PROFILE=yourprofile is equivalent to `aws --profile ${AWS_PROFILE}`.
 // See https://github.com/variantdev/vals/issues/19#issuecomment-600437486 for more details and why and when this is needed.
-func NewSession(region string,profile string) *session.Session {
+func NewSession(region string, profile string) *session.Session {
 	var cfg *aws.Config
 	if region != "" {
 		cfg = aws.NewConfig().WithRegion(region)
@@ -32,14 +32,12 @@ func NewSession(region string,profile string) *session.Session {
 		Config:                  *cfg,
 	}
 
-	if os.Getenv("FORCE_AWS_PROFILE") == "true" || profile != "" {
-		if profile != "" {
-			opts.Profile = profile
-		} else {
-			opts.Profile = os.Getenv("AWS_PROFILE")
-		}
+	if profile != "" {
+		opts.Profile = profile
+	} else if os.Getenv("FORCE_AWS_PROFILE") == "true" {
+		opts.Profile = os.Getenv("AWS_PROFILE")
 	}
-	
+
 	sess := session.Must(session.NewSessionWithOptions(opts))
 
 	return sess
