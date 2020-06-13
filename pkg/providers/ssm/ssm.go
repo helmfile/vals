@@ -20,12 +20,15 @@ type provider struct {
 	// AWS SSM Parameter store global configuration
 	Region  string
 	Version string
+	Profile string
 }
 
 func New(cfg api.StaticConfig) *provider {
 	p := &provider{}
 	p.Region = cfg.String("region")
 	p.Version = cfg.String("version")
+	p.Profile = cfg.String("profile")
+
 	return p
 }
 
@@ -144,7 +147,7 @@ func (p *provider) getSSMClient() *ssm.SSM {
 		return p.ssmClient
 	}
 
-	sess := awsclicompat.NewSession(p.Region)
+	sess := awsclicompat.NewSession(p.Region,p.Profile)
 
 	p.ssmClient = ssm.New(sess)
 	return p.ssmClient
