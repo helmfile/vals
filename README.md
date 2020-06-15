@@ -191,7 +191,19 @@ Examples:
 - `ref+vault://mykv/foo#/bar?token_env=VAULT_TOKEN_VAULT1&address=https://vault1.example.com:8200` reads the value for the field `bar` in the kv `foo` on Vault listening on `https://vault1.example.com` with the Vault token read from **the envvar `VAULT_TOKEN_VAULT1`**
 - `ref+vault://mykv/foo#/bar?token_file=~/.vault_token_vault1&address=https://vault1.example.com:8200` reads the value for the field `bar` in the kv `foo` on Vault listening on `https://vault1.example.com` with the Vault token read from **the file `~/.vault_token_vault1`**
 
-### AWS SSM Parameter Store
+### AWS
+
+There are two providers for AWS:
+
+- SSM Parameter Store
+- Secrets Manager
+
+Both provider have support for specifying AWS region and profile via envvars or options:
+
+- AWS profile can be specified via an option `profile=AWS_PROFILE_NAME` or envvar `AWS_PROFILE`
+- AWS region can be specified via an option `region=AWS_REGION_NAME` or envvar `AWS_DEFAULT_REGION`
+
+#### AWS SSM Parameter Store
 
 - `ref+awsssm://PATH/TO/PARAM[?region=REGION]`
 - `ref+awsssm://PREFIX/TO/PARAMS[?region=REGION]#/PATH/TO/PARAM`
@@ -204,7 +216,7 @@ Examples:
 - `ref+awsssm://myteam/mydoc#/foo/bar`
 - `ref+awsssm://myteam/mykey?region=us-west-2`
 
-### AWS Secrets Manager
+#### AWS Secrets Manager
 
 - `ref+awssec://PATH/TO/SECRET[?region=REGION&version_stage=STAGE&version_id=ID]`
 - `ref+awssec://PATH/TO/SECRET[?region=REGION&version_stage=STAGE&version_id=ID]#/yaml_or_json_key/in/secret`
