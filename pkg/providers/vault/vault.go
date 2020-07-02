@@ -215,15 +215,11 @@ func (p *provider) ensureClient() (*vault.Client, error) {
 }
 
 func (p *provider) readTokenFile(path string) (string, error) {
-	homeDir := os.Getenv("HOME")
-	if homeDir != "" {
-		buff, err := ioutil.ReadFile(filepath.Join(homeDir, path))
-		if err != nil {
-			return "", err
-		}
-		return string(buff), nil
+	buff, err := ioutil.ReadFile(path)
+	if err != nil {
+		return "", err
 	}
-	return "", nil
+	return string(buff), nil
 }
 
 func (p *provider) debugf(msg string, args ...interface{}) {
