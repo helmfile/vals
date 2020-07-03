@@ -206,15 +206,21 @@ Both provider have support for specifying AWS region and profile via envvars or 
 #### AWS SSM Parameter Store
 
 - `ref+awsssm://PATH/TO/PARAM[?region=REGION]`
-- `ref+awsssm://PREFIX/TO/PARAMS[?region=REGION]#/PATH/TO/PARAM`
+- `ref+awsssm://PREFIX/TO/PARAMS[?region=REGION&mode=MODE&version=VERSION]#/PATH/TO/PARAM`
 
-In the latter case, `vals` uses `GetParametersByPath(/PREFIX/TO/PARAMS)` caches the result per prefix rather than each single path to reduce number of API calls
+
+For the second form:
+
+- If `mode` is not set, `vals` uses `GetParametersByPath(/PREFIX/TO/PARAMS)` caches the result per prefix rather than each single path to reduce number of API calls
+- If `mode` is `singleparam`, `vals` uses `GetParameter` to obtain the value parameter for key `/PREFIX/TO/PARAMS`, parse the value as a YAML hash, extract the value at the yaml path `PATH.TO.PARAM`.
+  - When `version` is set, `vals` uses `GetParameterHistoryPages` instead of `GetParameter`.
 
 Examples:
 
 - `ref+awsssm://myteam/mykey`
 - `ref+awsssm://myteam/mydoc#/foo/bar`
 - `ref+awsssm://myteam/mykey?region=us-west-2`
+- `ref+awsssm://myteam/mykey?mode=singleparam&version=1#/foo/bar`
 
 #### AWS Secrets Manager
 

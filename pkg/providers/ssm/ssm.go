@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/variantdev/vals/pkg/api"
 	"github.com/variantdev/vals/pkg/awsclicompat"
+	"gopkg.in/yaml.v3"
 	"os"
 	"strconv"
 	"strings"
@@ -21,6 +22,7 @@ type provider struct {
 	Region  string
 	Version string
 	Profile string
+	Mode    string
 }
 
 func New(cfg api.StaticConfig) *provider {
@@ -28,6 +30,7 @@ func New(cfg api.StaticConfig) *provider {
 	p.Region = cfg.String("region")
 	p.Version = cfg.String("version")
 	p.Profile = cfg.String("profile")
+	p.Mode = cfg.String("mode")
 
 	return p
 }
@@ -109,6 +112,21 @@ func (p *provider) GetStringVersion(key string) (string, error) {
 func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 	if key != "" && key[0] != '/' {
 		key = "/" + key
+	}
+
+	if p.Mode == "singleparam" {
+		yamlData, err := p.GetString(key)
+		if err != nil {
+			return nil, err
+		}
+
+		m := map[string]interface{}{}
+
+		if err := yaml.Unmarshal([]byte(yamlData), &m); err != nil {
+			return nil, err
+		}
+
+		return m, nil
 	}
 
 	ssmClient := p.getSSMClient()
