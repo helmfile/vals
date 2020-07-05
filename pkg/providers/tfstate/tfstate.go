@@ -30,7 +30,11 @@ func (p *provider) GetString(key string) (string, error) {
 	state, _ := tfstate.ReadFile(f)
 
 	// key is something like "aws_vpc.main.id" (RESOURCE_TYPE.RESOURCE_NAME.FIELD)
-	attrs, _ := state.Lookup(k)
+	attrs, err := state.Lookup(k)
+
+	if err != nil {
+		return "", fmt.Errorf("looking up terraform output for %q: %w", key, err)
+	}
 
 	return attrs.String(), nil
 }

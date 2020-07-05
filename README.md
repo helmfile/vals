@@ -9,7 +9,7 @@ It supports various backends including:
 - AWS Secrets Manager
 - GCP Secrets Manager
 - [SOPS](https://github.com/mozilla/sops)-encrypted files
-- Terraform outputs(Coming soon)
+- Terraform State
 - CredHub(Coming soon)
 
 - Use `vals eval -f refs.yaml` to replace all the `ref`s in the file to actual values and secrets.
@@ -253,6 +253,16 @@ Examples:
 - `ref+tfstate://path/to/some.tfstate/aws_vpc.main.id`
 - `ref+tfstate://path/to/some.tfstate/module.mymodule.aws_vpc.main.id`
 - `ref+tfstate://path/to/some.tfstate/data.thetype.name.foo.bar`
+
+When you're using [terraform-aws-vpc](https://github.com/terraform-aws-modules/terraform-aws-vpc) to define a `module "vpc"` resource and you wanted to grab the first vpc ARN created by the module:
+
+```
+$ tfstate-lookup -s ./terraform.tfstate ref+tfstate://terraform.tfstate/module.vpc.aws_vpc.this[0].arn
+arn:aws:ec2:us-east-2:ACCOUNT_ID:vpc/vpc-0cb48a12e4df7ad4c
+
+$ echo 'foo: ref+tfstate://terraform.tfstate/module.vpc.aws_vpc.this[0].arn' | vals eval -f -
+foo: arn:aws:ec2:us-east-2:ACCOUNT_ID:vpc/vpc-0cb48a12e4df7ad4c
+```
 
 ### SOPS
 

@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"strings"
 
+	lru "github.com/hashicorp/golang-lru"
 	"github.com/variantdev/vals/pkg/api"
 	"github.com/variantdev/vals/pkg/expansion"
 	"github.com/variantdev/vals/pkg/providers/awssec"
@@ -17,12 +18,11 @@ import (
 	"github.com/variantdev/vals/pkg/providers/gcpsecrets"
 	"github.com/variantdev/vals/pkg/providers/sops"
 	"github.com/variantdev/vals/pkg/providers/ssm"
+	"github.com/variantdev/vals/pkg/providers/tfstate"
 	"github.com/variantdev/vals/pkg/providers/vault"
 	"github.com/variantdev/vals/pkg/stringmapprovider"
 	"github.com/variantdev/vals/pkg/stringprovider"
 	"gopkg.in/yaml.v3"
-
-	lru "github.com/hashicorp/golang-lru"
 )
 
 const (
@@ -55,6 +55,7 @@ const (
 	ProviderEcho             = "echo"
 	ProviderFile             = "file"
 	ProviderGCPSecretManager = "gcpsecrets"
+	ProviderTFState          = "tfstate"
 )
 
 type Evaluator interface {
@@ -143,6 +144,9 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 			return p, nil
 		case ProviderGCPSecretManager:
 			p := gcpsecrets.New(conf)
+			return p, nil
+		case ProviderTFState:
+			p := tfstate.New(conf)
 			return p, nil
 		}
 		return nil, fmt.Errorf("no provider registered for scheme %q", scheme)
