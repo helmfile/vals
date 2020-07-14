@@ -224,14 +224,14 @@ Examples:
 
 #### AWS Secrets Manager
 
-- `ref+awssec://PATH/TO/SECRET[?region=REGION&version_stage=STAGE&version_id=ID]`
-- `ref+awssec://PATH/TO/SECRET[?region=REGION&version_stage=STAGE&version_id=ID]#/yaml_or_json_key/in/secret`
+- `ref+awssecrets://PATH/TO/SECRET[?region=REGION&version_stage=STAGE&version_id=ID]`
+- `ref+awssecrets://PATH/TO/SECRET[?region=REGION&version_stage=STAGE&version_id=ID]#/yaml_or_json_key/in/secret`
 
 Examples:
 
-- `ref+awssec://myteam/mykey`
-- `ref+awssec://myteam/mydoc#/foo/bar`
-- `ref+awssec://myteam/mykey?region=us-west-2`
+- `ref+awssecrets://myteam/mykey`
+- `ref+awssecrets://myteam/mydoc#/foo/bar`
+- `ref+awssecrets://myteam/mykey?region=us-west-2`
 
 ### GCP Secrets Manager
 
@@ -318,14 +318,14 @@ By using the `secretref+<uri>` notation, you tell `vals` that it is a secret and
 
 ```yaml
 myconfigvalue: ref+awsssm://myconfig/value
-mysecretvalue: secretref+awssec://mysecret/value
+mysecretvalue: secretref+awssecrets://mysecret/value
 ```
 
 To leverage `GitOps` most by allowing you to review the content of `ref+awsssm://myconfig/value` only, you run `vals eval --exclude-secretref` to generate the following:
 
 ```yaml
 myconfigvalue: MYCONFIG_VALUE
-mysecretvalue: secretref+awssec://mysecret/value
+mysecretvalue: secretref+awssecrets://mysecret/value
 ```
 
 This is safe to be committed into git because, as you've told to `vals`, `awsssm://myconfig/value` is a config value that can be shared publicly.
