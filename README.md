@@ -226,12 +226,16 @@ Examples:
 
 - `ref+awssecrets://PATH/TO/SECRET[?region=REGION&version_stage=STAGE&version_id=ID]`
 - `ref+awssecrets://PATH/TO/SECRET[?region=REGION&version_stage=STAGE&version_id=ID]#/yaml_or_json_key/in/secret`
+- `ref+awssecrets://ACCOUNT:ARN:secret:/PATH/TO/PARAM[?region=REGION]`
+
+The third form allows you to reference a secret in another AWS account (if your cross-account secret permissions are configured).
 
 Examples:
 
 - `ref+awssecrets://myteam/mykey`
 - `ref+awssecrets://myteam/mydoc#/foo/bar`
 - `ref+awssecrets://myteam/mykey?region=us-west-2`
+- `ref+awssecrets:///arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/myteam/mydoc/?region=ap-southeast-2#/secret/key`
 
 ### GCP Secrets Manager
 
