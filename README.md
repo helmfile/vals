@@ -244,6 +244,11 @@ Examples:
 - `ref+gcpsecrets://myproject/mysecret?version=3`
 - `ref+gcpsecrets://myproject/mysecret?version=3#/yaml_or_json_key/in/secret`
 
+> NOTE: Got an error like `expand gcpsecrets://project/secret-name?version=1: failed to get secret: rpc error: code = PermissionDenied desc = Request had insufficient authentication scopes.`?
+>
+> In some cases like you need to use an alternative credentials or project,
+> you'll likely need to set `GOOGLE_APPLICATION_CREDENTIALS` and/or `GCP_PROJECT` envvars.
+
 ### Terraform (tfstate)
 
 - `ref+tfstate://path/to/some.tfstate/RESOURCE_NAME`
