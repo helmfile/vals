@@ -210,19 +210,33 @@ Both provider have support for specifying AWS region and profile via envvars or 
 - `ref+awsssm://PATH/TO/PARAM[?region=REGION]`
 - `ref+awsssm://PREFIX/TO/PARAMS[?region=REGION&mode=MODE&version=VERSION]#/PATH/TO/PARAM`
 
+The first form result in a `GetParameter` call and result in the reference to be replaced with the value of the parameter.
 
-For the second form:
+The second form is handy but fairly complex.
 
 - If `mode` is not set, `vals` uses `GetParametersByPath(/PREFIX/TO/PARAMS)` caches the result per prefix rather than each single path to reduce number of API calls
 - If `mode` is `singleparam`, `vals` uses `GetParameter` to obtain the value parameter for key `/PREFIX/TO/PARAMS`, parse the value as a YAML hash, extract the value at the yaml path `PATH.TO.PARAM`.
   - When `version` is set, `vals` uses `GetParameterHistoryPages` instead of `GetParameter`.
 
-Examples:
+For the second form, you can optionally specify `recursive=true` to enable the recursive option of the GetParametersByPath API.
 
-- `ref+awsssm://myteam/mykey`
-- `ref+awsssm://myteam/mydoc#/foo/bar`
-- `ref+awsssm://myteam/mykey?region=us-west-2`
-- `ref+awsssm://myteam/mykey?mode=singleparam&version=1#/foo/bar`
+Let's say you had a number of parameters like:
+
+```
+NAME        VALUE
+/foo/bar    {"BAR":"VALUE"}
+/foo/bar/a  A
+/foo/bar/b  B
+```
+
+- `ref+awsssm://foo/bar` and `ref+awsssm://foo#/bar` results in `{"BAR":"VALUE"}`
+- `ref+awsssm://foo/bar/a`, `ref+awsssm://foo/bar?#/a`, and `ref+awsssm://foo?recursive=true#/bar/a` results in `A`
+- `ref+awsssm://foo/bar?mode=singleparam#/BAR` results in `VALUE`.
+
+On the other hand,
+
+- `ref+awsssm://foo/bar#/BAR` fails because `/foo/bar` evaluates to `{"a":"A","b":"B"}`.
+- `ref+awsssm://foo?recursive=true#/bar` fails because `/foo?recursive=true` internal evaluates to `{"foo":{"a":"A","b":"B"}}`
 
 #### AWS Secrets Manager
 

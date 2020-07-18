@@ -3,6 +3,7 @@ package ssm
 import (
 	"errors"
 	"fmt"
+	"github.com/aws/aws-sdk-go/service/ssm/ssmiface"
 	"github.com/variantdev/vals/pkg/api"
 	"github.com/variantdev/vals/pkg/awsclicompat"
 	"gopkg.in/yaml.v3"
@@ -16,13 +17,14 @@ import (
 
 type provider struct {
 	// Keeping track of SSM services since we need a SSM service per region
-	ssmClient *ssm.SSM
+	ssmClient ssmiface.SSMAPI
 
 	// AWS SSM Parameter store global configuration
-	Region  string
-	Version string
-	Profile string
-	Mode    string
+	Region    string
+	Version   string
+	Profile   string
+	Mode      string
+	Recursive bool
 }
 
 func New(cfg api.StaticConfig) *provider {
@@ -31,6 +33,7 @@ func New(cfg api.StaticConfig) *provider {
 	p.Version = cfg.String("version")
 	p.Profile = cfg.String("profile")
 	p.Mode = cfg.String("mode")
+	p.Recursive = cfg.String("recursive") == "true"
 
 	return p
 }
@@ -135,6 +138,7 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 
 	in := ssm.GetParametersByPathInput{
 		Path:           aws.String(key),
+		Recursive:      aws.Bool(p.Recursive),
 		WithDecryption: aws.Bool(true),
 	}
 	out, err := ssmClient.GetParametersByPath(&in)
@@ -149,8 +153,41 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 	for _, param := range out.Parameters {
 		name := *param.Name
 		name = strings.TrimPrefix(name, key)
-		res[name] = *param.Value
+
+		if name[0] != '/' {
+			return nil, fmt.Errorf("bug: unexpected format of parameter: %s in %s must start with a slash(/)", name, *param.Name)
+		}
+
+		name = name[1:]
+
+		nameParts := strings.Split(name, "/")
+
+		var current map[string]interface{}
+
+		current = res
+
+		for i, n := range nameParts {
+			if i == len(nameParts)-1 {
+				current[n] = *param.Value
+			} else {
+				if m, ok := current[n]; !ok {
+					current[n] = map[string]interface{}{}
+				} else if _, isMap := m.(map[string]interface{}); !isMap {
+					if !p.Recursive {
+						return nil, fmt.Errorf("bug: unexpected type of value found at %d in %v: type = %T", i, nameParts, m)
+					}
+					// Ensure that in the recursive mode, /foo/bar=VALUE1 and /foo/bar/baz=VALUE2 results in
+					//   {"foo":{"bar":{"baz":"VALUE2"}}}
+					// not
+					//   {"foo":{"bar":"VALUE1"}}
+					current[n] = map[string]interface{}{}
+				}
+
+				current = current[n].(map[string]interface{})
+			}
+		}
 	}
+
 	p.debugf("SSM: successfully retrieved key=%s", key)
 
 	return res, nil
@@ -160,7 +197,7 @@ func (p *provider) debugf(msg string, args ...interface{}) {
 	fmt.Fprintf(os.Stderr, msg+"\n", args...)
 }
 
-func (p *provider) getSSMClient() *ssm.SSM {
+func (p *provider) getSSMClient() ssmiface.SSMAPI {
 	if p.ssmClient != nil {
 		return p.ssmClient
 	}
