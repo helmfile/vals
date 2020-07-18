@@ -14,7 +14,7 @@ import (
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/variantdev/vals/pkg/api"
 	"github.com/variantdev/vals/pkg/expansion"
-	"github.com/variantdev/vals/pkg/providers/awssec"
+	"github.com/variantdev/vals/pkg/providers/awssecrets"
 	"github.com/variantdev/vals/pkg/providers/echo"
 	"github.com/variantdev/vals/pkg/providers/file"
 	"github.com/variantdev/vals/pkg/providers/gcpsecrets"
@@ -140,7 +140,7 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 			// vals+awssecrets://foo/bar?region=ap-northeast-1#/baz
 			// 1. Get secret for key foo/bar, parse it as yaml
 			// 2. Then extracts the value for key baz) from the result from step 1.
-			p := awssec.New(conf)
+			p := awssecrets.New(conf)
 			return p, nil
 		case ProviderSOPS:
 			p := sops.New(conf)

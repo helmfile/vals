@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/variantdev/vals/pkg/api"
-	"github.com/variantdev/vals/pkg/providers/awssec"
+	"github.com/variantdev/vals/pkg/providers/awssecrets"
 	"github.com/variantdev/vals/pkg/providers/gcpsecrets"
 	"github.com/variantdev/vals/pkg/providers/s3"
 	"github.com/variantdev/vals/pkg/providers/sops"
@@ -24,7 +24,7 @@ func New(provider api.StaticConfig) (api.LazyLoadedStringProvider, error) {
 	case "vault":
 		return vault.New(provider), nil
 	case "awssecrets":
-		return awssec.New(provider), nil
+		return awssecrets.New(provider), nil
 	case "sops":
 		return sops.New(provider), nil
 	case "gcpsecrets":

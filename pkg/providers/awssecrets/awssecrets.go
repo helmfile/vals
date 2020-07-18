@@ -1,4 +1,4 @@
-package awssec
+package awssecrets
 
 import (
 	"errors"
