@@ -1,0 +1,16 @@
+project_name: vals
+builds:
+  - id: vals
+    main: ./cmd/vals
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X github.com/variantdev/vals/Version={{.Version}}
+changelog:
+  filters:
+    # commit messages matching the regexp listed here will be removed from
+    # the changelog
+    # Default is empty
+    exclude:
+      - '^docs:'
+      - typo
