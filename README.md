@@ -167,6 +167,7 @@ EOF
 - [Vault](#vault)
 - [AWS SSM Parameter Store](#aws-ssm-parameter-store)
 - [AWS Secrets Manager](#aws-secrets-manager)
+- [AWS S3](#aws-s3)
 - [GCP Secrets Manager](#gcp-secrets-manager)
 - [SOPS](#sops) powered by [sops](https://github.com/mozilla/sops))
 - [Terraform (tfstate)](#terraform-tfstate) powered by [tfstate-lookup](https://github.com/fujiwara/tfstate-lookup)
