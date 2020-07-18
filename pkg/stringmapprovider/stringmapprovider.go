@@ -15,6 +15,8 @@ func New(provider api.StaticConfig) (api.LazyLoadedStringMapProvider, error) {
 	tpe := provider.String("name")
 
 	switch tpe {
+	case "s3":
+		return ssm.New(provider), nil
 	case "ssm":
 		return ssm.New(provider), nil
 	case "vault":

@@ -1,9 +1,8 @@
 package gcpsecrets
 
 import (
+	config2 "github.com/variantdev/vals/pkg/config"
 	"testing"
-
-	"github.com/variantdev/vals"
 )
 
 func Test_New(t *testing.T) {
@@ -17,7 +16,7 @@ func Test_New(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			config := vals.Map(tt.options)
+			config := config2.Map(tt.options)
 
 		})
 	}

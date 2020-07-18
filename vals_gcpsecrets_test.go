@@ -1,6 +1,7 @@
 package vals
 
 import (
+	"github.com/variantdev/vals/pkg/config"
 	"os"
 	"reflect"
 	"testing"
@@ -97,7 +98,7 @@ func TestValues_GCPSecretsManager(t *testing.T) {
 	for i := range tests {
 		tt := tests[i]
 		t.Run(tt.name, func(t *testing.T) {
-			mapConfig := Map(tt.config)
+			mapConfig := config.Map(tt.config)
 			vals, err := Load(mapConfig)
 			if err != nil {
 				t.Fatalf("%v", err)

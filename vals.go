@@ -4,6 +4,8 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
+	"github.com/variantdev/vals/pkg/config"
+	"github.com/variantdev/vals/pkg/providers/s3"
 	"net/url"
 	"os"
 	"os/exec"
@@ -49,6 +51,7 @@ const (
 	defaultCacheSize = 512
 
 	ProviderVault            = "vault"
+	ProviderS3               = "s3"
 	ProviderSSM              = "awsssm"
 	ProviderSecretsManager   = "awssecrets"
 	ProviderSOPS             = "sops"
@@ -115,11 +118,17 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 			}
 		}
 
-		conf := mapConfig{m: m}
+		conf := config.MapConfig{M: m}
 
 		switch scheme {
 		case ProviderVault:
 			p := vault.New(conf)
+			return p, nil
+		case ProviderS3:
+			// vals+s3://foo/bar?region=ap-northeast-1#/baz
+			// 1. GetObject for the bucket foo and key bar
+			// 2. Then extracts the value for key baz(=/foo/bar/baz) from the result from step 1.
+			p := s3.New(conf)
 			return p, nil
 		case ProviderSSM:
 			// vals+awsssm://foo/bar?region=ap-northeast-1#/baz
@@ -281,7 +290,17 @@ func cloneMap(m map[string]interface{}) map[string]interface{} {
 	return out
 }
 
-var KnownValuesTypes = []string{ProviderVault, ProviderSSM, ProviderSecretsManager, ProviderSOPS}
+var KnownValuesTypes = []string{
+	ProviderVault,
+	ProviderS3,
+	ProviderSSM,
+	ProviderSecretsManager,
+	ProviderSOPS,
+	ProviderGCPSecretManager,
+	ProviderTFState,
+	ProviderFile,
+	ProviderEcho,
+}
 
 type ctx struct {
 	ignorePrefix string
@@ -345,7 +364,7 @@ func Eval(template map[string]interface{}, o ...Options) (map[string]interface{}
 	return runtime.Eval(template)
 }
 
-func Load(config api.StaticConfig, opt ...Option) (map[string]interface{}, error) {
+func Load(conf api.StaticConfig, opt ...Option) (map[string]interface{}, error) {
 	ctx := &ctx{}
 	for _, o := range opt {
 		o(ctx)
@@ -372,13 +391,13 @@ func Load(config api.StaticConfig, opt ...Option) (map[string]interface{}, error
 
 	var provider api.StaticConfig
 
-	if config.Exists(KeyProvider) {
-		provider = config.Config(KeyProvider)
+	if conf.Exists(KeyProvider) {
+		provider = conf.Config(KeyProvider)
 	} else {
 		p := map[string]interface{}{}
 		for _, t := range KnownValuesTypes {
-			if config.Exists(t) {
-				p = cloneMap(config.Map(t))
+			if conf.Exists(t) {
+				p = cloneMap(conf.Map(t))
 				p[KeyName] = t
 				break
 			}
@@ -388,7 +407,7 @@ func Load(config api.StaticConfig, opt ...Option) (map[string]interface{}, error
 			return nil, fmt.Errorf("one of %s must be exist in the config", ts)
 		}
 
-		provider = Map(p)
+		provider = config.Map(p)
 	}
 
 	name := provider.String(KeyName)
@@ -398,21 +417,21 @@ func Load(config api.StaticConfig, opt ...Option) (map[string]interface{}, error
 	// TODO Implement other key mapping provider like "file", "templateFile", "template", etc.
 	getKeymap := func() map[string]interface{} {
 		for _, p := range valuesProviders {
-			if config.Exists(p.ID...) {
-				return p.Get(config)
+			if conf.Exists(p.ID...) {
+				return p.Get(conf)
 			}
 			if p.ID[0] != KeyProvider {
 				continue
 			}
 			id := []string{}
 			for i, idFragment := range p.ID {
-				if i == 0 && idFragment == KeyProvider && config.Map(KeyProvider) == nil {
+				if i == 0 && idFragment == KeyProvider && conf.Map(KeyProvider) == nil {
 					id = append(id, name)
 				} else {
 					id = append(id, idFragment)
 				}
 			}
-			m := Map(config.Map(id...))
+			m := config.Map(conf.Map(id...))
 			return p.Get(m)
 		}
 		return map[string]interface{}{}
@@ -588,5 +607,5 @@ func Load(config api.StaticConfig, opt ...Option) (map[string]interface{}, error
 		}
 	}
 
-	return nil, fmt.Errorf("failed setting values from config: type=%q, config=%v", tpe, config)
+	return nil, fmt.Errorf("failed setting values from config: type=%q, config=%v", tpe, conf)
 }

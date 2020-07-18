@@ -7,6 +7,7 @@ It supports various backends including:
 - Vault
 - AWS SSM Parameter Store
 - AWS Secrets Manager
+- AWS S3
 - GCP Secrets Manager
 - [SOPS](https://github.com/mozilla/sops)-encrypted files
 - Terraform State
@@ -232,6 +233,19 @@ Examples:
 - `ref+awssec://myteam/mykey`
 - `ref+awssec://myteam/mydoc#/foo/bar`
 - `ref+awssec://myteam/mykey?region=us-west-2`
+
+#### AWS S3
+
+- `ref+s3://BUCKET/KEY/OF/OBJECT[?region=REGION&profile=AWS_PROFILE&version_id=ID]`
+- `ref+s3://BUCKET/KEY/OF/OBJECT[?region=REGION&profile=AWS_PROFILE&version_id=ID]#/yaml_or_json_key/in/secret`
+
+Examples:
+
+- `ref+s3://mybucket/mykey`
+- `ref+s3://mybucket/myjsonobj#/foo/bar`
+- `ref+s3://mybucket/myyamlobj#/foo/bar`
+- `ref+s3://mybucket/mykey?region=us-west-2`
+- `ref+s3://mybucket/mykey?profile=prod`
 
 ### GCP Secrets Manager
 

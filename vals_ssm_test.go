@@ -2,6 +2,7 @@ package vals
 
 import (
 	"fmt"
+	config2 "github.com/variantdev/vals/pkg/config"
 	"testing"
 )
 
@@ -58,7 +59,7 @@ func TestValues_SSM_String(t *testing.T) {
 	for i := range testcases {
 		tc := testcases[i]
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			config := Map(tc.config)
+			config := config2.Map(tc.config)
 
 			vals, err := Load(config)
 			if err != nil {
@@ -130,7 +131,7 @@ func TestValues_SSM_Map(t *testing.T) {
 	for i := range testcases {
 		tc := testcases[i]
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			config := Map(map[string]interface{}{
+			config := config2.Map(map[string]interface{}{
 				"provider": tc.provider,
 				"inline": map[string]interface{}{
 					"foo": "foo",
@@ -221,7 +222,7 @@ func TestValues_SSM_Map_Raw(t *testing.T) {
 		tc := testcases[i]
 
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			config := Map(map[string]interface{}{
+			config := config2.Map(map[string]interface{}{
 				"provider": tc.provider,
 				"inline": map[string]interface{}{
 					"foo": "foo",
@@ -336,7 +337,7 @@ func TestValues_SSM_Map_YAML(t *testing.T) {
 	for i := range testcases {
 		tc := testcases[i]
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			config := Map(map[string]interface{}{
+			config := config2.Map(map[string]interface{}{
 				"provider": tc.provider,
 				"inline": map[string]interface{}{
 					"bar": tc.dataKey,
@@ -449,7 +450,7 @@ func TestValues_SSM_Map_YAML_Root(t *testing.T) {
 	for i := range testcases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			tc := testcases[i]
-			config := Map(tc.config)
+			config := config2.Map(tc.config)
 
 			vals, err := Load(config)
 			if err != nil {
@@ -558,7 +559,7 @@ func TestValues_SSM_Map_Raw_Root(t *testing.T) {
 		tc := testcases[i]
 
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			config := Map(tc.config)
+			config := config2.Map(tc.config)
 
 			vals, err := Load(config)
 			if err != nil {
