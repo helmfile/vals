@@ -290,17 +290,48 @@ Examples:
 
 - `ref+tfstate://path/to/some.tfstate/aws_vpc.main.id`
 - `ref+tfstate://path/to/some.tfstate/module.mymodule.aws_vpc.main.id`
+- `ref+tfstate://path/to/some.tfstate/output.OUTPUT_NAME.value`
 - `ref+tfstate://path/to/some.tfstate/data.thetype.name.foo.bar`
 
 When you're using [terraform-aws-vpc](https://github.com/terraform-aws-modules/terraform-aws-vpc) to define a `module "vpc"` resource and you wanted to grab the first vpc ARN created by the module:
 
 ```
-$ tfstate-lookup -s ./terraform.tfstate ref+tfstate://terraform.tfstate/module.vpc.aws_vpc.this[0].arn
+$ tfstate-lookup -s ./terraform.tfstate module.vpc.aws_vpc.this[0].arn
 arn:aws:ec2:us-east-2:ACCOUNT_ID:vpc/vpc-0cb48a12e4df7ad4c
 
 $ echo 'foo: ref+tfstate://terraform.tfstate/module.vpc.aws_vpc.this[0].arn' | vals eval -f -
 foo: arn:aws:ec2:us-east-2:ACCOUNT_ID:vpc/vpc-0cb48a12e4df7ad4c
 ```
+
+You can also grab a Terraform output by using `output.OUTPUT_NAME.value` like:
+
+```
+$ tfstate-lookup -s ./terraform.tfstate output.mystack_apply.value
+```
+
+which is equivalent to the following input for `vals`:
+
+```
+$ echo 'foo: ref+tfstate://terraform.tfstate/output.mystack_apply.value' | vals eval -f -
+```
+
+Remote backends like S3 is also supported. When a remote backend is used in your terraform workspace, there should be a local file at `./terraform/terraform.tfstate` that contains the reference to the backend:
+
+```
+{
+    "version": 3,
+    "serial": 1,
+    "lineage": "f1ad69de-68b8-9fe5-7e87-0cb70d8572c8",
+    "backend": {
+        "type": "s3",
+        "config": {
+            "access_key": null,
+            "acl": null,
+            "assume_role_policy": null,
+            "bucket": "yourbucketnname",
+```
+
+Just specify the path to that file, so that `vals` is able to transparently make the remote state contents available for you.
 
 ### SOPS
 
