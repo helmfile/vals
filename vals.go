@@ -203,14 +203,27 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 			frag = strings.TrimPrefix(frag, "#")
 			frag = strings.TrimPrefix(frag, "/")
 
-			var path string
-			path = uri.Path
-			path = strings.TrimPrefix(path, "#")
-			path = strings.TrimPrefix(path, "/")
+			var components []string
 
-			if uri.Host != "" {
-				path = strings.Join([]string{uri.Host, path}, "/")
+			{
+				host := uri.Host
+
+				if host != "" {
+					components = append(components, host)
+				}
 			}
+
+			{
+				path2 := uri.Path
+				path2 = strings.TrimPrefix(path2, "#")
+				path2 = strings.TrimPrefix(path2, "/")
+
+				if path2 != "" {
+					components = append(components, path2)
+				}
+			}
+
+			path := strings.Join(components, "/")
 
 			if len(frag) == 0 {
 				var str string
