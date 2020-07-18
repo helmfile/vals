@@ -28,6 +28,9 @@ func New(cfg api.StaticConfig) *provider {
 	p := &provider{}
 	p.Region = cfg.String("region")
 	p.Version = cfg.String("version")
+	if p.Version == "" {
+		p.Version = cfg.String("version_id")
+	}
 	p.Profile = cfg.String("profile")
 
 	return p
