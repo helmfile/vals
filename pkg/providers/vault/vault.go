@@ -114,6 +114,15 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 		return nil, fmt.Errorf("Cannot create Vault Client: %v", err)
 	}
 
+	mountPath, v2, err := isKVv2(key, cli)
+	if err != nil {
+		return nil, err
+	}
+
+	if v2 {
+		key = addPrefixToVKVPath(key, mountPath, "data")
+	}
+
 	res := map[string]interface{}{}
 
 	data := map[string][]string{}
@@ -135,9 +144,11 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 	secrets := secret.Data
 
 	// Vault KV Version 2
-	if _, ok := secret.Data["data"]; ok {
-		if m, ok := secret.Data["data"].(map[string]interface{}); ok {
-			secrets = m
+	if v2 {
+		if _, ok := secret.Data["data"]; ok {
+			if m, ok := secret.Data["data"].(map[string]interface{}); ok {
+				secrets = m
+			}
 		}
 	}
 
