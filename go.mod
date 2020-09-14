@@ -11,7 +11,7 @@ require (
 	github.com/Azure/go-autorest/autorest/to v0.3.0 // indirect
 	github.com/Azure/go-autorest/autorest/validation v0.2.0 // indirect
 	github.com/aws/aws-sdk-go v1.30.7
-	github.com/fujiwara/tfstate-lookup v0.0.9
+	github.com/fujiwara/tfstate-lookup v0.0.12
 	github.com/google/go-cmp v0.4.0
 	github.com/hashicorp/golang-lru v0.5.3
 	github.com/hashicorp/vault v1.2.3
