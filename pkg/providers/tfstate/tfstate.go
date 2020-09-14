@@ -27,13 +27,16 @@ func (p *provider) GetString(key string) (string, error) {
 	f := strings.Join(splits[:pos], string(os.PathSeparator))
 	k := strings.Join(splits[pos:], string(os.PathSeparator))
 
-	state, _ := tfstate.ReadFile(f)
+	state, err := tfstate.ReadFile(f)
+	if err != nil {
+		return "", fmt.Errorf("reading tfstate for %s: %w", key, err)
+	}
 
 	// key is something like "aws_vpc.main.id" (RESOURCE_TYPE.RESOURCE_NAME.FIELD)
 	attrs, err := state.Lookup(k)
 
 	if err != nil {
-		return "", fmt.Errorf("looking up terraform output for %q: %w", key, err)
+		return "", fmt.Errorf("reading value for %s: %w", key, err)
 	}
 
 	return attrs.String(), nil

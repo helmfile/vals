@@ -219,6 +219,8 @@ github.com/fujiwara/tfstate-lookup v0.0.4 h1:NGH9y+U4RDO3ooMYjK+fq1iYAkrBfCNZbZw
 github.com/fujiwara/tfstate-lookup v0.0.4/go.mod h1:kluvnw25uJ8bszZldMoewWxylt7QFvuzTGN+Rr911qs=
 github.com/fujiwara/tfstate-lookup v0.0.9 h1:U/iAQusJBJ5EsxdU48rZGaUSMiZmK8cTCkyCJpiFnMw=
 github.com/fujiwara/tfstate-lookup v0.0.9/go.mod h1:08o5Rm5pKzvIxoZe3D0NIT8AHYBqTzyUU03BZ/c0IKA=
+github.com/fujiwara/tfstate-lookup v0.0.12 h1:Ax8Xws/BvXRO2NH13QqGZJtk6X5aITJCSBdlaWqMLwU=
+github.com/fujiwara/tfstate-lookup v0.0.12/go.mod h1:08o5Rm5pKzvIxoZe3D0NIT8AHYBqTzyUU03BZ/c0IKA=
 github.com/fullsailor/pkcs7 v0.0.0-20190404230743-d7302db945fa h1:RDBNVkRviHZtvDvId8XSGPu3rmpmSe+wKRcEWNgsfWU=
 github.com/fullsailor/pkcs7 v0.0.0-20190404230743-d7302db945fa/go.mod h1:KnogPXtdwXqoenmZCw6S+25EAm2MkxbG0deNDu4cbSA=
 github.com/gammazero/deque v0.0.0-20190130191400-2afb3858e9c7 h1:D2LrfOPgGHQprIxmsTpxtzhpmF66HoM6rXSmcqaX7h8=
