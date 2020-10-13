@@ -105,7 +105,7 @@ func (p *provider) GetStringVersion(key string) (string, error) {
 		return "", errors.New(err.Error())
 	}
 	if result != "" {
-		p.debugf("SSM: successfully retrieved key=%s", result)
+		p.debugf("SSM: successfully retrieved key=%s", key)
 		return result, nil
 	}
 
