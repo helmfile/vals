@@ -2,11 +2,32 @@ package vals
 
 import (
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/secretsmanager"
+	"github.com/variantdev/vals/pkg/awsclicompat"
 	config2 "github.com/variantdev/vals/pkg/config"
 	"testing"
 )
 
 func TestValues_AWSSecrets_String(t *testing.T) {
+	client := secretsmanager.New(awsclicompat.NewSession("", ""))
+
+	sec, err := client.CreateSecret(&secretsmanager.CreateSecretInput{
+		Name:         aws.String("/mykv/foo/mykey"),
+		SecretString: aws.String("myvalue"),
+	})
+	if err != nil {
+		t.Fatalf("Error creatign secret: %v", err)
+	}
+
+	defer func() {
+		if _, err := client.DeleteSecret(&secretsmanager.DeleteSecretInput{
+			SecretId: sec.ARN,
+		}); err != nil {
+			t.Fatalf("Error deleting secret: %v", err)
+		}
+	}()
+
 	// TODO
 	// Pre-requisite:
 	//   aws secretsmanager create-secret --name /mykv/foo/mykey --secret-string myvalue

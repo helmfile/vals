@@ -1,17 +1,16 @@
 package vals
 
 import (
+	"context"
 	"fmt"
 	config2 "github.com/variantdev/vals/pkg/config"
+	"io/ioutil"
 	"os"
+	"os/exec"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	kv "github.com/hashicorp/vault-plugin-secrets-kv"
 	"github.com/hashicorp/vault/api"
-	"github.com/hashicorp/vault/http"
-	"github.com/hashicorp/vault/sdk/logical"
-	"github.com/hashicorp/vault/vault"
 )
 
 type Conn struct {
@@ -22,29 +21,46 @@ type Conn struct {
 func StartVault(t *testing.T, mountPath, mountInputType string) (Conn, func()) {
 	t.Helper()
 
-	conf := &vault.CoreConfig{
-		LogicalBackends: map[string]logical.Factory{
-			"kv": kv.Factory,
-		},
+	ctx, cancel := context.WithCancel(context.Background())
+
+	port := 8200
+	devRootTokenID := "root"
+	vaultAddr := fmt.Sprintf("127.0.0.1:%v", port)
+	vault := exec.CommandContext(ctx, "vault", "server",
+		"-dev",
+		"-dev-root-token-id="+devRootTokenID,
+		fmt.Sprintf("-dev-listen-address=%s", vaultAddr),
+	)
+	vault.Stdout = os.Stdout
+	vault.Stderr = os.Stderr
+
+	errs := make(chan error, 1)
+
+	go func() {
+		errs <- vault.Run()
+	}()
+
+	config := &api.Config{
+		Address: "http://" + vaultAddr,
+	}
+	client, err := api.NewClient(config)
+	if err != nil {
+		t.Fatalf("Failed creating vault client: %v", err)
 	}
 
-	cluster := vault.NewTestCluster(t, conf, &vault.TestClusterOptions{
-		HandlerFunc: http.Handler,
-		NumCores:    1,
-	})
-	cluster.Start()
-
-	core := cluster.Cores[0].Core
-	vault.TestWaitActive(t, core)
-
-	client := cluster.Cores[0].Client
-	client.SetToken(cluster.RootToken)
+	client.SetToken(devRootTokenID)
 
 	client.Sys().Mount(mountPath, &api.MountInput{
 		Type: mountInputType,
 	})
 
-	return Conn{Client: client, Token: cluster.RootToken}, func() { defer cluster.Cleanup() }
+	return Conn{Client: client, Token: devRootTokenID}, func() {
+		cancel()
+
+		if err := <-errs; err != nil {
+			t.Logf("stopping vault: %v", err)
+		}
+	}
 }
 
 func SetupVaultKV(t *testing.T, writes map[string]map[string]interface{}) (string, func()) {
@@ -521,6 +537,27 @@ func TestValues_Vault_Map_YAML(t *testing.T) {
 	//
 	// vault write mykv/yamltest myyaml="$(cat myyaml.yaml)" myjson="$(cat myjson.json)"
 
+	yamlContent, err := ioutil.ReadFile("myyaml.yaml")
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	jsonContent, err := ioutil.ReadFile("myjson.json")
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	addr, stop := SetupVaultKV(
+		t,
+		map[string]map[string]interface{}{
+			"mykv/yamltest": map[string]interface{}{
+				"myyaml": string(yamlContent),
+				"myjson": string(jsonContent),
+			},
+		},
+	)
+	defer stop()
+
 	type testcase struct {
 		provider map[string]interface{}
 		dataKey  string
@@ -529,7 +566,7 @@ func TestValues_Vault_Map_YAML(t *testing.T) {
 		"name":    "vault",
 		"type":    "map",
 		"path":    "mykv/yamltest",
-		"address": "http://127.0.0.1:8200",
+		"address": addr,
 		"format":  "yaml",
 	}
 
@@ -537,7 +574,7 @@ func TestValues_Vault_Map_YAML(t *testing.T) {
 		"name": "vault",
 		// implies `type: map`
 		"path":    "mykv/yamltest",
-		"address": "http://127.0.0.1:8200",
+		"address": addr,
 		"format":  "yaml",
 	}
 

@@ -7,7 +7,7 @@ import (
 	"github.com/variantdev/vals/pkg/api"
 	"gopkg.in/yaml.v3"
 
-	"go.mozilla.org/sops/decrypt"
+	"go.mozilla.org/sops/v3/decrypt"
 )
 
 type provider struct {
