@@ -173,6 +173,7 @@ EOF
 - [Terraform (tfstate)](#terraform-tfstate) powered by [tfstate-lookup](https://github.com/fujiwara/tfstate-lookup)
 - [Echo](#echo)
 - [File](#file)
+- [Azure Key Vault](#azure-key-vault)
 
 Please see [pkg/providers](https://github.com/variantdev/vals/tree/master/pkg/providers) for the implementations of all the providers. The package names corresponds to the URI schemes.
 
@@ -368,6 +369,22 @@ Examples:
 - `ref+file://foo/bar` loads the file at `foo/bar`
 - `ref+file://some.yaml#/foo/bar` loads the YAML file at `some.yaml` and reads the value for the path `$.foo.bar`.
   Let's say `some.yaml` contains `{"foo":{"bar":"BAR"}}`, `key1: ref+file://some.yaml#/foo/bar` results in `key1: BAR`.
+
+### Azure Key Vault
+
+Retrieve secrets from Azure Key Vault. Path is used to specify the vault and secret name. Optionally a specific secret version can be retrieved.
+
+- `ref+azurekeyvault://VAULT-NAME/SECRET-NAME[/VERSION]`
+
+VAULT-NAME is either a simple name if operating in AzureCloud (vault.azure.net) or the full endpoint dns name when operating against non-default azure clouds (US Gov Cloud, China Cloud, German Cloud).
+
+For authentication, the Azure SDK expects credentials in environment variables (see [auth.go](https://godoc.org/github.com/Azure/go-autorest/autorest/azure/auth#NewAuthorizerFromEnvironment)). For example, if using client credentials the required env vars are AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID and possibly AZURE_ENVIRONMENT in case of accessing an azure gov cloud.
+
+Examples:
+
+- `ref+azurekeyvault://my-vault/secret-a`
+- `ref+azurekeyvault://my-vault/secret-a/ba4f196b15f644cd9e949896a21bab0d`
+- `ref+azurekeyvault://gov-cloud-test.vault.usgovcloudapi.net/secret-b`
 
 ## Advanced Usages
 
