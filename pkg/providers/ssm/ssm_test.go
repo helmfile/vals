@@ -3,13 +3,14 @@ package ssm
 import (
 	"errors"
 	"fmt"
+	"testing"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/aws/aws-sdk-go/service/ssm/ssmiface"
 	"github.com/google/go-cmp/cmp"
 	"github.com/variantdev/vals/pkg/config"
-	"testing"
 )
 
 type mockedSSM struct {
@@ -42,6 +43,15 @@ func (m mockedSSM) GetParametersByPath(in *ssm.GetParametersByPathInput) (*ssm.G
 	}
 
 	return m.Output, m.Error
+}
+
+func (m mockedSSM) GetParametersByPathPages(in *ssm.GetParametersByPathInput, a func(o *ssm.GetParametersByPathOutput, lastPage bool) bool) error {
+	path := *in.Path
+	if path != m.Path {
+		return fmt.Errorf("unexpected path: %s", path)
+	}
+
+	return m.Error
 }
 
 func TestGetStringMap(t *testing.T) {
