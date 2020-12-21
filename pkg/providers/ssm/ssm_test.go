@@ -45,12 +45,13 @@ func (m mockedSSM) GetParametersByPath(in *ssm.GetParametersByPathInput) (*ssm.G
 	return m.Output, m.Error
 }
 
-func (m mockedSSM) GetParametersByPathPages(in *ssm.GetParametersByPathInput, a func(o *ssm.GetParametersByPathOutput, lastPage bool) bool) error {
+func (m mockedSSM) GetParametersByPathPages(in *ssm.GetParametersByPathInput, fn func(o *ssm.GetParametersByPathOutput, lastPage bool) bool) error {
 	path := *in.Path
 	if path != m.Path {
 		return fmt.Errorf("unexpected path: %s", path)
 	}
 
+	fn(m.Output, true)
 	return m.Error
 }
 

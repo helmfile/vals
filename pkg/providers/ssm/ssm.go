@@ -145,10 +145,11 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 
 	var out ssm.GetParametersByPathOutput
 	if err := ssmClient.GetParametersByPathPages(&in, func(o *ssm.GetParametersByPathOutput, lastPage bool) bool {
-		if o.Parameters != nil {
+		if o != nil && len(o.Parameters) > 0 {
 			out.Parameters = append(out.Parameters, o.Parameters...)
+			return true
 		}
-		return true
+		return false
 	}); err != nil {
 		return nil, fmt.Errorf("ssm: get parameters by path: %v", err)
 	}
