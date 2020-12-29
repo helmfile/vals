@@ -174,6 +174,7 @@ EOF
 - [Echo](#echo)
 - [File](#file)
 - [Azure Key Vault](#azure-key-vault)
+- [Vals](#vals)
 
 Please see [pkg/providers](https://github.com/variantdev/vals/tree/master/pkg/providers) for the implementations of all the providers. The package names corresponds to the URI schemes.
 
@@ -196,12 +197,14 @@ Examples:
 
 ### AWS
 
-There are two providers for AWS:
+There are four providers for AWS:
 
 - SSM Parameter Store
 - Secrets Manager
+- S3
+- KMS via [Vals](#vals) provider
 
-Both provider have support for specifying AWS region and profile via envvars or options:
+Each provider have support for specifying AWS region and profile via envvars or options:
 
 - AWS profile can be specified via an option `profile=AWS_PROFILE_NAME` or envvar `AWS_PROFILE`
 - AWS region can be specified via an option `region=AWS_REGION_NAME` or envvar `AWS_DEFAULT_REGION`
@@ -385,6 +388,41 @@ Examples:
 - `ref+azurekeyvault://my-vault/secret-a`
 - `ref+azurekeyvault://my-vault/secret-a/ba4f196b15f644cd9e949896a21bab0d`
 - `ref+azurekeyvault://gov-cloud-test.vault.usgovcloudapi.net/secret-b`
+
+### Vals
+
+#### AWS KMS
+
+If you need indirection to another YAML file external to the vals config file, as example shared configuration
+in another folder or so.
+
+- `ref+vals://PATH/TO/LOCAL/YAML/FILE.yaml?key_path=PATH.TO.KEY[&encryption=kms]`
+
+The first form result in `GetParameter` call which will:
+- load yaml into map
+- find encrypted value by `key_path`
+- decoding base64 to blob
+- decrypting the secret via AWS SDK
+- replacing reference to decoded plaintext value
+
+`key_path` supports named keys only, arrays access is not yet implemented.
+
+Examples:
+
+<details><summary>YAML stored somewhere</summary>
+
+```yaml
+baz:
+  mykey: myvalue
+  password: |-
+    AQICAHjdCdF7cI/3fnsYnEkQOFPNfy7fsifEtmi2Vj0qXk61IQFSxnJPmQf6cw8AvC6UPV
+    8rAAAAbjBsBgkqhkiG9w0BBwagXzBdAgEAMFgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4w
+    EQQMiLcM1eAzGkkALUUBAgEQgCu6nRylSxQo0xhmpEfF+eoUPAjFXHBqpl+SMMO/fOugny
+    rk3s3+zUORdvxB
+```
+</details>
+
+- `ref+vals://../ansible/role/demo/vars/secrets.yaml?key_path=baz.password&encryption=kms`
 
 ## Advanced Usages
 
