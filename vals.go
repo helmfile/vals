@@ -22,6 +22,7 @@ import (
 	"github.com/variantdev/vals/pkg/providers/sops"
 	"github.com/variantdev/vals/pkg/providers/ssm"
 	"github.com/variantdev/vals/pkg/providers/tfstate"
+	"github.com/variantdev/vals/pkg/providers/vals"
 	"github.com/variantdev/vals/pkg/providers/vault"
 	"github.com/variantdev/vals/pkg/stringmapprovider"
 	"github.com/variantdev/vals/pkg/stringprovider"
@@ -61,6 +62,7 @@ const (
 	ProviderGCPSecretManager = "gcpsecrets"
 	ProviderTFState          = "tfstate"
 	ProviderAzureKeyVault    = "azurekeyvault"
+	ProviderVals             = "vals"
 )
 
 type Evaluator interface {
@@ -161,6 +163,9 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 			return p, nil
 		case ProviderAzureKeyVault:
 			p := azurekeyvault.New(conf)
+			return p, nil
+		case ProviderVals:
+			p := vals.New(conf)
 			return p, nil
 		}
 		return nil, fmt.Errorf("no provider registered for scheme %q", scheme)

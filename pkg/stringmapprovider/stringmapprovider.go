@@ -9,6 +9,7 @@ import (
 	"github.com/variantdev/vals/pkg/providers/gcpsecrets"
 	"github.com/variantdev/vals/pkg/providers/sops"
 	"github.com/variantdev/vals/pkg/providers/ssm"
+	"github.com/variantdev/vals/pkg/providers/vals"
 	"github.com/variantdev/vals/pkg/providers/vault"
 )
 
@@ -30,6 +31,8 @@ func New(provider api.StaticConfig) (api.LazyLoadedStringMapProvider, error) {
 		return gcpsecrets.New(provider), nil
 	case "azurekeyvault":
 		return azurekeyvault.New(provider), nil
+	case "vals":
+		return vals.New(provider), nil
 	}
 
 	return nil, fmt.Errorf("failed initializing string-map provider from config: %v", provider)
