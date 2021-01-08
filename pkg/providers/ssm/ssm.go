@@ -3,13 +3,14 @@ package ssm
 import (
 	"errors"
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
+
 	"github.com/aws/aws-sdk-go/service/ssm/ssmiface"
 	"github.com/variantdev/vals/pkg/api"
 	"github.com/variantdev/vals/pkg/awsclicompat"
 	"gopkg.in/yaml.v3"
-	"os"
-	"strconv"
-	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ssm"
@@ -141,8 +142,15 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 		Recursive:      aws.Bool(p.Recursive),
 		WithDecryption: aws.Bool(true),
 	}
-	out, err := ssmClient.GetParametersByPath(&in)
-	if err != nil {
+
+	var out ssm.GetParametersByPathOutput
+	if err := ssmClient.GetParametersByPathPages(&in, func(o *ssm.GetParametersByPathOutput, lastPage bool) bool {
+		if o != nil && len(o.Parameters) > 0 {
+			out.Parameters = append(out.Parameters, o.Parameters...)
+			return true
+		}
+		return false
+	}); err != nil {
 		return nil, fmt.Errorf("ssm: get parameters by path: %v", err)
 	}
 
