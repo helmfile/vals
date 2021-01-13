@@ -209,7 +209,14 @@ func (p *provider) ensureClient() (*vault.Client, error) {
 				"secret_id": p.SecretId,
 			}
 
-			resp, err := cli.Logical().Write("auth/approle/login", data)
+			mount_point, ok := os.LookupEnv("VAULT_LOGIN_MOUNT_POINT")
+			if !ok {
+				mount_point = "/approle"
+			}
+
+			auth_path := filepath.Join("auth", mount_point, "login")
+
+			resp, err := cli.Logical().Write(auth_path, data)
 			if err != nil {
 				return nil, err
 			}
