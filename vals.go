@@ -4,12 +4,13 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
-	"github.com/variantdev/vals/pkg/config"
-	"github.com/variantdev/vals/pkg/providers/s3"
 	"net/url"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/variantdev/vals/pkg/config"
+	"github.com/variantdev/vals/pkg/providers/s3"
 
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/variantdev/vals/pkg/api"
@@ -60,6 +61,8 @@ const (
 	ProviderFile             = "file"
 	ProviderGCPSecretManager = "gcpsecrets"
 	ProviderTFState          = "tfstate"
+	ProviderTFStateGS        = "tfstategs"
+	ProviderTFStateS3        = "tfstates3"
 	ProviderAzureKeyVault    = "azurekeyvault"
 )
 
@@ -157,7 +160,13 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 			p := gcpsecrets.New(conf)
 			return p, nil
 		case ProviderTFState:
-			p := tfstate.New(conf)
+			p := tfstate.New(conf, "")
+			return p, nil
+		case ProviderTFStateGS:
+			p := tfstate.New(conf, "gs")
+			return p, nil
+		case ProviderTFStateS3:
+			p := tfstate.New(conf, "s3")
 			return p, nil
 		case ProviderAzureKeyVault:
 			p := azurekeyvault.New(conf)

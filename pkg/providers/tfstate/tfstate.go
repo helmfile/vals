@@ -11,10 +11,12 @@ import (
 )
 
 type provider struct {
+	backend string
 }
 
-func New(cfg api.StaticConfig) *provider {
+func New(cfg api.StaticConfig, backend string) *provider {
 	p := &provider{}
+	p.backend = backend
 	return p
 }
 
@@ -27,9 +29,9 @@ func (p *provider) GetString(key string) (string, error) {
 	f := strings.Join(splits[:pos], string(os.PathSeparator))
 	k := strings.Join(splits[pos:], string(os.PathSeparator))
 
-	state, err := tfstate.ReadFile(f)
+	state, err := p.ReadTFState(f, k)
 	if err != nil {
-		return "", fmt.Errorf("reading tfstate for %s: %w", key, err)
+		return "", err
 	}
 
 	// key is something like "aws_vpc.main.id" (RESOURCE_TYPE.RESOURCE_NAME.FIELD)
@@ -40,6 +42,25 @@ func (p *provider) GetString(key string) (string, error) {
 	}
 
 	return attrs.String(), nil
+}
+
+// Read state either from file or from backend
+func (p *provider) ReadTFState(f, k string) (*tfstate.TFState, error) {
+	switch p.backend {
+	case "":
+		state, err := tfstate.ReadFile(f)
+		if err != nil {
+			return nil, fmt.Errorf("reading tfstate for %s: %w", k, err)
+		}
+		return state, nil
+	default:
+		url := p.backend + "://" + f
+		state, err := tfstate.ReadURL(url)
+		if err != nil {
+			return nil, fmt.Errorf("reading tfstate for %s: %w", k, err)
+		}
+		return state, nil
+	}
 }
 
 func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {

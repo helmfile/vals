@@ -334,6 +334,48 @@ Remote backends like S3 is also supported. When a remote backend is used in your
 
 Just specify the path to that file, so that `vals` is able to transparently make the remote state contents available for you.
 
+### Terraform in GCS bucket (tfstategs)
+
+- `ref+tfstategs://bucket/path/to/some.tfstate/RESOURCE_NAME`
+
+Examples:
+
+- `ref+tfstate://bucket/path/to/some.tfstate/google_compute_disk.instance.id`
+
+It allows to use Terraform state stored in GCS bucket with the direct URL to it. You can try to read the state with command: 
+
+```
+$ tfstate-lookup -s gs://bucket-with-terraform-state/terraform.tfstate google_compute_disk.instance.source_image_id
+5449927740744213880
+```
+
+which is equivalent to the following input for `vals`:
+
+```
+$ echo 'foo: ref+tfstategs://bucket-with-terraform-state/terraform.tfstate/google_compute_disk.instance.source_image_id' | vals eval -f -
+```
+
+### Terraform in S3 bucket (tfstates3)
+
+- `ref+tfstates3://bucket/path/to/some.tfstate/RESOURCE_NAME`
+
+Examples:
+
+- `ref+tfstate://bucket/path/to/some.tfstate/aws_vpc.main.id`
+
+It allows to use Terraform state stored in AWS S3 bucket with the direct URL to it. You can try to read the state with command: 
+
+```
+$ tfstate-lookup -s s3://bucket-with-terraform-state/terraform.tfstate module.vpc.aws_vpc.this[0].arn
+arn:aws:ec2:us-east-2:ACCOUNT_ID:vpc/vpc-0cb48a12e4df7ad4c
+```
+
+which is equivalent to the following input for `vals`:
+
+```
+$ echo 'foo: ref+tfstates3://bucket-with-terraform-state/terraform.tfstate/module.vpc.aws_vpc.this[0].arn' | vals eval -f -
+```
+
 ### SOPS
 
 - The whole content of a SOPS-encrypted file: `ref+sops://base64_data_or_path_to_file?key_type=[filepath|base64]&format=[binary|dotenv|yaml]`
