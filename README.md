@@ -361,7 +361,7 @@ $ echo 'foo: ref+tfstategs://bucket-with-terraform-state/terraform.tfstate/googl
 
 Examples:
 
-- `ref+tfstate://bucket/path/to/some.tfstate/aws_vpc.main.id`
+- `ref+tfstates3://bucket/path/to/some.tfstate/aws_vpc.main.id`
 
 It allows to use Terraform state stored in AWS S3 bucket with the direct URL to it. You can try to read the state with command: 
 
