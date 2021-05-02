@@ -4,12 +4,13 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
-	"github.com/variantdev/vals/pkg/config"
-	"github.com/variantdev/vals/pkg/providers/s3"
 	"net/url"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/variantdev/vals/pkg/config"
+	"github.com/variantdev/vals/pkg/providers/s3"
 
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/variantdev/vals/pkg/api"
@@ -209,9 +210,10 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 			frag = strings.TrimPrefix(frag, "/")
 
 			var components []string
+			var host string
 
 			{
-				host := uri.Host
+				host = uri.Host
 
 				if host != "" {
 					components = append(components, host)
@@ -221,7 +223,9 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 			{
 				path2 := uri.Path
 				path2 = strings.TrimPrefix(path2, "#")
-				path2 = strings.TrimPrefix(path2, "/")
+				if host != "" {
+					path2 = strings.TrimPrefix(path2, "/")
+				}
 
 				if path2 != "" {
 					components = append(components, path2)

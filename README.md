@@ -285,7 +285,8 @@ Examples:
 
 ### Terraform (tfstate)
 
-- `ref+tfstate://path/to/some.tfstate/RESOURCE_NAME`
+- `ref+tfstate://relative/path/to/some.tfstate/RESOURCE_NAME`
+- `ref+tfstate:///absolute/path/to/some.tfstate/RESOURCE_NAME`
 
 Examples:
 
@@ -362,11 +363,13 @@ Examples:
 
 File provider reads a local text file, or the value for the specific path in a YAML/JSON file.
 
-- `ref+file://path/to/file[#/path/to/the/value]`
+- `ref+file://relative/path/to/file[#/path/to/the/value]`
+- `ref+file:///absolute/path/to/file[#/path/to/the/value]`
 
 Examples:
 
 - `ref+file://foo/bar` loads the file at `foo/bar`
+- `ref+file:///home/foo/bar` loads the file at `/home/foo/bar`
 - `ref+file://some.yaml#/foo/bar` loads the YAML file at `some.yaml` and reads the value for the path `$.foo.bar`.
   Let's say `some.yaml` contains `{"foo":{"bar":"BAR"}}`, `key1: ref+file://some.yaml#/foo/bar` results in `key1: BAR`.
 
