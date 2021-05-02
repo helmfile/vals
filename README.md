@@ -340,7 +340,7 @@ Just specify the path to that file, so that `vals` is able to transparently make
 
 Examples:
 
-- `ref+tfstate://bucket/path/to/some.tfstate/google_compute_disk.instance.id`
+- `ref+tfstategs://bucket/path/to/some.tfstate/google_compute_disk.instance.id`
 
 It allows to use Terraform state stored in GCS bucket with the direct URL to it. You can try to read the state with command: 
 
