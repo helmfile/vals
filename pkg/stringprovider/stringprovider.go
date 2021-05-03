@@ -31,7 +31,11 @@ func New(provider api.StaticConfig) (api.LazyLoadedStringProvider, error) {
 	case "gcpsecrets":
 		return gcpsecrets.New(provider), nil
 	case "tfstate":
-		return tfstate.New(provider), nil
+		return tfstate.New(provider, ""), nil
+	case "tfstategs":
+		return tfstate.New(provider, "gs"), nil
+	case "tfstates3":
+		return tfstate.New(provider, "s3"), nil
 	case "azurekeyvault":
 		return azurekeyvault.New(provider), nil
 	}
