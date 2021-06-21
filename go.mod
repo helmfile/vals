@@ -9,7 +9,7 @@ require (
 	github.com/Azure/go-autorest/autorest/adal v0.8.0 // indirect
 	github.com/Azure/go-autorest/autorest/azure/auth v0.4.0
 	github.com/aws/aws-sdk-go v1.38.35
-	github.com/fujiwara/tfstate-lookup v0.2.0
+	github.com/fujiwara/tfstate-lookup v0.2.3
 	github.com/google/go-cmp v0.5.5
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/hashicorp/vault/api v1.0.4
