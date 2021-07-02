@@ -17,7 +17,7 @@ require (
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/sirupsen/logrus v1.7.0 // indirect
 	github.com/smartystreets/goconvey v1.6.4 // indirect
-	go.mozilla.org/sops/v3 v3.6.1
+	go.mozilla.org/sops/v3 v3.7.1
 	google.golang.org/genproto v0.0.0-20210420162539-3c870d7478d2
 	gopkg.in/ini.v1 v1.51.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0 // indirect
