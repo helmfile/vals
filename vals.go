@@ -63,6 +63,7 @@ const (
 	ProviderTFState          = "tfstate"
 	ProviderTFStateGS        = "tfstategs"
 	ProviderTFStateS3        = "tfstates3"
+	ProviderTFStateAzureRM   = "tfstateazurerm"
 	ProviderAzureKeyVault    = "azurekeyvault"
 )
 
@@ -167,6 +168,9 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 			return p, nil
 		case ProviderTFStateS3:
 			p := tfstate.New(conf, "s3")
+			return p, nil
+		case ProviderTFStateAzureRM:
+			p := tfstate.New(conf, "azurerm")
 			return p, nil
 		case ProviderAzureKeyVault:
 			p := azurekeyvault.New(conf)
