@@ -317,7 +317,7 @@ which is equivalent to the following input for `vals`:
 $ echo 'foo: ref+tfstate://terraform.tfstate/output.mystack_apply.value' | vals eval -f -
 ```
 
-Remote backends like S3, GCS and Azurerm are also supported. When a remote backend is used in your terraform workspace, there should be a local file at `./terraform/terraform.tfstate` that contains the reference to the backend:
+Remote backends like S3, GCS and AzureRM blob store are also supported. When a remote backend is used in your terraform workspace, there should be a local file at `./terraform/terraform.tfstate` that contains the reference to the backend:
 
 ```
 {
