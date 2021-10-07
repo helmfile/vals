@@ -317,7 +317,7 @@ which is equivalent to the following input for `vals`:
 $ echo 'foo: ref+tfstate://terraform.tfstate/output.mystack_apply.value' | vals eval -f -
 ```
 
-Remote backends like S3 or GCS are also supported. When a remote backend is used in your terraform workspace, there should be a local file at `./terraform/terraform.tfstate` that contains the reference to the backend:
+Remote backends like S3, GCS and Azurerm are also supported. When a remote backend is used in your terraform workspace, there should be a local file at `./terraform/terraform.tfstate` that contains the reference to the backend:
 
 ```
 {
@@ -376,7 +376,25 @@ which is equivalent to the following input for `vals`:
 ```
 $ echo 'foo: ref+tfstates3://bucket-with-terraform-state/terraform.tfstate/module.vpc.aws_vpc.this[0].arn' | vals eval -f -
 ```
+### Terraform in AzureRM Blob storage (tfstateazurerm)
 
+- `ref+tfstateazurerm://{resource_group_name}/{storage_account_name}/{container_name}/{blob_name}.tfstate/RESOURCE_NAME`
+
+Examples:
+
+- `ref+tfstateazurerm://my_rg/my_storage_account/terraform-backend/unique.terraform.tfstate/output.virtual_network.name`
+
+It allows to use Terraform state stored in Azure Blob storage given the resource group, storage account, container name and blob name. You can try to read the state with command:
+
+```
+$ tfstate-lookup -s azurerm://my_rg/my_storage_account/terraform-backend/unique.terraform.tfstate output.virtual_network.name
+```
+
+which is equivalent to the following input for `vals`:
+
+```
+$ echo 'foo: ref+tfstateazurerm://my_rg/my_storage_account/terraform-backend/unique.terraform.tfstate/output.virtual_network.name' | vals eval -f -
+```
 ### SOPS
 
 - The whole content of a SOPS-encrypted file: `ref+sops://base64_data_or_path_to_file?key_type=[filepath|base64]&format=[binary|dotenv|yaml]`
