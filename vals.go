@@ -130,19 +130,19 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 			p := vault.New(conf)
 			return p, nil
 		case ProviderS3:
-			// vals+s3://foo/bar?region=ap-northeast-1#/baz
+			// ref+s3://foo/bar?region=ap-northeast-1#/baz
 			// 1. GetObject for the bucket foo and key bar
 			// 2. Then extracts the value for key baz(=/foo/bar/baz) from the result from step 1.
 			p := s3.New(conf)
 			return p, nil
 		case ProviderSSM:
-			// vals+awsssm://foo/bar?region=ap-northeast-1#/baz
+			// ref+awsssm://foo/bar?region=ap-northeast-1#/baz
 			// 1. GetParametersByPath for the prefix /foo/bar
 			// 2. Then extracts the value for key baz(=/foo/bar/baz) from the result from step 1.
 			p := ssm.New(conf)
 			return p, nil
 		case ProviderSecretsManager:
-			// vals+awssecrets://foo/bar?region=ap-northeast-1#/baz
+			// ref+awssecrets://foo/bar?region=ap-northeast-1#/baz
 			// 1. Get secret for key foo/bar, parse it as yaml
 			// 2. Then extracts the value for key baz) from the result from step 1.
 			p := awssecrets.New(conf)
