@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	FormatYAML = "yaml"
-	FormatRaw  = "raw"
+	FormatYAML             = "yaml"
+	FormatRaw              = "raw"
+	kubernetesJwtTokenPath = "/var/run/secrets/kubernetes.io/serviceaccount/token"
 )
 
 // Test procedure:
@@ -61,6 +62,8 @@ func New(cfg api.StaticConfig) *provider {
 	if p.AuthMethod == "" {
 		if os.Getenv("VAULT_AUTH_METHOD") == "approle" {
 			p.AuthMethod = "approle"
+		} else if os.Getenv("VAULT_AUTH_METHOD") == "kubernetes" {
+			p.AuthMethod = "kubernetes"
 		} else {
 			p.AuthMethod = "token"
 		}
@@ -212,6 +215,38 @@ func (p *provider) ensureClient() (*vault.Client, error) {
 			mount_point, ok := os.LookupEnv("VAULT_LOGIN_MOUNT_POINT")
 			if !ok {
 				mount_point = "/approle"
+			}
+
+			auth_path := filepath.Join("auth", mount_point, "login")
+
+			resp, err := cli.Logical().Write(auth_path, data)
+			if err != nil {
+				return nil, err
+			}
+
+			if resp.Auth == nil {
+				return nil, fmt.Errorf("no auth info returned")
+			}
+
+			cli.SetToken(resp.Auth.ClientToken)
+		} else if p.AuthMethod == "kubernetes" {
+			fd, err := os.Open(kubernetesJwtTokenPath)
+			defer fd.Close()
+			if err != nil {
+				return nil, fmt.Errorf("unable to read file containing service account token: %w", err)
+			}
+			jwt, err := ioutil.ReadAll(fd)
+			if err != nil {
+				return nil, fmt.Errorf("unable to read file containing service account token: %w", err)
+			}
+
+			data := map[string]interface{}{
+				"jwt":  string(jwt),
+				"role": p.RoleId,
+			}
+			mount_point, ok := os.LookupEnv("VAULT_KUBERNETES_MOUNT_POINT")
+			if !ok {
+				mount_point = "/kubernetes"
 			}
 
 			auth_path := filepath.Join("auth", mount_point, "login")
