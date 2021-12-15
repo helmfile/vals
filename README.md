@@ -169,6 +169,7 @@ EOF
 - [AWS Secrets Manager](#aws-secrets-manager)
 - [AWS S3](#aws-s3)
 - [GCP Secrets Manager](#gcp-secrets-manager)
+- [Google GCS](#google-gcs)
 - [SOPS](#sops) powered by [sops](https://github.com/mozilla/sops)
 - [Terraform (tfstate)](#terraform-tfstate) powered by [tfstate-lookup](https://github.com/fujiwara/tfstate-lookup)
 - [Echo](#echo)
@@ -266,6 +267,17 @@ Examples:
 - `ref+s3://mybucket/myyamlobj#/foo/bar`
 - `ref+s3://mybucket/mykey?region=us-west-2`
 - `ref+s3://mybucket/mykey?profile=prod`
+
+#### Google GCS
+- `ref+gcs://BUCKET/KEY/OF/OBJECT[?generation=ID]`
+- `ref+gcs://BUCKET/KEY/OF/OBJECT[?generation=ID]#/yaml_or_json_key/in/secret`
+
+Examples:
+
+- `ref+gcs://mybucket/mykey`
+- `ref+gcs://mybucket/myjsonobj#/foo/bar`
+- `ref+gcs://mybucket/myyamlobj#/foo/bar`
+- `ref+gcs://mybucket/mykey?generation=1639567476974625`
 
 ### GCP Secrets Manager
 

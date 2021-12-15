@@ -7,6 +7,7 @@ import (
 	"github.com/variantdev/vals/pkg/providers/awssecrets"
 	"github.com/variantdev/vals/pkg/providers/azurekeyvault"
 	"github.com/variantdev/vals/pkg/providers/gcpsecrets"
+	"github.com/variantdev/vals/pkg/providers/gcs"
 	"github.com/variantdev/vals/pkg/providers/s3"
 	"github.com/variantdev/vals/pkg/providers/sops"
 	"github.com/variantdev/vals/pkg/providers/ssm"
@@ -20,6 +21,8 @@ func New(provider api.StaticConfig) (api.LazyLoadedStringProvider, error) {
 	switch tpe {
 	case "s3":
 		return s3.New(provider), nil
+	case "gcs":
+		return gcs.New(provider), nil
 	case "ssm":
 		return ssm.New(provider), nil
 	case "vault":
