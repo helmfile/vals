@@ -8,8 +8,6 @@ import (
 
 	"cloud.google.com/go/storage"
 
-	"os"
-
 	"strings"
 	"time"
 
@@ -24,6 +22,7 @@ type provider struct {
 	ctx    context.Context
 }
 
+// New creates a new GCS provider
 func New(cfg api.StaticConfig) *provider {
 	p := &provider{}
 	p.Generation = cfg.String("generation")
@@ -31,6 +30,7 @@ func New(cfg api.StaticConfig) *provider {
 	return p
 }
 
+// Get secret string from GCS
 func (p *provider) GetString(key string) (string, error) {
 	var client *storage.Client
 	var err error
@@ -42,7 +42,7 @@ func (p *provider) GetString(key string) (string, error) {
 	if p.Generation != "" {
 		g, err := strconv.ParseInt(p.Generation, 10, 64)
 		if err != nil {
-			return "", fmt.Errorf("cannot convert generation to int64: %v\n", err)
+			return "", fmt.Errorf("cannot convert generation to int64: %v", err)
 		}
 		generation = g
 	}
@@ -91,6 +91,7 @@ func (p *provider) GetString(key string) (string, error) {
 	return string(slurp), nil
 }
 
+// Convert yaml to map interface and return the requested keys
 func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 	yamlData, err := p.GetString(key)
 	if err != nil {
@@ -107,6 +108,7 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 	return m, nil
 }
 
+// Check is versioning is enabled in the bucket
 func (p *provider) isVersioningEnabled(bucketName string) (bool, error) {
 	attrs, err := p.client.Bucket(bucketName).Attrs(p.ctx)
 	if err != nil {
@@ -114,8 +116,4 @@ func (p *provider) isVersioningEnabled(bucketName string) (bool, error) {
 	}
 
 	return attrs.VersioningEnabled, nil
-}
-
-func (p *provider) debugf(msg string, args ...interface{}) {
-	fmt.Fprintf(os.Stderr, msg+"\n", args...)
 }
