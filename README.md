@@ -40,7 +40,7 @@ Available Commands:
 Use "vals [command] --help" for more infomation about a command
 ```
 
-`vals` has a collection of providers that each an be referred with a URI scheme looks `vals+<TYPE>`.
+`vals` has a collection of providers that each an be referred with a URI scheme looks `ref+<TYPE>`.
 
 For this example, use the [Vault](https://www.terraform.io/docs/providers/vault/index.html) provider.
 
@@ -50,7 +50,7 @@ Let's start by writing some secret value to `Vault`:
 $ vault kv put secret/foo mykey=myvalue
 ```
 
-Now input the template of your YAML and refer to `vals`' Vault provider by using `vals+vault` in the URI scheme:
+Now input the template of your YAML and refer to `vals`' Vault provider by using `ref+vault` in the URI scheme:
 
 ```console
 $ VAULT_TOKEN=yourtoken VAULT_ADDR=http://127.0.0.1:8200/ \
@@ -497,9 +497,9 @@ This is safe to be committed into git because, as you've told to `vals`, `awsssm
 In the early days of this project, the original author has investigated if it was a good idea to introduce string interpolation like feature to vals:
 
 ```
-foo: xx${{ref "vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey" }}
+foo: xx${{ref "ref+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey" }}
 bar:
-  baz: yy${{ref "vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey" }}
+  baz: yy${{ref "ref+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey" }}
 ```
 
 But the idea had abandoned due to that it seemed to drive the momentum to vals being a full-fledged YAML templating engine. What if some users started wanting to use `vals` for transforming values with functions?
