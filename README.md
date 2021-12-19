@@ -40,7 +40,7 @@ Available Commands:
 Use "vals [command] --help" for more infomation about a command
 ```
 
-`vals` has a collection of providers that each an be referred with a URI scheme looks `vals+<TYPE>`.
+`vals` has a collection of providers that each an be referred with a URI scheme looks `ref+<TYPE>`.
 
 For this example, use the [Vault](https://www.terraform.io/docs/providers/vault/index.html) provider.
 
@@ -50,7 +50,7 @@ Let's start by writing some secret value to `Vault`:
 $ vault kv put secret/foo mykey=myvalue
 ```
 
-Now input the template of your YAML and refer to `vals`' Vault provider by using `vals+vault` in the URI scheme:
+Now input the template of your YAML and refer to `vals`' Vault provider by using `ref+vault` in the URI scheme:
 
 ```console
 $ VAULT_TOKEN=yourtoken VAULT_ADDR=http://127.0.0.1:8200/ \
@@ -329,7 +329,7 @@ which is equivalent to the following input for `vals`:
 $ echo 'foo: ref+tfstate://terraform.tfstate/output.mystack_apply.value' | vals eval -f -
 ```
 
-Remote backends like S3 or GCS are also supported. When a remote backend is used in your terraform workspace, there should be a local file at `./terraform/terraform.tfstate` that contains the reference to the backend:
+Remote backends like S3, GCS and AzureRM blob store are also supported. When a remote backend is used in your terraform workspace, there should be a local file at `./terraform/terraform.tfstate` that contains the reference to the backend:
 
 ```
 {
@@ -388,7 +388,25 @@ which is equivalent to the following input for `vals`:
 ```
 $ echo 'foo: ref+tfstates3://bucket-with-terraform-state/terraform.tfstate/module.vpc.aws_vpc.this[0].arn' | vals eval -f -
 ```
+### Terraform in AzureRM Blob storage (tfstateazurerm)
 
+- `ref+tfstateazurerm://{resource_group_name}/{storage_account_name}/{container_name}/{blob_name}.tfstate/RESOURCE_NAME`
+
+Examples:
+
+- `ref+tfstateazurerm://my_rg/my_storage_account/terraform-backend/unique.terraform.tfstate/output.virtual_network.name`
+
+It allows to use Terraform state stored in Azure Blob storage given the resource group, storage account, container name and blob name. You can try to read the state with command:
+
+```
+$ tfstate-lookup -s azurerm://my_rg/my_storage_account/terraform-backend/unique.terraform.tfstate output.virtual_network.name
+```
+
+which is equivalent to the following input for `vals`:
+
+```
+$ echo 'foo: ref+tfstateazurerm://my_rg/my_storage_account/terraform-backend/unique.terraform.tfstate/output.virtual_network.name' | vals eval -f -
+```
 ### SOPS
 
 - The whole content of a SOPS-encrypted file: `ref+sops://base64_data_or_path_to_file?key_type=[filepath|base64]&format=[binary|dotenv|yaml]`
@@ -491,9 +509,9 @@ This is safe to be committed into git because, as you've told to `vals`, `awsssm
 In the early days of this project, the original author has investigated if it was a good idea to introduce string interpolation like feature to vals:
 
 ```
-foo: xx${{ref "vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey" }}
+foo: xx${{ref "ref+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey" }}
 bar:
-  baz: yy${{ref "vals+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey" }}
+  baz: yy${{ref "ref+vault://127.0.0.1:8200/mykv/foo?proto=http#/mykey" }}
 ```
 
 But the idea had abandoned due to that it seemed to drive the momentum to vals being a full-fledged YAML templating engine. What if some users started wanting to use `vals` for transforming values with functions?

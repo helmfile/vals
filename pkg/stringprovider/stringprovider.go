@@ -39,6 +39,8 @@ func New(provider api.StaticConfig) (api.LazyLoadedStringProvider, error) {
 		return tfstate.New(provider, "gs"), nil
 	case "tfstates3":
 		return tfstate.New(provider, "s3"), nil
+	case "tfstateazurerm":
+		return tfstate.New(provider, "azurerm"), nil
 	case "azurekeyvault":
 		return azurekeyvault.New(provider), nil
 	}
