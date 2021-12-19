@@ -20,6 +20,7 @@ import (
 	"github.com/variantdev/vals/pkg/providers/echo"
 	"github.com/variantdev/vals/pkg/providers/file"
 	"github.com/variantdev/vals/pkg/providers/gcpsecrets"
+	"github.com/variantdev/vals/pkg/providers/gcs"
 	"github.com/variantdev/vals/pkg/providers/sops"
 	"github.com/variantdev/vals/pkg/providers/ssm"
 	"github.com/variantdev/vals/pkg/providers/tfstate"
@@ -54,6 +55,7 @@ const (
 
 	ProviderVault            = "vault"
 	ProviderS3               = "s3"
+	ProviderGCS              = "gcs"
 	ProviderSSM              = "awsssm"
 	ProviderSecretsManager   = "awssecrets"
 	ProviderSOPS             = "sops"
@@ -135,6 +137,12 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 			// 1. GetObject for the bucket foo and key bar
 			// 2. Then extracts the value for key baz(=/foo/bar/baz) from the result from step 1.
 			p := s3.New(conf)
+			return p, nil
+		case ProviderGCS:
+			// vals+gcs://foo/bar?generation=timestamp#/baz
+			// 1. GetObject for the bucket foo and key bar
+			// 2. Then extracts the value for key baz(=/foo/bar/baz) from the result from step 1.
+			p := gcs.New(conf)
 			return p, nil
 		case ProviderSSM:
 			// ref+awsssm://foo/bar?region=ap-northeast-1#/baz
