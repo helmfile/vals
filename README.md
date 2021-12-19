@@ -181,18 +181,28 @@ Please see [pkg/providers](https://github.com/variantdev/vals/tree/master/pkg/pr
 
 - `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT&token_file=PATH/TO/FILE&token_env=VAULT_TOKEN]#/fieldkey`
 - `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT&auth_method=approle&role_id=ce5e571a-f7d4-4c73-93dd-fd6922119839&secret_id=5c9194b9-585e-4539-a865-f45604bd6f56]#/fieldkey`
+- `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT&auth_method=kubernetes&role_id=K8S-ROLE`
 
-`address` defaults to the value of the `VAULT_ADDR` envvar.
-`auth_method` default to `token` and can also be set to the value of the `VAULT_AUTH_METHOD` envar.
-`role_id` defaults to the value of the `VAULT_ROLE_ID` envvar.
-`secret_id` defaults to the value of the `VAULT_SECRET_ID` envvar.
-`version` is the specific version of the secret to be obtained. Used when you want to get a previous content of the secret.
+* `address` defaults to the value of the `VAULT_ADDR` envvar.
+* `auth_method` default to `token` and can also be set to the value of the `VAULT_AUTH_METHOD` envar.
+* `role_id` defaults to the value of the `VAULT_ROLE_ID` envvar.
+* `secret_id` defaults to the value of the `VAULT_SECRET_ID` envvar.
+* `version` is the specific version of the secret to be obtained. Used when you want to get a previous content of the secret.
+
+### Authentication
+
+The `auth_method` or `VAULT_AUTH_METHOD` envar configures how `vals` authenticates to HashiCorp Vault. Currently only these options are supported:
+
+* [approle](https://www.vaultproject.io/docs/auth/approle#via-the-api): it requires you pass on a `role_id` together with a `secret_id`. 
+* [token](https://www.vaultproject.io/docs/auth/token): you just need creating and passing on a `VAULT_TOKEN`
+* [kubernetes](https://www.vaultproject.io/docs/auth/kubernetes): if you're running inside a Kubernetes cluster, you can use this option. It requires you [configure](https://www.vaultproject.io/docs/auth/kubernetes#configuration) a policy, a Kubernetes role, a service account and a JWT token. The login path can also be set using the environment variable `VAULT_KUBERNETES_MOUNT_POINT` (default is `/kubernetes`). You must also set `role_id` or `VAULT_ROLE_ID` envar to the Kubernetes role.
 
 Examples:
 
 - `ref+vault://mykv/foo#/bar?address=https://vault1.example.com:8200` reads the value for the field `bar` in the kv `foo` on Vault listening on `https://vault1.example.com` with the Vault token read from **the envvar `VAULT_TOKEN`, or the file `~/.vault_token` when the envvar is not set**
 - `ref+vault://mykv/foo#/bar?token_env=VAULT_TOKEN_VAULT1&address=https://vault1.example.com:8200` reads the value for the field `bar` in the kv `foo` on Vault listening on `https://vault1.example.com` with the Vault token read from **the envvar `VAULT_TOKEN_VAULT1`**
 - `ref+vault://mykv/foo#/bar?token_file=~/.vault_token_vault1&address=https://vault1.example.com:8200` reads the value for the field `bar` in the kv `foo` on Vault listening on `https://vault1.example.com` with the Vault token read from **the file `~/.vault_token_vault1`**
+- `ref+vault://mykv/foo#/bar?role_id=my-kube-role` using the Kubernetes role to log in to Vault
 
 ### AWS
 
