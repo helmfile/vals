@@ -162,7 +162,7 @@ foo: $(vault read mykv/foo -o json | jq -r .mykey)
 EOF
 ```
 
-## Suported Backends
+## Supported Backends
 
 - [Vault](#vault)
 - [AWS SSM Parameter Store](#aws-ssm-parameter-store)
