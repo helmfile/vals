@@ -194,7 +194,7 @@ Please see [pkg/providers](https://github.com/variantdev/vals/tree/master/pkg/pr
 
 The `auth_method` or `VAULT_AUTH_METHOD` envar configures how `vals` authenticates to HashiCorp Vault. Currently only these options are supported:
 
-* [approle](https://www.vaultproject.io/docs/auth/approle#via-the-api): it requires you pass on a `role_id` together with a `secret_id`. 
+* [approle](https://www.vaultproject.io/docs/auth/approle#via-the-api): it requires you pass on a `role_id` together with a `secret_id`.
 * [token](https://www.vaultproject.io/docs/auth/token): you just need creating and passing on a `VAULT_TOKEN`
 * [kubernetes](https://www.vaultproject.io/docs/auth/kubernetes): if you're running inside a Kubernetes cluster, you can use this option. It requires you [configure](https://www.vaultproject.io/docs/auth/kubernetes#configuration) a policy, a Kubernetes role, a service account and a JWT token. The login path can also be set using the environment variable `VAULT_KUBERNETES_MOUNT_POINT` (default is `/kubernetes`). You must also set `role_id` or `VAULT_ROLE_ID` envar to the Kubernetes role.
 
@@ -314,7 +314,7 @@ Examples:
 
 - `ref+tfstate://path/to/some.tfstate/aws_vpc.main.id`
 - `ref+tfstate://path/to/some.tfstate/module.mymodule.aws_vpc.main.id`
-- `ref+tfstate://path/to/some.tfstate/output.OUTPUT_NAME.value`
+- `ref+tfstate://path/to/some.tfstate/output.OUTPUT_NAME`
 - `ref+tfstate://path/to/some.tfstate/data.thetype.name.foo.bar`
 
 When you're using [terraform-aws-vpc](https://github.com/terraform-aws-modules/terraform-aws-vpc) to define a `module "vpc"` resource and you wanted to grab the first vpc ARN created by the module:
@@ -327,16 +327,16 @@ $ echo 'foo: ref+tfstate://terraform.tfstate/module.vpc.aws_vpc.this[0].arn' | v
 foo: arn:aws:ec2:us-east-2:ACCOUNT_ID:vpc/vpc-0cb48a12e4df7ad4c
 ```
 
-You can also grab a Terraform output by using `output.OUTPUT_NAME.value` like:
+You can also grab a Terraform output by using `output.OUTPUT_NAME` like:
 
 ```
-$ tfstate-lookup -s ./terraform.tfstate output.mystack_apply.value
+$ tfstate-lookup -s ./terraform.tfstate output.mystack_apply
 ```
 
 which is equivalent to the following input for `vals`:
 
 ```
-$ echo 'foo: ref+tfstate://terraform.tfstate/output.mystack_apply.value' | vals eval -f -
+$ echo 'foo: ref+tfstate://terraform.tfstate/output.mystack_apply' | vals eval -f -
 ```
 
 Remote backends like S3, GCS and AzureRM blob store are also supported. When a remote backend is used in your terraform workspace, there should be a local file at `./terraform/terraform.tfstate` that contains the reference to the backend:
@@ -365,7 +365,7 @@ Examples:
 
 - `ref+tfstategs://bucket/path/to/some.tfstate/google_compute_disk.instance.id`
 
-It allows to use Terraform state stored in GCS bucket with the direct URL to it. You can try to read the state with command: 
+It allows to use Terraform state stored in GCS bucket with the direct URL to it. You can try to read the state with command:
 
 ```
 $ tfstate-lookup -s gs://bucket-with-terraform-state/terraform.tfstate google_compute_disk.instance.source_image_id
@@ -386,7 +386,7 @@ Examples:
 
 - `ref+tfstates3://bucket/path/to/some.tfstate/aws_vpc.main.id`
 
-It allows to use Terraform state stored in AWS S3 bucket with the direct URL to it. You can try to read the state with command: 
+It allows to use Terraform state stored in AWS S3 bucket with the direct URL to it. You can try to read the state with command:
 
 ```
 $ tfstate-lookup -s s3://bucket-with-terraform-state/terraform.tfstate module.vpc.aws_vpc.this[0].arn
@@ -469,7 +469,7 @@ Examples:
 
 #### Authentication
 
-Vals aquires Azure credentials though Azure CLI or from environment variables. The easiest way is to run `az login`. Vals can then aquire the current credentials from `az` without further set up. 
+Vals aquires Azure credentials though Azure CLI or from environment variables. The easiest way is to run `az login`. Vals can then aquire the current credentials from `az` without further set up.
 
 Other authentication methods require information to be passed in environment variables. See [Azure SDK docs](https://docs.microsoft.com/en-us/azure/developer/go/azure-sdk-authorization#use-environment-based-authentication) and [auth.go](https://godoc.org/github.com/Azure/go-autorest/autorest/azure/auth#NewAuthorizerFromEnvironment) for the full list of supported environment variables.
 
