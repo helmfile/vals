@@ -170,6 +170,8 @@ github.com/form3tech-oss/jwt-go v3.2.2+incompatible/go.mod h1:pbq4aXjuKjdthFRnoD
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/fujiwara/tfstate-lookup v0.4.0 h1:AaubXvolethCndWpZ+c/Sibm6J4SCIlSxcxvn6cYon4=
 github.com/fujiwara/tfstate-lookup v0.4.0/go.mod h1:F56Bz3W497ZJA0ijFLVgcYeAVuhtbzvV6/hMtu6f2Ek=
+github.com/fujiwara/tfstate-lookup v0.4.2 h1:RmhlHIMLVqNWHxaBasap+L5LO7pKorAbpIVQrktYCzY=
+github.com/fujiwara/tfstate-lookup v0.4.2/go.mod h1:F56Bz3W497ZJA0ijFLVgcYeAVuhtbzvV6/hMtu6f2Ek=
 github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
 github.com/go-asn1-ber/asn1-ber v1.3.1/go.mod h1:hEBeB/ic+5LoWskz+yKT7vGhhPYkProFKoKdwZRWMe0=
 github.com/go-gl/glfw v0.0.0-20190409004039-e6da0acd62b1/go.mod h1:vR7hzQXu2zJy9AVAgeJqvqgH9Q5CA+iKCZ2gyEVpxRU=
