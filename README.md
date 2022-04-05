@@ -417,6 +417,27 @@ which is equivalent to the following input for `vals`:
 ```
 $ echo 'foo: ref+tfstateazurerm://my_rg/my_storage_account/terraform-backend/unique.terraform.tfstate/output.virtual_network.name' | vals eval -f -
 ```
+
+### Terraform in Terraform Cloud / Terraform Enterprise (tfstateremote)
+
+- `ref+tfstateremote://app.terraform.io/{org}/{myworkspace}/RESOURCE_NAME`
+
+Examples:
+
+- `ref+tfstateremote://app.terraform.io/myorg/myworkspace/output.virtual_network.name`
+
+It allows to use Terraform state stored in Terraform Cloud / Terraform Enterprise given the resource group, the organization and the workspace. You can try to read the state with command (with exported variable `TFE_TOKEN`):
+
+```
+$ tfstate-lookup -s remote://app.terraform.io/myorg/myworkspace output.virtual_network.name
+```
+
+which is equivalent to the following input for `vals`:
+
+```
+$ echo 'foo: ref+tfstateremote://app.terraform.io/myorg/myworkspace/output.virtual_network.name' | vals eval -f -
+```
+
 ### SOPS
 
 - The whole content of a SOPS-encrypted file: `ref+sops://base64_data_or_path_to_file?key_type=[filepath|base64]&format=[binary|dotenv|yaml]`
