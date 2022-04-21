@@ -5,7 +5,7 @@ builds:
     env:
       - CGO_ENABLED=0
     ldflags:
-      - -s -w -X github.com/sherifkayad/vals/Version={{.Version}}
+      - -s -w -X github.com/variantdev/vals/Version={{.Version}}
     goos:
       - darwin
       - linux
