@@ -12,8 +12,8 @@ builds:
       - windows
     goarch:
       - amd64
-      - arm
       - arm64
+      - "386"
 changelog:
   filters:
     # commit messages matching the regexp listed here will be removed from
