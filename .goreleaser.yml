@@ -5,7 +5,15 @@ builds:
     env:
       - CGO_ENABLED=0
     ldflags:
-      - -s -w -X github.com/variantdev/vals/Version={{.Version}}
+      - -s -w -X github.com/sherifkayad/vals/Version={{.Version}}
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm
+      - arm64
 changelog:
   filters:
     # commit messages matching the regexp listed here will be removed from
