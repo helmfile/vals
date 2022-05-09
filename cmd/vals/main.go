@@ -6,9 +6,15 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"os"
+
 	"github.com/variantdev/vals"
 	"gopkg.in/yaml.v3"
-	"os"
+)
+
+var (
+	Version   string
+	GitCommit string
 )
 
 func flagUsage() {
@@ -22,6 +28,7 @@ Available Commands:
   exec		Populates the environment variables and executes the command
   env		Renders environment variables to be consumed by eval or a tool like direnv
   ksdecode	Decode YAML document(s) by converting Secret resources' "data" to "stringData" for use with "vals eval"
+  version	Print vals version
 
 Use "vals [command] --help" for more infomation about a command
 `
@@ -57,6 +64,7 @@ func main() {
 	CmdExec := "exec"
 	CmdEnv := "env"
 	CmdKsDecode := "ksdecode"
+	CmdVersion := "version"
 
 	if len(os.Args) == 1 {
 		flag.Usage()
@@ -153,6 +161,13 @@ func main() {
 				fmt.Println("---")
 			}
 		}
+	case CmdVersion:
+		if len(Version) == 0 {
+			fmt.Println("Version: dev")
+		} else {
+			fmt.Println("Version:", Version)
+		}
+		fmt.Println("Git Commit:", GitCommit)
 	default:
 		flag.Usage()
 	}
