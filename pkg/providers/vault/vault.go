@@ -26,6 +26,7 @@ type provider struct {
 	client *vault.Client
 
 	Address    string
+	Namespace  string
 	Proto      string
 	Host       string
 	TokenEnv   string
@@ -56,6 +57,7 @@ func New(cfg api.StaticConfig) *provider {
 			p.Address = os.Getenv("VAULT_ADDR")
 		}
 	}
+	p.Namespace = cfg.String("namespace")
 	p.TokenEnv = cfg.String("token_env")
 	p.TokenFile = cfg.String("token_file")
 	p.AuthMethod = cfg.String("auth_method")
@@ -175,6 +177,9 @@ func (p *provider) ensureClient() (*vault.Client, error) {
 		if err != nil {
 			p.debugf("Vault connections failed")
 			return nil, fmt.Errorf("Cannot create Vault Client: %v", err)
+		}
+		if p.Namespace != "" {
+			cli.setNamespace(p.Namespace)
 		}
 
 		if p.AuthMethod == "token" {
