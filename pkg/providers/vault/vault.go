@@ -179,7 +179,7 @@ func (p *provider) ensureClient() (*vault.Client, error) {
 			return nil, fmt.Errorf("Cannot create Vault Client: %v", err)
 		}
 		if p.Namespace != "" {
-			cli.setNamespace(p.Namespace)
+			cli.SetNamespace(p.Namespace)
 		}
 
 		if p.AuthMethod == "token" {
