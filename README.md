@@ -175,6 +175,7 @@ EOF
 - [Echo](#echo)
 - [File](#file)
 - [Azure Key Vault](#azure-key-vault)
+- [EnvSubst](#EnvSubst)
 
 Please see [pkg/providers](https://github.com/variantdev/vals/tree/master/pkg/providers) for the implementations of all the providers. The package names corresponds to the URI schemes.
 
@@ -488,6 +489,17 @@ Examples:
 - `ref+azurekeyvault://my-vault/secret-a/ba4f196b15f644cd9e949896a21bab0d`
 - `ref+azurekeyvault://gov-cloud-test.vault.usgovcloudapi.net/secret-b`
 
+### EnvSubst
+
+Environment variables substitution.
+
+- `ref+envsubst://$VAR1`
+
+Examples:
+
+- `ref+envsubst://$VAR1` loads environment variables `$VAR1`
+ 
+ 
 #### Authentication
 
 Vals aquires Azure credentials though Azure CLI or from environment variables. The easiest way is to run `az login`. Vals can then aquire the current credentials from `az` without further set up.

@@ -8,6 +8,7 @@ require (
 	github.com/Azure/azure-sdk-for-go v56.2.0+incompatible
 	github.com/Azure/go-autorest/autorest v0.11.19
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.8
+	github.com/a8m/envsubst v1.3.0
 	github.com/aws/aws-sdk-go v1.40.28
 	github.com/fujiwara/tfstate-lookup v0.4.2
 	github.com/google/go-cmp v0.5.5
@@ -20,6 +21,5 @@ require (
 	go.mozilla.org/sops/v3 v3.7.1
 	google.golang.org/genproto v0.0.0-20210420162539-3c870d7478d2
 	gopkg.in/ini.v1 v1.51.0 // indirect
-	gopkg.in/yaml.v2 v2.3.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107172259-749611fa9fcc
 )
