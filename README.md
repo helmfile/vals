@@ -180,11 +180,12 @@ Please see [pkg/providers](https://github.com/variantdev/vals/tree/master/pkg/pr
 
 ### Vault
 
-- `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT&token_file=PATH/TO/FILE&token_env=VAULT_TOKEN]#/fieldkey`
+- `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT&token_file=PATH/TO/FILE&token_env=VAULT_TOKEN&namespace=VAULT_NAMESPACE]#/fieldkey`
 - `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT&auth_method=approle&role_id=ce5e571a-f7d4-4c73-93dd-fd6922119839&secret_id=5c9194b9-585e-4539-a865-f45604bd6f56]#/fieldkey`
 - `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT&auth_method=kubernetes&role_id=K8S-ROLE`
 
 * `address` defaults to the value of the `VAULT_ADDR` envvar.
+* `namespace` defaults to the value of the `VAULT_NAMESPACE` envvar.
 * `auth_method` default to `token` and can also be set to the value of the `VAULT_AUTH_METHOD` envar.
 * `role_id` defaults to the value of the `VAULT_ROLE_ID` envvar.
 * `secret_id` defaults to the value of the `VAULT_SECRET_ID` envvar.
@@ -201,7 +202,7 @@ The `auth_method` or `VAULT_AUTH_METHOD` envar configures how `vals` authenticat
 Examples:
 
 - `ref+vault://mykv/foo#/bar?address=https://vault1.example.com:8200` reads the value for the field `bar` in the kv `foo` on Vault listening on `https://vault1.example.com` with the Vault token read from **the envvar `VAULT_TOKEN`, or the file `~/.vault_token` when the envvar is not set**
-- `ref+vault://mykv/foo#/bar?token_env=VAULT_TOKEN_VAULT1&address=https://vault1.example.com:8200` reads the value for the field `bar` in the kv `foo` on Vault listening on `https://vault1.example.com` with the Vault token read from **the envvar `VAULT_TOKEN_VAULT1`**
+- `ref+vault://mykv/foo#/bar?token_env=VAULT_TOKEN_VAULT1&namespace=ns1&address=https://vault1.example.com:8200` reads the value for the field `bar` from namespace `ns1` in the kv `foo` on Vault listening on `https://vault1.example.com` with the Vault token read from **the envvar `VAULT_TOKEN_VAULT1`**
 - `ref+vault://mykv/foo#/bar?token_file=~/.vault_token_vault1&address=https://vault1.example.com:8200` reads the value for the field `bar` in the kv `foo` on Vault listening on `https://vault1.example.com` with the Vault token read from **the file `~/.vault_token_vault1`**
 - `ref+vault://mykv/foo#/bar?role_id=my-kube-role` using the Kubernetes role to log in to Vault
 
