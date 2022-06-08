@@ -30,7 +30,7 @@ Available Commands:
   ksdecode	Decode YAML document(s) by converting Secret resources' "data" to "stringData" for use with "vals eval"
   version	Print vals version
 
-Use "vals [command] --help" for more infomation about a command
+Use "vals [command] --help" for more information about a command
 `
 
 	fmt.Fprintf(os.Stderr, "%s\n", text)

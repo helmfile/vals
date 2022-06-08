@@ -37,7 +37,7 @@ Available Commands:
   env		Renders environment variables to be consumed by eval or a tool like direnv
   ksdecode	Decode YAML document(s) by converting Secret resources' "data" to "stringData" for use with "vals eval"
 
-Use "vals [command] --help" for more infomation about a command
+Use "vals [command] --help" for more information about a command
 ```
 
 `vals` has a collection of providers that each an be referred with a URI scheme looks `ref+<TYPE>`.
