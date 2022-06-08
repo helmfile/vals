@@ -207,10 +207,12 @@ Examples:
 
 ### AWS
 
-There are two providers for AWS:
+There are three providers for AWS:
 
 - SSM Parameter Store
 - Secrets Manager
+- S3
+- KMS
 
 Both provider have support for specifying AWS region and profile via envvars or options:
 
@@ -277,6 +279,13 @@ Examples:
 - `ref+s3://mybucket/myyamlobj#/foo/bar`
 - `ref+s3://mybucket/mykey?region=us-west-2`
 - `ref+s3://mybucket/mykey?profile=prod`
+
+#### AWS KMS
+
+- `ref+awskms://BASE64CIPHERTEXT[?region=REGION&profile=AWS_PROFILE]`
+
+Examples:
+- `foo: ref+awskms://AQICAHhyi8hQoGLOE46PVJyinH...WwHKT0i3H0znHRHwfyC7AGZ8ek=`
 
 #### Google GCS
 - `ref+gcs://BUCKET/KEY/OF/OBJECT[?generation=ID]`
