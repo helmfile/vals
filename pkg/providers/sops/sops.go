@@ -3,6 +3,7 @@ package sops
 import (
 	"fmt"
 	"os"
+	"encoding/base64"
 
 	"github.com/variantdev/vals/pkg/api"
 	"gopkg.in/yaml.v3"
@@ -62,7 +63,11 @@ func (p *provider) format(defaultFormat string) string {
 
 func (p *provider) decrypt(keyOrData, format string) ([]byte, error) {
 	if p.KeyType == "base64" {
-		return decrypt.Data([]byte(keyOrData), format)
+		blob, err := base64.StdEncoding.DecodeString(keyOrData)
+		if err != nil {
+			return nil, err
+		}
+		return decrypt.Data(blob, format)
 	} else if p.KeyType == "filepath" {
 		return decrypt.File(keyOrData, format)
 	} else {
