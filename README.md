@@ -490,6 +490,11 @@ $ echo 'foo: ref+tfstateremote://app.terraform.io/myorg/myworkspace/output.virtu
 - The whole content of a SOPS-encrypted file: `ref+sops://base64_data_or_path_to_file?key_type=[filepath|base64]&format=[binary|dotenv|yaml]`
 - The value for the specific path in an encrypted YAML/JSON document: `ref+sops://base64_data_or_path_to_file#/json_or_yaml_key/in/the_encrypted_doc`
 
+Note: When using an inline base64-encoded sops "file", be sure to use URL-safe Base64 encoding.
+URL-safe base64 encoding is the same as "traditional" base64 encoding, except it uses `_` and `-` in
+place of `/` and `+`, respectively. For example, you might use the following command:
+`sops -e <(echo "foo") | base64 -w0 | tr '/+' '_-'`
+
 Examples:
 
 - `ref+sops://path/to/file` reads `path/to/file` as `binary` input
@@ -544,8 +549,8 @@ Environment variables substitution.
 Examples:
 
 - `ref+envsubst://$VAR1` loads environment variables `$VAR1`
- 
- 
+
+
 #### Authentication
 
 Vals aquires Azure credentials though Azure CLI or from environment variables. The easiest way is to run `az login`. Vals can then aquire the current credentials from `az` without further set up.

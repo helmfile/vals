@@ -63,7 +63,7 @@ func (p *provider) format(defaultFormat string) string {
 
 func (p *provider) decrypt(keyOrData, format string) ([]byte, error) {
 	if p.KeyType == "base64" {
-		blob, err := base64.StdEncoding.DecodeString(keyOrData)
+		blob, err := base64.URLEncoding.DecodeString(keyOrData)
 		if err != nil {
 			return nil, err
 		}
