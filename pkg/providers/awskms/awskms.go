@@ -1,15 +1,14 @@
 package awskms
 
 import (
-	"fmt"
-	"strings"
-	"os"
 	"encoding/base64"
+	"fmt"
+	"os"
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/variantdev/vals/pkg/api"
 	"github.com/aws/aws-sdk-go/service/kms"
+	"github.com/variantdev/vals/pkg/api"
 	"github.com/variantdev/vals/pkg/awsclicompat"
 )
 
