@@ -207,7 +207,7 @@ Examples:
 
 ### AWS
 
-There are three providers for AWS:
+There are four providers for AWS:
 
 - SSM Parameter Store
 - Secrets Manager
