@@ -309,6 +309,7 @@ Valid value formats for `key` include:
 * A URL-encoded key id ARN: `arn%3Aaws%3Akms%3Aus-east-2%3A111122223333%3Akey%2F1234abcd-12ab-34cd-56ef-1234567890ab`
 * A URL-encoded key alias: `alias%2FExampleAlias`
 * A URL-encoded key alias ARN: `arn%3Aaws%3Akms%3Aus-east-2%3A111122223333%3Aalias%2FExampleAlias`
+
 For ciphertext encrypted with a symmetric key, the `key` field may be omitted. For ciphertext
 encrypted with a key in your own account, a plain key id or alias can be used. If the encryption
 key is from another AWS account, you must use the key or alias ARN.
