@@ -19,6 +19,7 @@ import (
 	"github.com/variantdev/vals/pkg/providers/awssecrets"
 	"github.com/variantdev/vals/pkg/providers/azurekeyvault"
 	"github.com/variantdev/vals/pkg/providers/echo"
+	"github.com/variantdev/vals/pkg/providers/envsubst"
 	"github.com/variantdev/vals/pkg/providers/file"
 	"github.com/variantdev/vals/pkg/providers/gcpsecrets"
 	"github.com/variantdev/vals/pkg/providers/gcs"
@@ -70,6 +71,7 @@ const (
 	ProviderTFStateAzureRM   = "tfstateazurerm"
 	ProviderTFStateRemote    = "tfstateremote"
 	ProviderAzureKeyVault    = "azurekeyvault"
+	ProviderEnvSubst         = "envsubst"
 )
 
 type Evaluator interface {
@@ -191,6 +193,9 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 			return p, nil
 		case ProviderKms:
 			p := awskms.New(conf)
+			return p, nil
+		case ProviderEnvSubst:
+			p := envsubst.New(conf)
 			return p, nil
 		}
 		return nil, fmt.Errorf("no provider registered for scheme %q", scheme)
@@ -351,6 +356,7 @@ var KnownValuesTypes = []string{
 	ProviderTFState,
 	ProviderFile,
 	ProviderEcho,
+	ProviderEnvSubst,
 }
 
 type ctx struct {
