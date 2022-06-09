@@ -175,7 +175,7 @@ EOF
 - [Echo](#echo)
 - [File](#file)
 - [Azure Key Vault](#azure-key-vault)
-- [EnvSubst](#EnvSubst)
+- [EnvSubst](#envsubst)
 
 Please see [pkg/providers](https://github.com/variantdev/vals/tree/master/pkg/providers) for the implementations of all the providers. The package names corresponds to the URI schemes.
 
