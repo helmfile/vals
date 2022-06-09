@@ -208,10 +208,12 @@ Examples:
 
 ### AWS
 
-There are two providers for AWS:
+There are four providers for AWS:
 
 - SSM Parameter Store
 - Secrets Manager
+- S3
+- KMS
 
 Both provider have support for specifying AWS region and profile via envvars or options:
 
@@ -278,6 +280,49 @@ Examples:
 - `ref+s3://mybucket/myyamlobj#/foo/bar`
 - `ref+s3://mybucket/mykey?region=us-west-2`
 - `ref+s3://mybucket/mykey?profile=prod`
+
+#### AWS KMS
+
+- `ref+awskms://BASE64CIPHERTEXT[?region=REGION&profile=AWS_PROFILE&alg=ENCRYPTION_ALGORITHM&key=KEY_ID&context=URL_ENCODED_JSON]`
+- `ref+awskms://BASE64CIPHERTEXT[?region=REGION&profile=AWS_PROFILE&alg=ENCRYPTION_ALGORITHM&key=KEY_ID&context=URL_ENCODED_JSON]#/yaml_or_json_key/in/secret`
+
+Decrypts the URL-safe base64-encoded ciphertext using AWS KMS. Note that URL-safe base64 encoding is
+the same as "traditional" base64 encoding, except it uses `_` and `-` in place of `/` and `+`, respectively.
+For example, to get a URL-safe base64-encoded ciphertext using the AWS CLI, you might run
+```
+aws kms encrypt \
+  --key-id alias/example \
+  --plaintext $(echo -n "hello, world" | base64 -w0) \
+  --query CiphertextBlob \
+  --output text |
+  tr '/+' '_-'
+```
+
+Valid values for `alg` include:
+* `SYMMETRIC_DEFAULT` (the default)
+* `RSAES_OAEP_SHA_1`
+* `RSAES_OAEP_SHA_256`
+
+Valid value formats for `key` include:
+* A key id `1234abcd-12ab-34cd-56ef-1234567890ab`
+* A URL-encoded key id ARN: `arn%3Aaws%3Akms%3Aus-east-2%3A111122223333%3Akey%2F1234abcd-12ab-34cd-56ef-1234567890ab`
+* A URL-encoded key alias: `alias%2FExampleAlias`
+* A URL-encoded key alias ARN: `arn%3Aaws%3Akms%3Aus-east-2%3A111122223333%3Aalias%2FExampleAlias`
+For ciphertext encrypted with a symmetric key, the `key` field may be omitted. For ciphertext
+encrypted with a key in your own account, a plain key id or alias can be used. If the encryption
+key is from another AWS account, you must use the key or alias ARN.
+
+Use the `context` parameter to optionally specify the encryption context used when encrypting the
+ciphertext. Format it by URL-encoding the JSON representation of the encryption context. For example,
+if the encryption context is `{"foo":"bar","hello":"world"}`, then you would represent that as
+`context=%7B%22foo%22%3A%22bar%22%2C%22hello%22%2C%22world%22%7D`.
+
+Examples:
+- `ref+awskms://AQICAHhy_i8hQoGLOE46PVJyinH...WwHKT0i3H0znHRHwfyC7AGZ8ek=`
+- `ref+awskms://AQICAHhy...nHRHwfyC7AGZ8ek=#/foo/bar`
+- `ref+awskms://AQICAHhy...WwHKT0i3AGZ8ek=?context=%7B%22foo%22%3A%22bar%22%2C%22hello%22%2C%22world%22%7D`
+- `ref+awskms://AQICAVJyinH...WwHKT0iC7AGZ8ek=?alg=RSAES_OAEP_SHA1&key=alias%2FExampleAlias`
+- `ref+awskms://AQICA...fyC7AGZ8ek=?alg=RSAES_OAEP_SHA256&key=arn%3Aaws%3Akms%3Aus-east-2%3A111122223333%3Akey%2F1234abcd-12ab-34cd-56ef-1234567890ab&context=%7B%22foo%22%3A%22bar%22%2C%22hello%22%2C%22world%22%7D`
 
 #### Google GCS
 - `ref+gcs://BUCKET/KEY/OF/OBJECT[?generation=ID]`

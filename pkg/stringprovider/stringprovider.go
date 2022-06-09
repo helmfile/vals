@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/variantdev/vals/pkg/api"
+	"github.com/variantdev/vals/pkg/providers/awskms"
 	"github.com/variantdev/vals/pkg/providers/awssecrets"
 	"github.com/variantdev/vals/pkg/providers/azurekeyvault"
 	"github.com/variantdev/vals/pkg/providers/gcpsecrets"
@@ -27,6 +28,8 @@ func New(provider api.StaticConfig) (api.LazyLoadedStringProvider, error) {
 		return ssm.New(provider), nil
 	case "vault":
 		return vault.New(provider), nil
+	case "awskms":
+		return awskms.New(provider), nil
 	case "awssecrets":
 		return awssecrets.New(provider), nil
 	case "sops":
