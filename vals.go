@@ -15,6 +15,7 @@ import (
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/variantdev/vals/pkg/api"
 	"github.com/variantdev/vals/pkg/expansion"
+	"github.com/variantdev/vals/pkg/providers/awskms"
 	"github.com/variantdev/vals/pkg/providers/awssecrets"
 	"github.com/variantdev/vals/pkg/providers/azurekeyvault"
 	"github.com/variantdev/vals/pkg/providers/echo"
@@ -58,6 +59,7 @@ const (
 	ProviderS3               = "s3"
 	ProviderGCS              = "gcs"
 	ProviderSSM              = "awsssm"
+	ProviderKms              = "awskms"
 	ProviderSecretsManager   = "awssecrets"
 	ProviderSOPS             = "sops"
 	ProviderEcho             = "echo"
@@ -188,6 +190,9 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 			return p, nil
 		case ProviderAzureKeyVault:
 			p := azurekeyvault.New(conf)
+			return p, nil
+		case ProviderKms:
+			p := awskms.New(conf)
 			return p, nil
 		case ProviderEnvSubst:
 			p := envsubst.New(conf)
