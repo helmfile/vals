@@ -10,7 +10,7 @@ require (
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.8
 	github.com/a8m/envsubst v1.3.0
 	github.com/aws/aws-sdk-go v1.40.28
-	github.com/fujiwara/tfstate-lookup v0.4.2
+	github.com/fujiwara/tfstate-lookup v0.4.4
 	github.com/google/go-cmp v0.5.5
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/hashicorp/vault/api v1.0.4
