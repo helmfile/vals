@@ -5,7 +5,7 @@ builds:
     env:
       - CGO_ENABLED=0
     ldflags:
-      - -s -w -X github.com/variantdev/vals/Version={{.Version}}
+      - -s -w -X main.Version={{.Version}} -X main.GitCommit={{.Commit}}
     goos:
       - darwin
       - linux
