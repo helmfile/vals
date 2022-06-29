@@ -101,7 +101,7 @@ func main() {
 	case CmdEnv:
 		execEnv := flag.NewFlagSet(CmdEnv, flag.ExitOnError)
 		f := execEnv.String("f", "", "YAML/JSON file to be loaded to set envvars")
-		export := execEnv.Bool("export", false, "Prepend `export`s to each line")
+		export := execEnv.Bool("export", false, "Prepend 'export' to each line")
 		execEnv.Parse(os.Args[2:])
 
 		m := readOrFail(f)
