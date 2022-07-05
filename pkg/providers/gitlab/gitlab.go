@@ -23,8 +23,9 @@ type gitlabSecret struct {
 }
 
 type provider struct {
-	Scheme    string
-	SSLVerify bool
+	Scheme     string
+	SSLVerify  bool
+	APIVersion string
 }
 
 func New(cfg api.StaticConfig) *provider {
@@ -40,6 +41,12 @@ func New(cfg api.StaticConfig) *provider {
 		p.SSLVerify = true
 	}
 
+	if a := cfg.String("api_version"); a == "" {
+		p.APIVersion = "v4"
+	} else {
+		p.APIVersion = a
+	}
+
 	return p
 }
 
@@ -51,9 +58,12 @@ func (p *provider) GetString(key string) (string, error) {
 		return "", errors.New("Missing GITLAB_TOKEN environment variable")
 	}
 
-	url := fmt.Sprintf("%s://%s/api/v4/projects/%s/variables/%s",
+	url := fmt.Sprintf("%s://%s/api/%s/projects/%s/variables/%s",
 		p.Scheme,
-		splits[0], splits[1], splits[2])
+		splits[0],
+		p.APIVersion,
+		splits[1],
+		splits[2])
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: p.SSLVerify},

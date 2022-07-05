@@ -556,7 +556,8 @@ Examples:
 
 For this provider to work you require an [access token](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html) exported as the environment variable `GITLAB_TOKEN`.
 
-- `ref+gitlab://my-gitlab-server.com/project_id/secret_name?[ssl_verify=false&scheme=https]`
+
+- `ref+gitlab://my-gitlab-server.com/project_id/secret_name?[ssl_verify=false&scheme=https&api_version=v4]`
 
 Examples:
 
