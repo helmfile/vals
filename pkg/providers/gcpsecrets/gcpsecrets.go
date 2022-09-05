@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -16,16 +17,18 @@ import (
 
 // Format: ref+gcpsecrets://project/mykey[?version=VERSION]#/yaml_or_json_key/in/secret
 type provider struct {
-	client  *sm.Client
-	ctx     context.Context
-	version string
+	client   *sm.Client
+	ctx      context.Context
+	version  string
+	optional bool
 }
 
 func New(cfg api.StaticConfig) *provider {
 	ctx := context.Background()
 
 	p := &provider{
-		ctx: ctx,
+		ctx:      ctx,
+		optional: false,
 	}
 
 	version := cfg.String("version")
@@ -33,6 +36,14 @@ func New(cfg api.StaticConfig) *provider {
 		p.version = "latest"
 	} else {
 		p.version = version
+	}
+
+	optional := cfg.String("optional")
+	if optional != "" {
+		val, err := strconv.ParseBool(optional)
+		if err == nil {
+			p.optional = val
+		}
 	}
 
 	return p
@@ -80,6 +91,9 @@ func (p *provider) getSecretBytes(key string) ([]byte, error) {
 		},
 	)
 	if err != nil {
+		if p.optional {
+			return nil, nil
+		}
 		return nil, fmt.Errorf("failed to get secret: %w", err)
 	}
 
