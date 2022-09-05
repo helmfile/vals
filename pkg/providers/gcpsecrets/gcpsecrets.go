@@ -15,12 +15,13 @@ import (
 	"github.com/variantdev/vals/pkg/api"
 )
 
-// Format: ref+gcpsecrets://project/mykey[?version=VERSION]#/yaml_or_json_key/in/secret
+// Format: ref+gcpsecrets://project/mykey[?version=VERSION][&fallback=valuewhenkeyisnotfound]#/yaml_or_json_key/in/secret
 type provider struct {
 	client   *sm.Client
 	ctx      context.Context
 	version  string
 	optional bool
+	fallback *string
 }
 
 func New(cfg api.StaticConfig) *provider {
@@ -44,6 +45,11 @@ func New(cfg api.StaticConfig) *provider {
 		if err == nil {
 			p.optional = val
 		}
+	}
+
+	if cfg.Exists("fallback") {
+		fallback := cfg.String("fallback")
+		p.fallback = &fallback
 	}
 
 	return p
@@ -94,6 +100,11 @@ func (p *provider) getSecretBytes(key string) ([]byte, error) {
 		if p.optional {
 			return nil, nil
 		}
+
+		if p.fallback != nil {
+			return []byte(*p.fallback), nil
+		}
+
 		return nil, fmt.Errorf("failed to get secret: %w", err)
 	}
 

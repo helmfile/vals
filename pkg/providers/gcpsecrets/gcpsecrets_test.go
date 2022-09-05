@@ -1,11 +1,14 @@
 package gcpsecrets
 
 import (
-	config2 "github.com/variantdev/vals/pkg/config"
 	"testing"
+
+	config2 "github.com/variantdev/vals/pkg/config"
 )
 
 func Test_New(t *testing.T) {
+	defaultVal := "default-value"
+
 	tests := []struct {
 		name    string
 		options map[string]interface{}
@@ -13,6 +16,8 @@ func Test_New(t *testing.T) {
 	}{
 		{"latest", map[string]interface{}{"version": "latest"}, provider{version: "latest", optional: false}},
 		{"optional", map[string]interface{}{"version": "latest", "optional": true}, provider{version: "latest", optional: true}},
+		{"latest", map[string]interface{}{"version": "latest"}, provider{version: "latest", fallback: nil}},
+		{"fallback", map[string]interface{}{"version": "latest", "fallback": defaultVal}, provider{version: "latest", fallback: &defaultVal}},
 	}
 
 	for _, tt := range tests {
