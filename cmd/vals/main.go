@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	Version   string
-	GitCommit string
+	version string
+	commit  string
 )
 
 func flagUsage() {
@@ -162,12 +162,12 @@ func main() {
 			}
 		}
 	case CmdVersion:
-		if len(Version) == 0 {
+		if len(version) == 0 {
 			fmt.Println("Version: dev")
 		} else {
-			fmt.Println("Version:", Version)
+			fmt.Println("Version:", version)
 		}
-		fmt.Println("Git Commit:", GitCommit)
+		fmt.Println("Git Commit:", commit)
 	default:
 		flag.Usage()
 	}

@@ -1,6 +1,6 @@
 Version := $(shell git describe --tags --dirty)
 GitCommit := $(shell git rev-parse HEAD)
-LDFLAGS := "-X main.Version=$(Version) -X main.GitCommit=$(GitCommit)"
+LDFLAGS := "-X main.version=$(Version) -X main.commit=$(GitCommit)"
 
 build:
 	go build -ldflags $(LDFLAGS) -o bin/vals ./cmd/vals
