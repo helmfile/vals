@@ -3,23 +3,23 @@ package azurekeyvault
 import (
 	"context"
 	"fmt"
-	"os"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/keyvault/azsecrets"
 	"strings"
 
-	"github.com/Azure/azure-sdk-for-go/profiles/latest/keyvault/keyvault"
-	autorest "github.com/Azure/go-autorest/autorest"
-	auth "github.com/Azure/go-autorest/autorest/azure/auth"
 	"github.com/variantdev/vals/pkg/api"
+	"github.com/variantdev/vals/pkg/azureclicompat"
 	"gopkg.in/yaml.v3"
 )
 
 type provider struct {
 	// azure key vault client
-	client *keyvault.BaseClient
+	clients map[string]*azsecrets.Client
 }
 
 func New(cfg api.StaticConfig) *provider {
 	p := &provider{}
+	p.clients = make(map[string]*azsecrets.Client)
 	return p
 }
 
@@ -29,12 +29,12 @@ func (p *provider) GetString(key string) (string, error) {
 		return "", err
 	}
 
-	client, err := p.getClient()
+	client, err := p.getClientForKeyVault(spec.vaultBaseURL)
 	if err != nil {
 		return "", err
 	}
 
-	secretBundle, err := client.GetSecret(context.Background(), spec.vaultBaseURL, spec.secretName, spec.secretVersion)
+	secretBundle, err := client.GetSecret(context.Background(), spec.secretName, spec.secretVersion, nil)
 	if err != nil {
 		return "", err
 	}
@@ -55,57 +55,27 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 	return m, nil
 }
 
-func (p *provider) getClient() (*keyvault.BaseClient, error) {
-	if p.client != nil {
-		return p.client, nil
+func (p *provider) getClientForKeyVault(vaultBaseURL string) (*azsecrets.Client, error) {
+	if val, ok := p.clients[vaultBaseURL]; val != nil || ok {
+		return p.clients[vaultBaseURL], nil
 	}
-	authorizer, err := getAuthorizer()
+
+	cred, err := getTokenCredential()
 	if err != nil {
 		return nil, err
 	}
 
-	var basicClient = keyvault.New()
-	basicClient.Authorizer = authorizer
-
-	p.client = &basicClient
-	return p.client, nil
+	p.clients[vaultBaseURL] = azsecrets.NewClient(vaultBaseURL, cred, nil)
+	return p.clients[vaultBaseURL], nil
 }
 
-func getAuthorizer() (autorest.Authorizer, error) {
-	settings, err := auth.GetSettingsFromEnvironment()
+func getTokenCredential() (azcore.TokenCredential, error) {
+	cred, err := azureclicompat.ResolveIdentity()
 	if err != nil {
 		return nil, err
 	}
 
-	// set up key vault endpoint
-	resource := os.Getenv("AZURE_KEYVAULT_RESOURCE")
-	if resource == "" {
-		resource = strings.TrimSuffix(settings.Environment.KeyVaultEndpoint, "/")
-	}
-	settings.Values[auth.Resource] = resource
-
-	// based on Azure SDK EnvironmentSettings.GetAuthorizer()
-	//1.Client Credentials
-	if c, e := settings.GetClientCredentials(); e == nil {
-		return c.Authorizer()
-	}
-
-	//2. Client Certificate
-	if c, e := settings.GetClientCertificate(); e == nil {
-		return c.Authorizer()
-	}
-
-	//3. Username Password
-	if c, e := settings.GetUsernamePassword(); e == nil {
-		return c.Authorizer()
-	}
-
-	// 4. MSI or CLI
-	if v := os.Getenv("AZURE_USE_MSI"); v == "true" {
-		return settings.GetMSI().Authorizer()
-	} else {
-		return auth.NewAuthorizerFromCLIWithResource(settings.Values[auth.Resource])
-	}
+	return cred, nil
 }
 
 type secretSpec struct {
