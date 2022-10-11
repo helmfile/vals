@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
 
 	"github.com/variantdev/vals/pkg/config"
 	"github.com/variantdev/vals/pkg/providers/s3"
@@ -85,6 +86,8 @@ type Runtime struct {
 	strCache  *lru.Cache // secrets are cached to improve performance
 
 	Options Options
+
+	m sync.Mutex
 }
 
 // New returns an instance of Runtime
@@ -224,6 +227,9 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 			}
 
 			hash := uriToProviderHash(uri)
+
+			r.m.Lock()
+			defer r.m.Unlock()
 			p, ok := r.providers[hash]
 			if !ok {
 				var scheme string
