@@ -267,7 +267,7 @@ Examples:
 - `ref+awssecrets://myteam/mykey`
 - `ref+awssecrets://myteam/mydoc#/foo/bar`
 - `ref+awssecrets://myteam/mykey?region=us-west-2`
-- `ref+awssecrets:///arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/myteam/mydoc/?region=ap-southeast-2#/secret/key`
+- `ref+awssecrets://arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/myteam/mydoc/?region=ap-southeast-2#/secret/key`
 
 #### AWS S3
 
