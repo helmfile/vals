@@ -204,6 +204,25 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 		return nil, fmt.Errorf("no provider registered for scheme %q", scheme)
 	}
 
+	updateProviders := func(uri *url.URL, hash string) (api.Provider, error) {
+		r.m.Lock()
+		defer r.m.Unlock()
+		p, ok := r.providers[hash]
+		if !ok {
+			var scheme string
+			scheme = uri.Scheme
+			scheme = strings.Split(scheme, "://")[0]
+
+			p, err = createProvider(scheme, uri)
+			if err != nil {
+				return nil, err
+			}
+
+			r.providers[hash] = p
+		}
+		return p, nil
+	}
+
 	var only []string
 	if r.Options.ExcludeSecret {
 		only = []string{"ref"}
@@ -228,23 +247,11 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 
 			hash := uriToProviderHash(uri)
 
-			func() {
-				r.m.Lock()
-				defer r.m.Unlock()
-				p, ok := r.providers[hash]
-				if !ok {
-					var scheme string
-					scheme = uri.Scheme
-					scheme = strings.Split(scheme, "://")[0]
+			p, err := updateProviders(uri, hash)
 
-					p, err = createProvider(scheme, uri)
-					if err != nil {
-						return "", err
-					}
-
-					r.providers[hash] = p
-				}
-			}()
+			if err != nil {
+				return "", err
+			}
 
 			var frag string
 			frag = uri.Fragment
