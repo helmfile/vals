@@ -228,21 +228,23 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 
 			hash := uriToProviderHash(uri)
 
-			r.m.Lock()
-			defer r.m.Unlock()
-			p, ok := r.providers[hash]
-			if !ok {
-				var scheme string
-				scheme = uri.Scheme
-				scheme = strings.Split(scheme, "://")[0]
+			func() {
+				r.m.Lock()
+				defer r.m.Unlock()
+				p, ok := r.providers[hash]
+				if !ok {
+					var scheme string
+					scheme = uri.Scheme
+					scheme = strings.Split(scheme, "://")[0]
 
-				p, err = createProvider(scheme, uri)
-				if err != nil {
-					return "", err
+					p, err = createProvider(scheme, uri)
+					if err != nil {
+						return "", err
+					}
+
+					r.providers[hash] = p
 				}
-
-				r.providers[hash] = p
-			}
+			}()
 
 			var frag string
 			frag = uri.Fragment
