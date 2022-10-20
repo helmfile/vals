@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
 
 	"github.com/variantdev/vals/pkg/config"
 	"github.com/variantdev/vals/pkg/providers/s3"
@@ -85,6 +86,8 @@ type Runtime struct {
 	strCache  *lru.Cache // secrets are cached to improve performance
 
 	Options Options
+
+	m sync.Mutex
 }
 
 // New returns an instance of Runtime
@@ -201,6 +204,25 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 		return nil, fmt.Errorf("no provider registered for scheme %q", scheme)
 	}
 
+	updateProviders := func(uri *url.URL, hash string) (api.Provider, error) {
+		r.m.Lock()
+		defer r.m.Unlock()
+		p, ok := r.providers[hash]
+		if !ok {
+			var scheme string
+			scheme = uri.Scheme
+			scheme = strings.Split(scheme, "://")[0]
+
+			p, err = createProvider(scheme, uri)
+			if err != nil {
+				return nil, err
+			}
+
+			r.providers[hash] = p
+		}
+		return p, nil
+	}
+
 	var only []string
 	if r.Options.ExcludeSecret {
 		only = []string{"ref"}
@@ -224,18 +246,11 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 			}
 
 			hash := uriToProviderHash(uri)
-			p, ok := r.providers[hash]
-			if !ok {
-				var scheme string
-				scheme = uri.Scheme
-				scheme = strings.Split(scheme, "://")[0]
 
-				p, err = createProvider(scheme, uri)
-				if err != nil {
-					return "", err
-				}
+			p, err := updateProviders(uri, hash)
 
-				r.providers[hash] = p
+			if err != nil {
+				return "", err
 			}
 
 			var frag string
