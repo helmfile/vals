@@ -14,6 +14,7 @@ import (
 	"github.com/variantdev/vals/pkg/providers/ssm"
 	"github.com/variantdev/vals/pkg/providers/tfstate"
 	"github.com/variantdev/vals/pkg/providers/vault"
+	"github.com/variantdev/vals/pkg/providers/gitlab"
 )
 
 func New(provider api.StaticConfig) (api.LazyLoadedStringProvider, error) {
@@ -48,6 +49,8 @@ func New(provider api.StaticConfig) (api.LazyLoadedStringProvider, error) {
 		return tfstate.New(provider, "remote"), nil
 	case "azurekeyvault":
 		return azurekeyvault.New(provider), nil
+	case "gitlab":
+		return gitlab.New(provider), nil
 	}
 
 	return nil, fmt.Errorf("failed initializing string provider from config: %v", provider)
