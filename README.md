@@ -203,10 +203,10 @@ The `auth_method` or `VAULT_AUTH_METHOD` envar configures how `vals` authenticat
 
 Examples:
 
-- `ref+vault://mykv/foo#/bar?address=https://vault1.example.com:8200` reads the value for the field `bar` in the kv `foo` on Vault listening on `https://vault1.example.com` with the Vault token read from **the envvar `VAULT_TOKEN`, or the file `~/.vault_token` when the envvar is not set**
-- `ref+vault://mykv/foo#/bar?token_env=VAULT_TOKEN_VAULT1&namespace=ns1&address=https://vault1.example.com:8200` reads the value for the field `bar` from namespace `ns1` in the kv `foo` on Vault listening on `https://vault1.example.com` with the Vault token read from **the envvar `VAULT_TOKEN_VAULT1`**
-- `ref+vault://mykv/foo#/bar?token_file=~/.vault_token_vault1&address=https://vault1.example.com:8200` reads the value for the field `bar` in the kv `foo` on Vault listening on `https://vault1.example.com` with the Vault token read from **the file `~/.vault_token_vault1`**
-- `ref+vault://mykv/foo#/bar?role_id=my-kube-role` using the Kubernetes role to log in to Vault
+- `ref+vault://mykv/foo?address=https://vault1.example.com:8200#/bar` reads the value for the field `bar` in the kv `foo` on Vault listening on `https://vault1.example.com` with the Vault token read from **the envvar `VAULT_TOKEN`, or the file `~/.vault_token` when the envvar is not set**
+- `ref+vault://mykv/foo?token_env=VAULT_TOKEN_VAULT1&namespace=ns1&address=https://vault1.example.com:8200#/bar` reads the value for the field `bar` from namespace `ns1` in the kv `foo` on Vault listening on `https://vault1.example.com` with the Vault token read from **the envvar `VAULT_TOKEN_VAULT1`**
+- `ref+vault://mykv/foo?token_file=~/.vault_token_vault1&address=https://vault1.example.com:8200#/bar` reads the value for the field `bar` in the kv `foo` on Vault listening on `https://vault1.example.com` with the Vault token read from **the file `~/.vault_token_vault1`**
+- `ref+vault://mykv/foo?role_id=my-kube-role#/bar` using the Kubernetes role to log in to Vault
 
 ### AWS
 
