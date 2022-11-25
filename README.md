@@ -198,7 +198,7 @@ Please see [pkg/providers](https://github.com/variantdev/vals/tree/master/pkg/pr
 The `auth_method` or `VAULT_AUTH_METHOD` envar configures how `vals` authenticates to HashiCorp Vault. Currently only these options are supported:
 
 * [approle](https://www.vaultproject.io/docs/auth/approle#via-the-api): it requires you pass on a `role_id` together with a `secret_id`.
-* [token](https://www.vaultproject.io/docs/auth/token): you just need creating and passing on a `VAULT_TOKEN`
+* [token](https://www.vaultproject.io/docs/auth/token): you just need creating and passing on a `VAULT_TOKEN`. If `VAULT_TOKEN` isn't set, token can be retrieved from `VAULT_TOKEN_FILE` env or `~/.vault-token` file.
 * [kubernetes](https://www.vaultproject.io/docs/auth/kubernetes): if you're running inside a Kubernetes cluster, you can use this option. It requires you [configure](https://www.vaultproject.io/docs/auth/kubernetes#configuration) a policy, a Kubernetes role, a service account and a JWT token. The login path can also be set using the environment variable `VAULT_KUBERNETES_MOUNT_POINT` (default is `/kubernetes`). You must also set `role_id` or `VAULT_ROLE_ID` envar to the Kubernetes role.
 
 Examples:
