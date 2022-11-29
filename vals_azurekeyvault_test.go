@@ -18,7 +18,7 @@ func TestValues_AzureKeyVault_String(t *testing.T) {
 	//  az ad sp create-for-rbac --name http://vals-test-sp --skip-assignment
 	//  az keyvault set-policy --name vals-test --spn  http://vals-test-sp --secret-permissions get
 
-	// set up service principal credentials in environment:
+	// set up service principal credentials in the environment:
 	//  "AZURE_CLIENT_ID":  "...",
 	//  "AZURE_CLIENT_SECRET": "...",
 	//  "AZURE_TENANT_ID": "..."
