@@ -15,7 +15,7 @@ import (
 	"github.com/variantdev/vals/pkg/api"
 )
 
-// Format: ref+gcpsecrets://project/mykey[?version=VERSION][&fallback=valuewhenkeyisnotfound]#/yaml_or_json_key/in/secret
+// Format: ref+gcpsecrets://project/mykey[?version=VERSION][&fallback=value=valuewhenkeyisnotfound][&optional=true]#/yaml_or_json_key/in/secret
 type provider struct {
 	client   *sm.Client
 	ctx      context.Context
@@ -47,8 +47,8 @@ func New(cfg api.StaticConfig) *provider {
 		}
 	}
 
-	if cfg.Exists("fallback") {
-		fallback := cfg.String("fallback")
+	if cfg.Exists("fallback_value") {
+		fallback := cfg.String("fallback_value")
 		p.fallback = &fallback
 	}
 

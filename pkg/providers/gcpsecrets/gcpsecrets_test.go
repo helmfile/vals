@@ -17,7 +17,7 @@ func Test_New(t *testing.T) {
 		{"latest", map[string]interface{}{"version": "latest"}, provider{version: "latest", optional: false}},
 		{"optional", map[string]interface{}{"version": "latest", "optional": true}, provider{version: "latest", optional: true}},
 		{"latest", map[string]interface{}{"version": "latest"}, provider{version: "latest", fallback: nil}},
-		{"fallback", map[string]interface{}{"version": "latest", "fallback": defaultVal}, provider{version: "latest", fallback: &defaultVal}},
+		{"fallback", map[string]interface{}{"version": "latest", "fallback_value": defaultVal}, provider{version: "latest", fallback: &defaultVal}},
 	}
 
 	for _, tt := range tests {
