@@ -176,6 +176,7 @@ EOF
 - [File](#file)
 - [Azure Key Vault](#azure-key-vault)
 - [EnvSubst](#envsubst)
+- [GitLab](#gitlab)
 
 Please see [pkg/providers](https://github.com/variantdev/vals/tree/master/pkg/providers) for the implementations of all the providers. The package names corresponds to the URI schemes.
 
@@ -267,7 +268,7 @@ Examples:
 - `ref+awssecrets://myteam/mykey`
 - `ref+awssecrets://myteam/mydoc#/foo/bar`
 - `ref+awssecrets://myteam/mykey?region=us-west-2`
-- `ref+awssecrets:///arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/myteam/mydoc/?region=ap-southeast-2#/secret/key`
+- `ref+awssecrets://arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/myteam/mydoc/?region=ap-southeast-2#/secret/key`
 
 #### AWS S3
 
@@ -551,6 +552,17 @@ Examples:
 
 - `ref+envsubst://$VAR1` loads environment variables `$VAR1`
 
+### GitLab Secrets
+
+For this provider to work you require an [access token](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html) exported as the environment variable `GITLAB_TOKEN`.
+
+
+- `ref+gitlab://my-gitlab-server.com/project_id/secret_name?[ssl_verify=false&scheme=https&api_version=v4]`
+
+Examples:
+
+- `ref+gitlab://gitlab.com/11111/password`
+- `ref+gitlab://my-gitlab.org/11111/password?ssl_verify=true&scheme=https`
 
 #### Authentication
 

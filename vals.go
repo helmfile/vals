@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
 
 	"github.com/variantdev/vals/pkg/config"
 	"github.com/variantdev/vals/pkg/providers/s3"
@@ -23,6 +24,7 @@ import (
 	"github.com/variantdev/vals/pkg/providers/file"
 	"github.com/variantdev/vals/pkg/providers/gcpsecrets"
 	"github.com/variantdev/vals/pkg/providers/gcs"
+	"github.com/variantdev/vals/pkg/providers/gitlab"
 	"github.com/variantdev/vals/pkg/providers/sops"
 	"github.com/variantdev/vals/pkg/providers/ssm"
 	"github.com/variantdev/vals/pkg/providers/tfstate"
@@ -58,6 +60,7 @@ const (
 	ProviderVault            = "vault"
 	ProviderS3               = "s3"
 	ProviderGCS              = "gcs"
+	ProviderGitLab           = "gitlab"
 	ProviderSSM              = "awsssm"
 	ProviderKms              = "awskms"
 	ProviderSecretsManager   = "awssecrets"
@@ -85,6 +88,8 @@ type Runtime struct {
 	strCache  *lru.Cache // secrets are cached to improve performance
 
 	Options Options
+
+	m sync.Mutex
 }
 
 // New returns an instance of Runtime
@@ -149,6 +154,10 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 			// 2. Then extracts the value for key baz(=/foo/bar/baz) from the result from step 1.
 			p := gcs.New(conf)
 			return p, nil
+		case ProviderGitLab:
+			// vals+gitlab://project/variable#key
+			p := gitlab.New(conf)
+			return p, nil
 		case ProviderSSM:
 			// ref+awsssm://foo/bar?region=ap-northeast-1#/baz
 			// 1. GetParametersByPath for the prefix /foo/bar
@@ -201,6 +210,25 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 		return nil, fmt.Errorf("no provider registered for scheme %q", scheme)
 	}
 
+	updateProviders := func(uri *url.URL, hash string) (api.Provider, error) {
+		r.m.Lock()
+		defer r.m.Unlock()
+		p, ok := r.providers[hash]
+		if !ok {
+			var scheme string
+			scheme = uri.Scheme
+			scheme = strings.Split(scheme, "://")[0]
+
+			p, err = createProvider(scheme, uri)
+			if err != nil {
+				return nil, err
+			}
+
+			r.providers[hash] = p
+		}
+		return p, nil
+	}
+
 	var only []string
 	if r.Options.ExcludeSecret {
 		only = []string{"ref"}
@@ -224,18 +252,11 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 			}
 
 			hash := uriToProviderHash(uri)
-			p, ok := r.providers[hash]
-			if !ok {
-				var scheme string
-				scheme = uri.Scheme
-				scheme = strings.Split(scheme, "://")[0]
 
-				p, err = createProvider(scheme, uri)
-				if err != nil {
-					return "", err
-				}
+			p, err := updateProviders(uri, hash)
 
-				r.providers[hash] = p
+			if err != nil {
+				return "", err
 			}
 
 			var frag string
