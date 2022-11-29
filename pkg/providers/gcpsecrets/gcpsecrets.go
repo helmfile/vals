@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	sm "cloud.google.com/go/secretmanager/apiv1"
@@ -14,10 +15,20 @@ import (
 
 // Format: ref+gcpsecrets://project/mykey[?version=VERSION]#/yaml_or_json_key/in/secret
 type provider struct {
-	version string
+	client   *sm.Client
+	ctx      context.Context
+	version  string
+	optional bool
 }
 
 func New(cfg api.StaticConfig) *provider {
+	ctx := context.Background()
+
+	p := &provider{
+		ctx:      ctx,
+		optional: false,
+	}
+
 	version := cfg.String("version")
 	if version == "" {
 		version = "latest"
@@ -25,6 +36,16 @@ func New(cfg api.StaticConfig) *provider {
 	return &provider{
 		version: version,
 	}
+
+	optional := cfg.String("optional")
+	if optional != "" {
+		val, err := strconv.ParseBool(optional)
+		if err == nil {
+			p.optional = val
+		}
+	}
+
+	return p
 }
 
 func (p *provider) GetString(key string) (string, error) {
@@ -58,6 +79,9 @@ func (p *provider) getSecret(ctx context.Context, key string) ([]byte, error) {
 		Name: fmt.Sprintf("projects/%s/secrets/%s/versions/%s", project, name, p.version),
 	})
 	if err != nil {
+		if p.optional {
+			return nil, nil
+		}
 		return nil, fmt.Errorf("failed to get secret: %w", err)
 	}
 	return secret.GetPayload().GetData(), nil
