@@ -1,10 +1,11 @@
 package vals
 
 import (
-	"github.com/variantdev/vals/pkg/config"
 	"os"
 	"reflect"
 	"testing"
+
+	"github.com/variantdev/vals/pkg/config"
 )
 
 // setup:
@@ -36,6 +37,40 @@ func TestValues_GCPSecretsManager(t *testing.T) {
 				},
 			},
 			map[string]interface{}{"valstestvar": "foo: bar"},
+		},
+		{
+			"fallback string",
+			map[string]string{},
+			map[string]interface{}{
+				"provider": map[string]interface{}{
+					"name":           "gcpsecrets",
+					"version":        "latest",
+					"type":           "string",
+					"path":           projectId,
+					"fallback_value": "default-value",
+				},
+				"inline": map[string]interface{}{
+					"missingvar": "missingvar",
+				},
+			},
+			map[string]interface{}{"missingvar": "default-value"},
+		},
+		{
+			"empty fallback string",
+			map[string]string{},
+			map[string]interface{}{
+				"provider": map[string]interface{}{
+					"name":           "gcpsecrets",
+					"version":        "latest",
+					"type":           "string",
+					"path":           projectId,
+					"fallback_value": "",
+				},
+				"inline": map[string]interface{}{
+					"missingvar": "missingvar",
+				},
+			},
+			map[string]interface{}{"missingvar": ""},
 		},
 		{
 			"v1 string",

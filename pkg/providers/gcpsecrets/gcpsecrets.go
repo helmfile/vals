@@ -13,12 +13,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Format: ref+gcpsecrets://project/mykey[?version=VERSION]#/yaml_or_json_key/in/secret
+// Format: ref+gcpsecrets://project/mykey[?version=VERSION][&fallback=value=valuewhenkeyisnotfound][&optional=true]#/yaml_or_json_key/in/secret
 type provider struct {
 	client   *sm.Client
 	ctx      context.Context
 	version  string
 	optional bool
+	fallback *string
 }
 
 func New(cfg api.StaticConfig) *provider {
@@ -43,6 +44,11 @@ func New(cfg api.StaticConfig) *provider {
 		if err == nil {
 			p.optional = val
 		}
+	}
+
+	if cfg.Exists("fallback_value") {
+		fallback := cfg.String("fallback_value")
+		p.fallback = &fallback
 	}
 
 	return p
@@ -82,6 +88,11 @@ func (p *provider) getSecret(ctx context.Context, key string) ([]byte, error) {
 		if p.optional {
 			return nil, nil
 		}
+
+		if p.fallback != nil {
+			return []byte(*p.fallback), nil
+		}
+
 		return nil, fmt.Errorf("failed to get secret: %w", err)
 	}
 	return secret.GetPayload().GetData(), nil
