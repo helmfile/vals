@@ -200,11 +200,18 @@ func (p *provider) ensureClient() (*vault.Client, error) {
 			}
 
 			// By default Vault token is set from VAULT_TOKEN env var by NewClient()
-			// But if VAULT_TOKEN isn't set, token can be retrieved from ~/.vault-token file
+			// But if VAULT_TOKEN isn't set, token can be retrieved from VAULT_TOKEN_FILE env or ~/.vault-token file
 			if cli.Token() == "" {
-				homeDir := os.Getenv("HOME")
-				if homeDir != "" {
-					token, _ := p.readTokenFile(filepath.Join(homeDir, ".vault-token"))
+				tokenFile := os.Getenv("VAULT_TOKEN_FILE")
+				// if VAULT_TOKEN_FILE env is not set, use default ~/.vault-token
+				if tokenFile == "" {
+					homeDir := os.Getenv("HOME")
+					if homeDir != "" {
+						tokenFile = filepath.Join(homeDir, ".vault-token")
+					}
+				}
+				if tokenFile != "" {
+					token, _ := p.readTokenFile(tokenFile)
 					if token != "" {
 						cli.SetToken(token)
 					}
