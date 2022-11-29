@@ -11,7 +11,8 @@ func Test_New(t *testing.T) {
 		options map[string]interface{}
 		want    provider
 	}{
-		{"latest", map[string]interface{}{"version": "latest"}, provider{version: "latest"}},
+		{"latest", map[string]interface{}{"version": "latest"}, provider{version: "latest", optional: false}},
+		{"optional", map[string]interface{}{"version": "latest", "optional": true}, provider{version: "latest", optional: true}},
 	}
 
 	for _, tt := range tests {
