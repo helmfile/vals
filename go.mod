@@ -5,7 +5,6 @@ go 1.19
 require (
 	cloud.google.com/go/secretmanager v1.6.0
 	cloud.google.com/go/storage v1.23.0
-	github.com/Azure/azure-sdk-for-go v56.2.0+incompatible
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.1.4
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.1.0
 	github.com/Azure/azure-sdk-for-go/sdk/keyvault/azsecrets v0.10.1
@@ -18,7 +17,7 @@ require (
 	github.com/hashicorp/vault/api v1.0.4
 	go.mozilla.org/sops/v3 v3.7.1
 	google.golang.org/genproto v0.0.0-20220930163606-c98284e70a91
-	gopkg.in/yaml.v3 v3.0.0-20210107172259-749611fa9fcc
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
 
 require (
@@ -70,6 +69,7 @@ require (
 	github.com/howeyc/gopass v0.0.0-20170109162249-bf9dde6d0d2c // indirect
 	github.com/itchyny/gojq v0.9.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/lestrrat-go/strftime v1.0.1 // indirect
 	github.com/lib/pq v1.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.8 // indirect
@@ -88,7 +88,7 @@ require (
 	github.com/smartystreets/goconvey v1.6.4 // indirect
 	go.mozilla.org/gopgagent v0.0.0-20170926210634-4d7ea76ff71a // indirect
 	go.opencensus.io v0.23.0 // indirect
-	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a // indirect
+	golang.org/x/crypto v0.0.0-20220511200225-c6db032c6c88 // indirect
 	golang.org/x/net v0.0.0-20220909164309-bea034e7d591 // indirect
 	golang.org/x/oauth2 v0.0.0-20220909003341-f21342109be1 // indirect
 	golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10 // indirect
