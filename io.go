@@ -4,10 +4,10 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"io"
-	"io/ioutil"
 	"os"
+
+	"gopkg.in/yaml.v3"
 )
 
 func Inputs(f string) ([]yaml.Node, error) {
@@ -24,7 +24,10 @@ func Inputs(f string) ([]yaml.Node, error) {
 	} else {
 		return nil, fmt.Errorf("Nothing to eval: No file specified")
 	}
+	return nodesFromReader(reader)
+}
 
+func nodesFromReader(reader io.Reader) ([]yaml.Node, error) {
 	nodes := []yaml.Node{}
 	buf := bufio.NewReader(reader)
 	decoder := yaml.NewDecoder(buf)
@@ -41,41 +44,29 @@ func Inputs(f string) ([]yaml.Node, error) {
 	return nodes, nil
 }
 
-func Input(f string) (map[string]interface{}, error) {
-	m := map[string]interface{}{}
-	var input []byte
-	var err error
-	if f == "-" {
-		input, err = ioutil.ReadAll(os.Stdin)
-	} else if f != "" {
-		input, err = ioutil.ReadFile(f)
-	} else {
-		return nil, fmt.Errorf("Nothing to eval: No file specified")
-	}
-	if err != nil {
-		return nil, err
-	}
-	if err := yaml.Unmarshal(input, &m); err != nil {
-		return nil, err
-	}
+func Output(output io.Writer, format string, nodes []yaml.Node) error {
+	for i, node := range nodes {
+		var v interface{}
+		if err := node.Decode(&v); err != nil {
+			return err
+		}
+		if format == "json" {
+			bs, err := json.Marshal(v)
+			if err != nil {
+				return err
+			}
+			fmt.Fprintln(output, string(bs))
+		} else {
+			encoder := yaml.NewEncoder(output)
+			encoder.SetIndent(2)
 
-	return m, nil
-}
-
-func Output(o string, res interface{}) (*string, error) {
-	var err error
-	var out []byte
-	switch o {
-	case "yaml":
-		out, err = yaml.Marshal(res)
-	case "json":
-		out, err = json.Marshal(res)
-	default:
-		return nil, fmt.Errorf("Unknown output type: %s", o)
+			if err := encoder.Encode(v); err != nil {
+				return err
+			}
+		}
+		if i != len(nodes)-1 {
+			fmt.Fprintln(output, "---")
+		}
 	}
-	if err != nil {
-		return nil, fmt.Errorf("Failed marshalling into %s: %v", o, err)
-	}
-	str := string(out)
-	return &str, nil
+	return nil
 }

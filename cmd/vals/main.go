@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bytes"
 	"encoding/base64"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
@@ -41,20 +39,32 @@ func fatal(format string, args ...interface{}) {
 	os.Exit(1)
 }
 
-func readOrFail(f *string) map[string]interface{} {
-	m, err := vals.Input(*f)
+func readNodesOrFail(f *string) []yaml.Node {
+	nodes, err := vals.Inputs(*f)
 	if err != nil {
 		fatal("%v", err)
 	}
-	return m
+	return nodes
 }
 
-func writeOrFail(o *string, res interface{}) {
-	out, err := vals.Output(*o, res)
+func readOrFail(f *string) map[string]interface{} {
+	nodes := readNodesOrFail(f)
+	if len(nodes) == 0 {
+		fatal("no document found")
+	}
+	var nodeValue map[string]interface{}
+	err := nodes[0].Decode(&nodeValue)
 	if err != nil {
 		fatal("%v", err)
 	}
-	fmt.Printf("%s", *out)
+	return nodeValue
+}
+
+func writeOrFail(o *string, nodes []yaml.Node) {
+	err := vals.Output(os.Stdout, *o, nodes)
+	if err != nil {
+		fatal("%v", err)
+	}
 }
 
 func main() {
@@ -79,11 +89,24 @@ func main() {
 		e := evalCmd.Bool("exclude-secret", false, "Leave secretref+<uri> as-is and only replace ref+<uri>")
 		evalCmd.Parse(os.Args[2:])
 
-		m := readOrFail(f)
+		nodes := readNodesOrFail(f)
 
-		res, err := vals.Eval(m, vals.Options{ExcludeSecret: *e})
-		if err != nil {
-			fatal("%v", err)
+		var res []yaml.Node
+		for _, node := range nodes {
+			var nodeValue map[string]interface{}
+			err := node.Decode(&nodeValue)
+			if err != nil {
+				fatal("%v", err)
+			}
+			evalResult, err := vals.Eval(nodeValue, vals.Options{ExcludeSecret: *e})
+			if err != nil {
+				fatal("%v", err)
+			}
+			err = node.Encode(evalResult)
+			if err != nil {
+				fatal("%v", err)
+			}
+			res = append(res, node)
 		}
 
 		writeOrFail(o, res)
@@ -122,10 +145,7 @@ func main() {
 		o := evalCmd.String("o", "yaml", "Output type which is either \"yaml\" or \"json\"")
 		evalCmd.Parse(os.Args[2:])
 
-		nodes, err := vals.Inputs(*f)
-		if err != nil {
-			fatal("%v", err)
-		}
+		nodes := readNodesOrFail(f)
 
 		var res []yaml.Node
 		for _, node := range nodes {
@@ -136,31 +156,7 @@ func main() {
 			res = append(res, *n)
 		}
 
-		for i, node := range res {
-			buf := &bytes.Buffer{}
-			encoder := yaml.NewEncoder(buf)
-			encoder.SetIndent(2)
-
-			if err := encoder.Encode(&node); err != nil {
-				fatal("%v", err)
-			}
-			if *o == "json" {
-				var v interface{}
-				if err := json.Unmarshal(buf.Bytes(), &v); err != nil {
-					fatal("%v", err)
-				}
-				bs, err := json.Marshal(v)
-				if err != nil {
-					fatal("%v", err)
-				}
-				print(string(bs))
-			} else {
-				print(buf.String())
-			}
-			if i != len(res)-1 {
-				fmt.Println("---")
-			}
-		}
+		writeOrFail(o, res)
 	case CmdVersion:
 		if len(version) == 0 {
 			fmt.Println("Version: dev")
@@ -203,7 +199,7 @@ func KsDecode(node yaml.Node) (*yaml.Node, error) {
 		}
 	}
 
-	if isSecret {
+	if isSecret && !kk.IsZero() {
 		kk.Value = "stringData"
 
 		v := vv
