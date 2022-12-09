@@ -2,16 +2,26 @@ package config
 
 import (
 	"fmt"
+
 	"github.com/variantdev/vals/pkg/api"
 )
 
 type MapConfig struct {
 	M map[string]interface{}
+
+	FallbackFunc func(string) string
 }
 
 var _ api.StaticConfig = &MapConfig{}
 
 func (m MapConfig) String(path ...string) string {
+	fallback := func() string {
+		if len(path) == 1 && m.FallbackFunc != nil {
+			return m.FallbackFunc(path[0])
+		}
+		return ""
+	}
+
 	var cur interface{}
 
 	cur = m.M
@@ -23,11 +33,11 @@ func (m MapConfig) String(path ...string) string {
 		case map[interface{}]interface{}:
 			cur = typed[k]
 		default:
-			return ""
+			return fallback()
 		}
 		if i == len(path)-1 {
 			if cur == nil {
-				return ""
+				return fallback()
 			}
 			return fmt.Sprintf("%v", cur)
 		}

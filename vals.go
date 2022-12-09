@@ -79,6 +79,10 @@ const (
 	ProviderEnvSubst         = "envsubst"
 )
 
+var (
+	EnvFallbackPrefix = "VALS_"
+)
+
 type Evaluator interface {
 	Eval(map[string]interface{}) (map[string]interface{}, error)
 }
@@ -138,7 +142,12 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 			}
 		}
 
-		conf := config.MapConfig{M: m}
+		envFallback := func(k string) string {
+			key := fmt.Sprintf("%s%s", EnvFallbackPrefix, strings.ToUpper(k))
+			return os.Getenv(key)
+		}
+
+		conf := config.MapConfig{M: m, FallbackFunc: envFallback}
 
 		switch scheme {
 		case ProviderVault:
