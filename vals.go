@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/variantdev/vals/pkg/config"
+	"github.com/variantdev/vals/pkg/providers/googlesheets"
 	"github.com/variantdev/vals/pkg/providers/s3"
 
 	lru "github.com/hashicorp/golang-lru"
@@ -68,6 +69,7 @@ const (
 	ProviderEcho             = "echo"
 	ProviderFile             = "file"
 	ProviderGCPSecretManager = "gcpsecrets"
+	ProviderGoogleSheets     = "googlesheets"
 	ProviderTFState          = "tfstate"
 	ProviderTFStateGS        = "tfstategs"
 	ProviderTFStateS3        = "tfstates3"
@@ -182,6 +184,8 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 		case ProviderGCPSecretManager:
 			p := gcpsecrets.New(conf)
 			return p, nil
+		case ProviderGoogleSheets:
+			return googlesheets.New(conf), nil
 		case ProviderTFState:
 			p := tfstate.New(conf, "")
 			return p, nil
@@ -374,6 +378,7 @@ var KnownValuesTypes = []string{
 	ProviderSecretsManager,
 	ProviderSOPS,
 	ProviderGCPSecretManager,
+	ProviderGoogleSheets,
 	ProviderTFState,
 	ProviderFile,
 	ProviderEcho,

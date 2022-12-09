@@ -1,6 +1,7 @@
 package googlesheets
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -8,12 +9,6 @@ import (
 	"strings"
 
 	"github.com/variantdev/vals/pkg/api"
-
-	"context"
-	"encoding/json"
-	"fmt"
-	"net/http"
-	"os"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
