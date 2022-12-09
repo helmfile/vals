@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/variantdev/vals/pkg/config"
+	"github.com/variantdev/vals/pkg/providers/googlesheets"
 	"github.com/variantdev/vals/pkg/providers/s3"
 
 	lru "github.com/hashicorp/golang-lru"
@@ -68,6 +69,7 @@ const (
 	ProviderEcho             = "echo"
 	ProviderFile             = "file"
 	ProviderGCPSecretManager = "gcpsecrets"
+	ProviderGoogleSheets     = "googlesheets"
 	ProviderTFState          = "tfstate"
 	ProviderTFStateGS        = "tfstategs"
 	ProviderTFStateS3        = "tfstates3"
@@ -75,6 +77,10 @@ const (
 	ProviderTFStateRemote    = "tfstateremote"
 	ProviderAzureKeyVault    = "azurekeyvault"
 	ProviderEnvSubst         = "envsubst"
+)
+
+var (
+	EnvFallbackPrefix = "VALS_"
 )
 
 type Evaluator interface {
@@ -136,7 +142,12 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 			}
 		}
 
-		conf := config.MapConfig{M: m}
+		envFallback := func(k string) string {
+			key := fmt.Sprintf("%s%s", EnvFallbackPrefix, strings.ToUpper(k))
+			return os.Getenv(key)
+		}
+
+		conf := config.MapConfig{M: m, FallbackFunc: envFallback}
 
 		switch scheme {
 		case ProviderVault:
@@ -182,6 +193,8 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 		case ProviderGCPSecretManager:
 			p := gcpsecrets.New(conf)
 			return p, nil
+		case ProviderGoogleSheets:
+			return googlesheets.New(conf), nil
 		case ProviderTFState:
 			p := tfstate.New(conf, "")
 			return p, nil
@@ -374,6 +387,7 @@ var KnownValuesTypes = []string{
 	ProviderSecretsManager,
 	ProviderSOPS,
 	ProviderGCPSecretManager,
+	ProviderGoogleSheets,
 	ProviderTFState,
 	ProviderFile,
 	ProviderEcho,

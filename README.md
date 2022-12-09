@@ -9,6 +9,7 @@ It supports various backends including:
 - AWS Secrets Manager
 - AWS S3
 - GCP Secrets Manager
+- [Google Sheets](#google-sheets)
 - [SOPS](https://github.com/mozilla/sops)-encrypted files
 - Terraform State
 - CredHub(Coming soon)
@@ -169,6 +170,7 @@ EOF
 - [AWS Secrets Manager](#aws-secrets-manager)
 - [AWS S3](#aws-s3)
 - [GCP Secrets Manager](#gcp-secrets-manager)
+- [Google Sheets](#google-sheets)
 - [Google GCS](#google-gcs)
 - [SOPS](#sops) powered by [sops](https://github.com/mozilla/sops)
 - [Terraform (tfstate)](#terraform-tfstate) powered by [tfstate-lookup](https://github.com/fujiwara/tfstate-lookup)
@@ -353,6 +355,14 @@ Examples:
 >
 > In some cases like you need to use an alternative credentials or project,
 > you'll likely need to set `GOOGLE_APPLICATION_CREDENTIALS` and/or `GCP_PROJECT` envvars.
+
+### Google Sheets
+
+- `ref+googlesheets://SPREADSHEET_ID?credentials_file=credentials.json#/KEY`
+
+Examples:
+
+- `ref+googlesheets://foobarbaz?credentials_file=credentials.json#/MYENV1` authenticates Google Sheets API using the credentials.json file, retrieve KVs from the sheet wit the spreadsheet ID "foobarbaz", and retrieves the value for the key "MYENV1". The `credentials.json` can be either a serviceaccount json key file, or client credentials file. In case it's a client credentials file, vals initiates a WebAuth flow and prints the URL. You open the URL with a browser, authenticate yourself there, copy the resulting auth code, input the auth code to vals.
 
 ### Terraform (tfstate)
 
