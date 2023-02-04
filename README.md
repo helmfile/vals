@@ -600,7 +600,7 @@ To best leverage GitOps, it is important to remove dynamic aspects of your confi
 
 On the other hand, `vals`'s primary purpose is to defer retrieval of values until the time of deployment, so that we won't accidentally git-commit secrets. The flip-side of this is, obviously, that you can't review the values themselves.
 
-Using `ref+<value uri>` and `secretref+<value uri>` in combination with `vals eval --exclude-secretref` helps it.
+Using `ref+<value uri>` and `secretref+<value uri>` in combination with `vals eval --exclude-secret` helps it.
 
 By using the `secretref+<uri>` notation, you tell `vals` that it is a secret and regular `ref+<uri>` instances are for config values.
 
@@ -609,7 +609,7 @@ myconfigvalue: ref+awsssm://myconfig/value
 mysecretvalue: secretref+awssecrets://mysecret/value
 ```
 
-To leverage `GitOps` most by allowing you to review the content of `ref+awsssm://myconfig/value` only, you run `vals eval --exclude-secretref` to generate the following:
+To leverage `GitOps` most by allowing you to review the content of `ref+awsssm://myconfig/value` only, you run `vals eval --exclude-secret` to generate the following:
 
 ```yaml
 myconfigvalue: MYCONFIG_VALUE
