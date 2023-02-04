@@ -120,8 +120,7 @@ func New(opts Options) (*Runtime, error) {
 	return r, nil
 }
 
-// Eval replaces 'ref+<provider>://xxxxx' entries by their actual values
-func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{}, error) {
+func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 	var err error
 
 	uriToProviderHash := func(uri *url.URL) string {
@@ -360,6 +359,16 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 		},
 	}
 
+	return &expand, nil
+}
+
+// Eval replaces 'ref+<provider>://xxxxx' entries by their actual values
+func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{}, error) {
+	expand, err := r.prepare()
+	if err != nil {
+		return nil, err
+	}
+
 	ret, err := expand.InMap(template)
 	if err != nil {
 		return nil, err
@@ -368,6 +377,20 @@ func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{},
 	return ret, nil
 }
 
+// Get replaces every occurrence of 'ref+<provider>://xxxxx' within a string with the fetched value
+func (r *Runtime) Get(code string) (string, error) {
+	expand, err := r.prepare()
+	if err != nil {
+		return "", err
+	}
+
+	ret, err := expand.InString(code)
+	if err != nil {
+		return "", err
+	}
+
+	return ret, nil
+}
 func cloneMap(m map[string]interface{}) map[string]interface{} {
 	bs, err := yaml.Marshal(m)
 	if err != nil {
@@ -454,6 +477,14 @@ func Eval(template map[string]interface{}, o ...Options) (map[string]interface{}
 		return nil, err
 	}
 	return runtime.Eval(template)
+}
+
+func Get(code string) (string, error) {
+	runtime, err := New(Options{})
+	if err != nil {
+		return "", err
+	}
+	return runtime.Get(code)
 }
 
 func Load(conf api.StaticConfig, opt ...Option) (map[string]interface{}, error) {
