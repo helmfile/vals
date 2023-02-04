@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/helmfile/vals"
+	"github.com/helmfile/vals/pkg/log"
 	"gopkg.in/yaml.v3"
 )
 
@@ -86,6 +87,7 @@ func main() {
 		evalCmd := flag.NewFlagSet(CmdEval, flag.ExitOnError)
 		f := evalCmd.String("f", "-", "YAML/JSON file to be evaluated. When set to \"-\", vals reads from STDIN")
 		o := evalCmd.String("o", "yaml", "Output type which is either \"yaml\" or \"json\"")
+		evalCmd.BoolVar(&log.Silent, "s", false, "Silent mode")
 		e := evalCmd.Bool("exclude-secret", false, "Leave secretref+<uri> as-is and only replace ref+<uri>")
 		evalCmd.Parse(os.Args[2:])
 

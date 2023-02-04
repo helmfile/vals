@@ -3,13 +3,13 @@ package ssm
 import (
 	"errors"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/service/ssm/ssmiface"
 	"github.com/helmfile/vals/pkg/api"
 	"github.com/helmfile/vals/pkg/awsclicompat"
+	"github.com/helmfile/vals/pkg/log"
 	"gopkg.in/yaml.v3"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -66,7 +66,7 @@ func (p *provider) GetString(key string) (string, error) {
 	if out.Parameter.Value == nil {
 		return "", errors.New("datasource.ssm.Get() out.Parameter.Value is nil")
 	}
-	p.debugf("SSM: successfully retrieved key=%s", key)
+	log.Debugf("SSM: successfully retrieved key=%s", key)
 
 	return *out.Parameter.Value, nil
 }
@@ -106,7 +106,7 @@ func (p *provider) GetStringVersion(key string) (string, error) {
 		return "", errors.New(err.Error())
 	}
 	if result != "" {
-		p.debugf("SSM: successfully retrieved key=%s", key)
+		log.Debugf("SSM: successfully retrieved key=%s", key)
 		return result, nil
 	}
 
@@ -196,13 +196,9 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 		}
 	}
 
-	p.debugf("SSM: successfully retrieved key=%s", key)
+	log.Debugf("SSM: successfully retrieved key=%s", key)
 
 	return res, nil
-}
-
-func (p *provider) debugf(msg string, args ...interface{}) {
-	fmt.Fprintf(os.Stderr, msg+"\n", args...)
 }
 
 func (p *provider) getSSMClient() ssmiface.SSMAPI {

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/helmfile/vals/pkg/api"
+	"github.com/helmfile/vals/pkg/log"
 
 	vault "github.com/hashicorp/vault/api"
 )
@@ -101,7 +102,7 @@ func (p *provider) GetString(key string) (string, error) {
 
 	secret, err := p.GetStringMap(path)
 	if err != nil {
-		p.debugf("vault: get string failed: path=%q, key=%q", path, key)
+		log.Debugf("vault: get string failed: path=%q, key=%q", path, key)
 		return "", err
 	}
 
@@ -138,7 +139,7 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 
 	secret, err := cli.Logical().ReadWithData(key, data)
 	if err != nil {
-		p.debugf("vault: read: key=%q", key)
+		log.Debugf("vault: read: key=%q", key)
 		return nil, err
 	}
 
@@ -176,7 +177,7 @@ func (p *provider) ensureClient() (*vault.Client, error) {
 		}
 		cli, err := vault.NewClient(cfg)
 		if err != nil {
-			p.debugf("Vault connections failed")
+			log.Debugf("Vault connections failed")
 			return nil, fmt.Errorf("Cannot create Vault Client: %v", err)
 		}
 		if p.Namespace != "" {
@@ -286,8 +287,4 @@ func (p *provider) readTokenFile(path string) (string, error) {
 		return "", err
 	}
 	return string(buff), nil
-}
-
-func (p *provider) debugf(msg string, args ...interface{}) {
-	fmt.Fprintf(os.Stderr, msg+"\n", args...)
 }
