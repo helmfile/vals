@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/helmfile/vals/pkg/api"
 
@@ -11,12 +12,14 @@ import (
 )
 
 type provider struct {
-	backend string
+	backend    string
+	awsProfile string
 }
 
 func New(cfg api.StaticConfig, backend string) *provider {
 	p := &provider{}
 	p.backend = backend
+	p.awsProfile = cfg.String("aws_profile")
 	return p
 }
 
@@ -44,8 +47,26 @@ func (p *provider) GetString(key string) (string, error) {
 	return attrs.String(), nil
 }
 
+var (
+	// tfstate-lookup does not support explicitly setting some settings like
+	// the AWS profile to be used.
+	// We use temporary envvar override around calling tfstate's Read function,
+	// so that hopefully the aws-go-sdk v2 session can be initialized using those temporary
+	// envvars, respecting things like the AWS profile to use.
+	tfstateMu sync.Mutex
+)
+
 // Read state either from file or from backend
 func (p *provider) ReadTFState(f, k string) (*tfstate.TFState, error) {
+	tfstateMu.Lock()
+	defer tfstateMu.Unlock()
+
+	if p.awsProfile != "" {
+		v := os.Getenv("AWS_PROFILE")
+		os.Setenv("AWS_PROFILE", p.awsProfile)
+		defer os.Setenv("AWS_PROFILE", v)
+	}
+
 	switch p.backend {
 	case "":
 		state, err := tfstate.ReadFile(f)

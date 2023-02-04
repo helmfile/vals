@@ -397,8 +397,12 @@ Examples:
 
 ### Terraform (tfstate)
 
-- `ref+tfstate://relative/path/to/some.tfstate/RESOURCE_NAME`
-- `ref+tfstate:///absolute/path/to/some.tfstate/RESOURCE_NAME`
+- `ref+tfstate://relative/path/to/some.tfstate/RESOURCE_NAME[?aws_profile=AWS_POFILE]`
+- `ref+tfstate:///absolute/path/to/some.tfstate/RESOURCE_NAME[?aws_profile=AWS_POFILE]`
+
+Options:
+
+`aws_profile`: If non-empty, `vals` tries to let tfstate-lookup to use the specified AWS profile defined in the well-known `~/.credentials` file.
 
 Examples:
 
