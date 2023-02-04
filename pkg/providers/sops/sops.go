@@ -1,11 +1,11 @@
 package sops
 
 import (
+	"encoding/base64"
 	"fmt"
 	"os"
-	"encoding/base64"
 
-	"github.com/variantdev/vals/pkg/api"
+	"github.com/helmfile/vals/pkg/api"
 	"gopkg.in/yaml.v3"
 
 	"go.mozilla.org/sops/v3/decrypt"

@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/variantdev/vals/pkg/api"
+	"github.com/helmfile/vals/pkg/api"
 
 	vault "github.com/hashicorp/vault/api"
 )
@@ -21,7 +21,8 @@ const (
 // Test procedure:
 //
 // $ vault secrets enable -path mykv kv
-//  Success! Enabled the kv secrets engine at: mykv/
+//
+//	Success! Enabled the kv secrets engine at: mykv/
 type provider struct {
 	client *vault.Client
 

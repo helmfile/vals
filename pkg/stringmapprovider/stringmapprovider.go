@@ -3,14 +3,14 @@ package stringmapprovider
 import (
 	"fmt"
 
-	"github.com/variantdev/vals/pkg/api"
-	"github.com/variantdev/vals/pkg/providers/awskms"
-	"github.com/variantdev/vals/pkg/providers/awssecrets"
-	"github.com/variantdev/vals/pkg/providers/azurekeyvault"
-	"github.com/variantdev/vals/pkg/providers/gcpsecrets"
-	"github.com/variantdev/vals/pkg/providers/sops"
-	"github.com/variantdev/vals/pkg/providers/ssm"
-	"github.com/variantdev/vals/pkg/providers/vault"
+	"github.com/helmfile/vals/pkg/api"
+	"github.com/helmfile/vals/pkg/providers/awskms"
+	"github.com/helmfile/vals/pkg/providers/awssecrets"
+	"github.com/helmfile/vals/pkg/providers/azurekeyvault"
+	"github.com/helmfile/vals/pkg/providers/gcpsecrets"
+	"github.com/helmfile/vals/pkg/providers/sops"
+	"github.com/helmfile/vals/pkg/providers/ssm"
+	"github.com/helmfile/vals/pkg/providers/vault"
 )
 
 func New(provider api.StaticConfig) (api.LazyLoadedStringMapProvider, error) {

@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	envSubst "github.com/a8m/envsubst"
-	"github.com/variantdev/vals/pkg/api"
+	"github.com/helmfile/vals/pkg/api"
 	"gopkg.in/yaml.v3"
 )
 

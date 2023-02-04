@@ -2,7 +2,7 @@ package vals
 
 import (
 	"fmt"
-	config2 "github.com/variantdev/vals/pkg/config"
+	config2 "github.com/helmfile/vals/pkg/config"
 	"testing"
 )
 

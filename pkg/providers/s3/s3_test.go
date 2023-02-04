@@ -7,7 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/google/go-cmp/cmp"
-	"github.com/variantdev/vals/pkg/config"
+	"github.com/helmfile/vals/pkg/config"
 	"io/ioutil"
 	"strings"
 	"testing"

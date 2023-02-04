@@ -135,7 +135,7 @@ In other words, you can safely omit access from the CI to the secrets store.
 ### Go
 
 ```go
-import "github.com/variantdev/vals"
+import "github.com/helmfile/vals"
 
 secretsToCache := 256 // how many secrets to keep in LRU cache
 runtime, err := vals.New(secretsToCache)
@@ -180,7 +180,7 @@ EOF
 - [EnvSubst](#envsubst)
 - [GitLab](#gitlab)
 
-Please see [pkg/providers](https://github.com/variantdev/vals/tree/master/pkg/providers) for the implementations of all the providers. The package names corresponds to the URI schemes.
+Please see [pkg/providers](https://github.com/helmfile/vals/tree/master/pkg/providers) for the implementations of all the providers. The package names corresponds to the URI schemes.
 
 ### Vault
 

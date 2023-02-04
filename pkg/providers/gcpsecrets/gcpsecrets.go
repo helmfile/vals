@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	sm "cloud.google.com/go/secretmanager/apiv1"
-	"github.com/variantdev/vals/pkg/api"
+	"github.com/helmfile/vals/pkg/api"
 	smpb "google.golang.org/genproto/googleapis/cloud/secretmanager/v1"
 	"gopkg.in/yaml.v3"
 )

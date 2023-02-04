@@ -3,7 +3,7 @@ package vals
 import (
 	"context"
 	"fmt"
-	config2 "github.com/variantdev/vals/pkg/config"
+	config2 "github.com/helmfile/vals/pkg/config"
 	"io/ioutil"
 	"os"
 	"os/exec"

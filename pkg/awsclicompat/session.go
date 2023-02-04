@@ -17,7 +17,7 @@ import (
 // 4. dynamic credentials obtained by assuming the role using static credentials loaded from the env (FORCE_AWS_PROFILE=true w/ credential_source=Environment)
 //
 // The fourth option of using FORCE_AWS_PROFILE=true and AWS_PROFILE=yourprofile is equivalent to `aws --profile ${AWS_PROFILE}`.
-// See https://github.com/variantdev/vals/issues/19#issuecomment-600437486 for more details and why and when this is needed.
+// See https://github.com/helmfile/vals/issues/19#issuecomment-600437486 for more details and why and when this is needed.
 func NewSession(region string, profile string) *session.Session {
 	var cfg *aws.Config
 	if region != "" {

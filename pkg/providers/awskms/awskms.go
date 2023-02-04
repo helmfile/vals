@@ -8,8 +8,8 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/aws/aws-sdk-go/service/kms"
-	"github.com/variantdev/vals/pkg/api"
-	"github.com/variantdev/vals/pkg/awsclicompat"
+	"github.com/helmfile/vals/pkg/api"
+	"github.com/helmfile/vals/pkg/awsclicompat"
 )
 
 type provider struct {

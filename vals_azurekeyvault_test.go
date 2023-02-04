@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	config2 "github.com/variantdev/vals/pkg/config"
+	config2 "github.com/helmfile/vals/pkg/config"
 )
 
 func TestValues_AzureKeyVault_String(t *testing.T) {
