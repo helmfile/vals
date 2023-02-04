@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
-	"github.com/variantdev/vals/pkg/awsclicompat"
-	config2 "github.com/variantdev/vals/pkg/config"
+	"github.com/helmfile/vals/pkg/awsclicompat"
+	config2 "github.com/helmfile/vals/pkg/config"
 	"testing"
 )
 
@@ -117,7 +117,7 @@ func TestValues_AWSSecrets_String(t *testing.T) {
 func TestValues_AWSSecrets_Map(t *testing.T) {
 	// TODO
 	// Pre-requisite:
-	//   aws secretsmanager create-secret --name /mykv/foo/meta --secret-string '{"github.com/variantdev/vals":["mykey"]}'
+	//   aws secretsmanager create-secret --name /mykv/foo/meta --secret-string '{"github.com/helmfile/vals":["mykey"]}'
 	//   aws secretsmanager create-secret --name /mykv/foo/mykey --secret-string myvalue
 
 	type testcase struct {

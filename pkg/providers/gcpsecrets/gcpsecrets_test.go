@@ -3,7 +3,7 @@ package gcpsecrets
 import (
 	"testing"
 
-	config2 "github.com/variantdev/vals/pkg/config"
+	config2 "github.com/helmfile/vals/pkg/config"
 )
 
 func Test_New(t *testing.T) {

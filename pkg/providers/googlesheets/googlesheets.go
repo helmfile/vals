@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/variantdev/vals/pkg/api"
+	"github.com/helmfile/vals/pkg/api"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"

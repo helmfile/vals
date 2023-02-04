@@ -7,8 +7,8 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/keyvault/azsecrets"
 	"strings"
 
-	"github.com/variantdev/vals/pkg/api"
-	"github.com/variantdev/vals/pkg/azureclicompat"
+	"github.com/helmfile/vals/pkg/api"
+	"github.com/helmfile/vals/pkg/azureclicompat"
 	"gopkg.in/yaml.v3"
 )
 

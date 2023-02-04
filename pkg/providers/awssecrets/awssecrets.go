@@ -3,8 +3,8 @@ package awssecrets
 import (
 	"errors"
 	"fmt"
-	"github.com/variantdev/vals/pkg/api"
-	"github.com/variantdev/vals/pkg/awsclicompat"
+	"github.com/helmfile/vals/pkg/api"
+	"github.com/helmfile/vals/pkg/awsclicompat"
 	"gopkg.in/yaml.v3"
 	"os"
 	"strings"
@@ -91,7 +91,7 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 		return nil, err
 	}
 
-	metaKeysField := "github.com/variantdev/vals"
+	metaKeysField := "github.com/helmfile/vals"
 	f, ok := meta[metaKeysField]
 	if !ok {
 		return nil, fmt.Errorf("%q not found", metaKeysField)
