@@ -3,51 +3,50 @@ package api
 // StaticConfig is pre-loaded configuration that has zero changes to fail at the time of getting values.
 // Examples of StaticConfig:
 //
-// values:
-// - provider:
-//     type: string
-//     name: ssm
-//     prefix: myteam/mysvc1
-//     region: ap-northeast-1
-//   inline:
-//     dst1: src1
+//	values:
+//	- provider:
+//	    type: string
+//	    name: ssm
+//	    prefix: myteam/mysvc1
+//	    region: ap-northeast-1
+//	  inline:
+//	    dst1: src1
 //
-// values:
-// - provider:
-//     type: map
-//     name: ssm
-//     prefix: myteam/mysvc1
-//     region: ap-northeast-1
-//     strategy: raw
-//   inline:
-//     dst1: src1
+//	values:
+//	- provider:
+//	    type: map
+//	    name: ssm
+//	    prefix: myteam/mysvc1
+//	    region: ap-northeast-1
+//	    strategy: raw
+//	  inline:
+//	    dst1: src1
 //
-// values:
-// - provider:
-//     type: map
-//     name: ssm
-//     prefix: myteam/mysvc1
-//     region: ap-northeast-1
-//     strategy: yaml
-//   inline:
-//     dst1: src1
+//	values:
+//	- provider:
+//	    type: map
+//	    name: ssm
+//	    prefix: myteam/mysvc1
+//	    region: ap-northeast-1
+//	    strategy: yaml
+//	  inline:
+//	    dst1: src1
 //
-// values:
-// - provider:
-//     type: string
-//     name: vault
-//     address: http://127.0.0.1:8200
-//     path: secrets/myteam/mysvc1
-//   inline:
-//     dst1: src1
+//	values:
+//	- provider:
+//	    type: string
+//	    name: vault
+//	    address: http://127.0.0.1:8200
+//	    path: secrets/myteam/mysvc1
+//	  inline:
+//	    dst1: src1
 //
-// values:
-// - vault:
-//     address: http://127.0.0.1:8200
-//     path: secrets/myteam/mysvc1
-//   inline:
-//     dst1: src1
-//
+//	values:
+//	- vault:
+//	    address: http://127.0.0.1:8200
+//	    path: secrets/myteam/mysvc1
+//	  inline:
+//	    dst1: src1
 type StaticConfig interface {
 	String(...string) string
 	Config(...string) StaticConfig
