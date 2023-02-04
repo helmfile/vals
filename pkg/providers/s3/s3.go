@@ -2,16 +2,17 @@ package s3
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
+	"gopkg.in/yaml.v3"
+
 	"github.com/helmfile/vals/pkg/api"
 	"github.com/helmfile/vals/pkg/awsclicompat"
 	"github.com/helmfile/vals/pkg/log"
-	"gopkg.in/yaml.v3"
 )
 
 type provider struct {
@@ -60,7 +61,7 @@ func (p *provider) GetString(key string) (string, error) {
 
 	log.Debugf("s3: successfully retrieved object for key=%s", key)
 
-	all, err := ioutil.ReadAll(out.Body)
+	all, err := io.ReadAll(out.Body)
 	if err != nil {
 		return "", fmt.Errorf("reading s3 object body: %w", err)
 	}

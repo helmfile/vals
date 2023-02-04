@@ -8,14 +8,14 @@ import (
 	"strings"
 
 	sm "cloud.google.com/go/secretmanager/apiv1"
-	"github.com/helmfile/vals/pkg/api"
 	smpb "google.golang.org/genproto/googleapis/cloud/secretmanager/v1"
 	"gopkg.in/yaml.v3"
+
+	"github.com/helmfile/vals/pkg/api"
 )
 
 // Format: ref+gcpsecrets://project/mykey[?version=VERSION][&fallback=value=valuewhenkeyisnotfound][&optional=true]#/yaml_or_json_key/in/secret
 type provider struct {
-	client   *sm.Client
 	ctx      context.Context
 	version  string
 	optional bool
@@ -34,9 +34,7 @@ func New(cfg api.StaticConfig) *provider {
 	if version == "" {
 		version = "latest"
 	}
-	return &provider{
-		version: version,
-	}
+	p.version = version
 
 	optional := cfg.String("optional")
 	if optional != "" {

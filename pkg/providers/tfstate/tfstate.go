@@ -6,9 +6,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/helmfile/vals/pkg/api"
-
 	"github.com/fujiwara/tfstate-lookup/tfstate"
+
+	"github.com/helmfile/vals/pkg/api"
 )
 
 type provider struct {
@@ -63,8 +63,13 @@ func (p *provider) ReadTFState(f, k string) (*tfstate.TFState, error) {
 
 	if p.awsProfile != "" {
 		v := os.Getenv("AWS_PROFILE")
-		os.Setenv("AWS_PROFILE", p.awsProfile)
-		defer os.Setenv("AWS_PROFILE", v)
+		err := os.Setenv("AWS_PROFILE", p.awsProfile)
+		if err != nil {
+			return nil, fmt.Errorf("setting AWS_PROFILE envvar: %w", err)
+		}
+		defer func() {
+			_ = os.Setenv("AWS_PROFILE", v)
+		}()
 	}
 
 	switch p.backend {

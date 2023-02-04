@@ -8,12 +8,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/helmfile/vals/pkg/api"
-
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"
+
+	"github.com/helmfile/vals/pkg/api"
 )
 
 type provider struct {
@@ -84,7 +84,10 @@ func tokenFromFile(file string) (*oauth2.Token, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer func() {
+		_ = f.Close()
+	}()
+
 	tok := &oauth2.Token{}
 	err = json.NewDecoder(f).Decode(tok)
 	return tok, err
@@ -97,9 +100,10 @@ func saveToken(path string, token *oauth2.Token) error {
 	if err != nil {
 		return fmt.Errorf("unable to cache oauth token: %w", err)
 	}
-	defer f.Close()
-	json.NewEncoder(f).Encode(token)
-	return nil
+	defer func() {
+		_ = f.Close()
+	}()
+	return json.NewEncoder(f).Encode(token)
 }
 
 func newServiceAccountClient(serviceAccountJSONKey []byte, scope ...string) (*http.Client, error) {

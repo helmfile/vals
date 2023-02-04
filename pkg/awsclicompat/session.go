@@ -1,10 +1,11 @@
 package awsclicompat
 
 import (
+	"os"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"os"
 )
 
 // NewSession creates a new AWS session for the given AWS region and AWS PROFILE.

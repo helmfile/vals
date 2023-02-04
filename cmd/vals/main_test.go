@@ -2,8 +2,9 @@ package main
 
 import (
 	"bytes"
-	"gopkg.in/yaml.v3"
 	"testing"
+
+	"gopkg.in/yaml.v3"
 )
 
 func TestKsDecode(t *testing.T) {

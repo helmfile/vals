@@ -75,6 +75,9 @@ func ModifyStringValues(v interface{}, f func(path string) (interface{}, error))
 		var deleted []string
 		for k, v := range typed_v {
 			ok, err := merge(extends, k, v)
+			if err != nil {
+				return nil, err
+			}
 			if ok {
 				deleted = append(deleted, k)
 				continue

@@ -6,14 +6,14 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/aws/aws-sdk-go/service/ssm/ssmiface"
+	"gopkg.in/yaml.v3"
+
 	"github.com/helmfile/vals/pkg/api"
 	"github.com/helmfile/vals/pkg/awsclicompat"
 	"github.com/helmfile/vals/pkg/log"
-	"gopkg.in/yaml.v3"
-
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/ssm"
 )
 
 type provider struct {

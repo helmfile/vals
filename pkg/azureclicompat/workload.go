@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/confidential"
-	"os"
 )
 
 // WorkloadIdentityClient !! Warning - A regrettable hack !!
@@ -77,6 +77,9 @@ func (c *WorkloadIdentityClient) GetToken(
 		cred,
 		confidential.WithAuthority(c.authorityUrl),
 	)
+	if err != nil {
+		return azcore.AccessToken{}, err
+	}
 
 	result, err := client.AcquireTokenByCredential(ctx, opts.Scopes)
 	if err != nil {

@@ -22,7 +22,9 @@ func kvPreflightVersionRequest(client *api.Client, path string) (string, int, er
 	r := client.NewRequest("GET", "/v1/sys/internal/ui/mounts/"+path)
 	resp, err := client.RawRequest(r)
 	if resp != nil {
-		defer resp.Body.Close()
+		defer func() {
+			_ = resp.Body.Close()
+		}()
 	}
 	if err != nil {
 		// If we get a 404 we are using an older version of vault, default to
@@ -82,4 +84,3 @@ func addPrefixToVKVPath(p, mountPath, apiPrefix string) string {
 		return path.Join(mountPath, apiPrefix, p)
 	}
 }
-

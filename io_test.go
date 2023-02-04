@@ -74,7 +74,6 @@ func Test_InputOutput(t *testing.T) {
 			if bufRoundTrip.String() != tt.input {
 				t.Errorf("Expected %q, got %q", tt.input, bufRoundTrip.String())
 			}
-
 		})
 	}
 }

@@ -9,8 +9,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/helmfile/vals/pkg/api"
 	"gopkg.in/yaml.v3"
+
+	"github.com/helmfile/vals/pkg/api"
 )
 
 type gitlabSecret struct {
@@ -69,7 +70,7 @@ func (p *provider) GetString(key string) (string, error) {
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: p.SSLVerify},
 	}
 	client := &http.Client{Transport: tr}
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return "", err
 	}
@@ -82,7 +83,10 @@ func (p *provider) GetString(key string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer res.Body.Close()
+
+	defer func() {
+		_ = res.Body.Close()
+	}()
 
 	var g gitlabSecret
 	err = json.NewDecoder(res.Body).Decode(&g)
@@ -94,7 +98,6 @@ func (p *provider) GetString(key string) (string, error) {
 }
 
 func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
-
 	secretMap := map[string]interface{}{}
 
 	secretString, err := p.GetString(key)

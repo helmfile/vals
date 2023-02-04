@@ -8,7 +8,6 @@ import (
 )
 
 func Test_parseKey(t *testing.T) {
-
 	testcases := []struct {
 		key     string
 		want    secretSpec
@@ -66,7 +65,6 @@ func Test_parseKey(t *testing.T) {
 	for i := range testcases {
 		tc := testcases[i]
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-
 			got, err := parseKey(tc.key)
 			if err != nil {
 				if err.Error() != tc.wantErr {

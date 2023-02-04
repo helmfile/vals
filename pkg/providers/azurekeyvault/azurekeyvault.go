@@ -3,13 +3,14 @@ package azurekeyvault
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/keyvault/azsecrets"
-	"strings"
+	"gopkg.in/yaml.v3"
 
 	"github.com/helmfile/vals/pkg/api"
 	"github.com/helmfile/vals/pkg/azureclicompat"
-	"gopkg.in/yaml.v3"
 )
 
 type provider struct {

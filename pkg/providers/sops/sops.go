@@ -4,11 +4,11 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	"github.com/helmfile/vals/pkg/api"
-	"github.com/helmfile/vals/pkg/log"
+	"go.mozilla.org/sops/v3/decrypt"
 	"gopkg.in/yaml.v3"
 
-	"go.mozilla.org/sops/v3/decrypt"
+	"github.com/helmfile/vals/pkg/api"
+	"github.com/helmfile/vals/pkg/log"
 )
 
 type provider struct {

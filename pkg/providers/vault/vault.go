@@ -2,15 +2,15 @@ package vault
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
 
+	vault "github.com/hashicorp/vault/api"
+
 	"github.com/helmfile/vals/pkg/api"
 	"github.com/helmfile/vals/pkg/log"
-
-	vault "github.com/hashicorp/vault/api"
 )
 
 const (
@@ -37,11 +37,6 @@ type provider struct {
 	RoleId     string
 	SecretId   string
 	Version    string
-}
-
-type appRoleLogin struct {
-	RoleID   string `json:"role_id,omitempty"`
-	SecretID string `json:"secret_id,omitempty"`
 }
 
 func New(cfg api.StaticConfig) *provider {
@@ -173,7 +168,9 @@ func (p *provider) ensureClient() (*vault.Client, error) {
 			cfg.Address = p.Address
 		}
 		if strings.Contains(p.Address, "127.0.0.1") {
-			cfg.ConfigureTLS(&vault.TLSConfig{Insecure: true})
+			if err := cfg.ConfigureTLS(&vault.TLSConfig{Insecure: true}); err != nil {
+				return nil, err
+			}
 		}
 		cli, err := vault.NewClient(cfg)
 		if err != nil {
@@ -220,7 +217,6 @@ func (p *provider) ensureClient() (*vault.Client, error) {
 				}
 			}
 		} else if p.AuthMethod == "approle" {
-
 			data := map[string]interface{}{
 				"role_id":   p.RoleId,
 				"secret_id": p.SecretId,
@@ -245,11 +241,13 @@ func (p *provider) ensureClient() (*vault.Client, error) {
 			cli.SetToken(resp.Auth.ClientToken)
 		} else if p.AuthMethod == "kubernetes" {
 			fd, err := os.Open(kubernetesJwtTokenPath)
-			defer fd.Close()
+			defer func() {
+				_ = fd.Close()
+			}()
 			if err != nil {
 				return nil, fmt.Errorf("unable to read file containing service account token: %w", err)
 			}
-			jwt, err := ioutil.ReadAll(fd)
+			jwt, err := io.ReadAll(fd)
 			if err != nil {
 				return nil, fmt.Errorf("unable to read file containing service account token: %w", err)
 			}
@@ -282,7 +280,7 @@ func (p *provider) ensureClient() (*vault.Client, error) {
 }
 
 func (p *provider) readTokenFile(path string) (string, error) {
-	buff, err := ioutil.ReadFile(path)
+	buff, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
 	}

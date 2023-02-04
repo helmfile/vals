@@ -140,8 +140,6 @@ func (m MapConfig) Map(path ...string) map[string]interface{} {
 	default:
 		return nil
 	}
-
-	panic("invalid state")
 }
 
 func Map(m map[string]interface{}) MapConfig {
