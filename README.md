@@ -42,12 +42,14 @@ Usage:
   vals [command]
 
 Available Commands:
-  eval		Evaluate a JSON/YAML document and replace any template expressions in it and prints the result
-  exec		Populates the environment variables and executes the command
-  env		Renders environment variables to be consumed by eval or a tool like direnv
-  ksdecode	Decode YAML document(s) by converting Secret resources' "data" to "stringData" for use with "vals eval"
+  eval          Evaluate a JSON/YAML document and replace any template expressions in it and prints the result
+  exec          Populates the environment variables and executes the command
+  env           Renders environment variables to be consumed by eval or a tool like direnv
+  get           Evaluate a string value passed as the first argument and replace any expressiosn in it and prints the result
+  ksdecode      Decode YAML document(s) by converting Secret resources' "data" to "stringData" for use with "vals eval"
+  version       Print vals version
 
-Use "vals [command] --help" for more information about a command
+Use "vals [command] --help" for more information about a comman
 ```
 
 `vals` has a collection of providers that each an be referred with a URI scheme looks `ref+<TYPE>`.

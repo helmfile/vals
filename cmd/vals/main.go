@@ -26,6 +26,7 @@ Available Commands:
   eval		Evaluate a JSON/YAML document and replace any template expressions in it and prints the result
   exec		Populates the environment variables and executes the command
   env		Renders environment variables to be consumed by eval or a tool like direnv
+  get       Evaluate a string value passed as the first argument and replace any expressiosn in it and prints the result
   ksdecode	Decode YAML document(s) by converting Secret resources' "data" to "stringData" for use with "vals eval"
   version	Print vals version
 
@@ -72,6 +73,7 @@ func main() {
 	flag.Usage = flagUsage
 
 	CmdEval := "eval"
+	CmdGet := "get"
 	CmdExec := "exec"
 	CmdEnv := "env"
 	CmdKsDecode := "ksdecode"
@@ -112,6 +114,22 @@ func main() {
 		}
 
 		writeOrFail(o, res)
+	case CmdGet:
+		getCmd := flag.NewFlagSet(CmdGet, flag.ExitOnError)
+		getCmd.BoolVar(&log.Silent, "s", false, "Silent mode")
+		getCmd.Parse(os.Args[2:])
+
+		code := getCmd.Arg(0)
+		if code == "" {
+			fatal("The first argument of the get command is required")
+		}
+
+		v, err := vals.Get(code)
+		if err != nil {
+			fatal("%v", err)
+		}
+
+		os.Stdout.WriteString(v)
 	case CmdExec:
 		execCmd := flag.NewFlagSet(CmdExec, flag.ExitOnError)
 		f := execCmd.String("f", "", "YAML/JSON file to be loaded to set envvars")
