@@ -3,11 +3,12 @@ package vals
 import (
 	"context"
 	"fmt"
-	config2 "github.com/helmfile/vals/pkg/config"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"testing"
+
+	config2 "github.com/helmfile/vals/pkg/config"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/vault/api"
@@ -91,10 +92,10 @@ func TestValues_Vault_EvalTemplate(t *testing.T) {
 	addr, stop := SetupVaultKV(
 		t,
 		map[string]map[string]interface{}{
-			"mykv/foo": map[string]interface{}{
+			"mykv/foo": {
 				"mykey": "myvalue",
 			},
-			"mykv/objs": map[string]interface{}{
+			"mykv/objs": {
 				"myyaml": `yamlkey1: yamlval1
 `,
 				"myjson": `{"jsonkey1":"jsonval1"}
@@ -550,7 +551,7 @@ func TestValues_Vault_Map_YAML(t *testing.T) {
 	addr, stop := SetupVaultKV(
 		t,
 		map[string]map[string]interface{}{
-			"mykv/yamltest": map[string]interface{}{
+			"mykv/yamltest": {
 				"myyaml": string(yamlContent),
 				"myjson": string(jsonContent),
 			},
