@@ -552,6 +552,20 @@ Examples:
 - `ref+azurekeyvault://my-vault/secret-a/ba4f196b15f644cd9e949896a21bab0d`
 - `ref+azurekeyvault://gov-cloud-test.vault.usgovcloudapi.net/secret-b`
 
+#### Authentication
+
+Vals aquires Azure credentials though Azure CLI or from environment variables. The easiest way is to run `az login`. Vals can then aquire the current credentials from `az` without further set up.
+
+Other authentication methods require information to be passed in environment variables. See [Azure SDK docs](https://docs.microsoft.com/en-us/azure/developer/go/azure-sdk-authorization#use-environment-based-authentication) and [auth.go](https://godoc.org/github.com/Azure/go-autorest/autorest/azure/auth#NewAuthorizerFromEnvironment) for the full list of supported environment variables.
+
+For example, if using client credentials the required env vars are `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_TENANT_ID` and possibly `AZURE_ENVIRONMENT` in case of accessing an Azure GovCloud.
+
+The order in which authentication methods are checked is:
+1. Client credentials
+2. Client certificate
+3. Username/Password
+4. Azure CLI or Managed identity (set environment `AZURE_USE_MSI=true` to enabled MSI)
+
 ### EnvSubst
 
 Environment variables substitution.
@@ -573,21 +587,6 @@ Examples:
 
 - `ref+gitlab://gitlab.com/11111/password`
 - `ref+gitlab://my-gitlab.org/11111/password?ssl_verify=true&scheme=https`
-
-#### Authentication
-
-Vals aquires Azure credentials though Azure CLI or from environment variables. The easiest way is to run `az login`. Vals can then aquire the current credentials from `az` without further set up.
-
-Other authentication methods require information to be passed in environment variables. See [Azure SDK docs](https://docs.microsoft.com/en-us/azure/developer/go/azure-sdk-authorization#use-environment-based-authentication) and [auth.go](https://godoc.org/github.com/Azure/go-autorest/autorest/azure/auth#NewAuthorizerFromEnvironment) for the full list of supported environment variables.
-
-For example, if using client credentials the required env vars are `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_TENANT_ID` and possibly `AZURE_ENVIRONMENT` in case of accessing an Azure GovCloud.
-
-The order in which authentication methods are checked is:
-1. Client credentials
-2. Client certificate
-3. Username/Password
-4. Azure CLI or Managed identity (set environment `AZURE_USE_MSI=true` to enabled MSI)
-
 
 ## Advanced Usages
 
