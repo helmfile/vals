@@ -2,8 +2,6 @@ package awskms
 
 import (
 	"encoding/base64"
-	"fmt"
-	"os"
 
 	"gopkg.in/yaml.v3"
 
@@ -92,8 +90,4 @@ func (p *provider) getClient() *kms.KMS {
 
 	p.client = kms.New(sess)
 	return p.client
-}
-
-func (p *provider) debugf(msg string, args ...interface{}) {
-	fmt.Fprintf(os.Stderr, msg+"\n", args...)
 }

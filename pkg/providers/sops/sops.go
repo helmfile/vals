@@ -3,9 +3,9 @@ package sops
 import (
 	"encoding/base64"
 	"fmt"
-	"os"
 
 	"github.com/helmfile/vals/pkg/api"
+	"github.com/helmfile/vals/pkg/log"
 	"gopkg.in/yaml.v3"
 
 	"go.mozilla.org/sops/v3/decrypt"
@@ -49,7 +49,7 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 		return nil, err
 	}
 
-	p.debugf("sops: successfully retrieved key=%s", key)
+	log.Debugf("sops: successfully retrieved key=%s", key)
 
 	return res, nil
 }
@@ -73,8 +73,4 @@ func (p *provider) decrypt(keyOrData, format string) ([]byte, error) {
 	} else {
 		return nil, fmt.Errorf("unsupported key type %q. It must be one \"base64\" or \"filepath\"", p.KeyType)
 	}
-}
-
-func (p *provider) debugf(msg string, args ...interface{}) {
-	fmt.Fprintf(os.Stderr, msg+"\n", args...)
 }

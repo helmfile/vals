@@ -3,11 +3,12 @@ package awssecrets
 import (
 	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/helmfile/vals/pkg/api"
 	"github.com/helmfile/vals/pkg/awsclicompat"
+	"github.com/helmfile/vals/pkg/log"
 	"gopkg.in/yaml.v3"
-	"os"
-	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
@@ -62,7 +63,7 @@ func (p *provider) GetString(key string) (string, error) {
 		return "", errors.New("awssecrets: get secret value: no SecretString nor SecretBinary is set")
 	}
 
-	p.debugf("awssecrets: successfully retrieved key=%s", key)
+	log.Debugf("awssecrets: successfully retrieved key=%s", key)
 
 	return v, nil
 }
@@ -125,13 +126,9 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 		res[sufKey] = str
 	}
 
-	p.debugf("SSM: successfully retrieved key=%s", key)
+	log.Debugf("SSM: successfully retrieved key=%s", key)
 
 	return res, nil
-}
-
-func (p *provider) debugf(msg string, args ...interface{}) {
-	fmt.Fprintf(os.Stderr, msg+"\n", args...)
 }
 
 func (p *provider) getClient() *secretsmanager.SecretsManager {

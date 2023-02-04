@@ -2,15 +2,16 @@ package s3
 
 import (
 	"fmt"
+	"io/ioutil"
+	"strings"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/helmfile/vals/pkg/api"
 	"github.com/helmfile/vals/pkg/awsclicompat"
+	"github.com/helmfile/vals/pkg/log"
 	"gopkg.in/yaml.v3"
-	"io/ioutil"
-	"os"
-	"strings"
 )
 
 type provider struct {
@@ -57,7 +58,7 @@ func (p *provider) GetString(key string) (string, error) {
 		return "", fmt.Errorf("getting s3 object: %w", err)
 	}
 
-	p.debugf("s3: successfully retrieved object for key=%s", key)
+	log.Debugf("s3: successfully retrieved object for key=%s", key)
 
 	all, err := ioutil.ReadAll(out.Body)
 	if err != nil {
@@ -80,10 +81,6 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 	}
 
 	return m, nil
-}
-
-func (p *provider) debugf(msg string, args ...interface{}) {
-	fmt.Fprintf(os.Stderr, msg+"\n", args...)
 }
 
 func (p *provider) getS3Client() s3iface.S3API {
