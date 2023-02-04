@@ -18,6 +18,15 @@ It supports various backends including:
 - Use `vals exec -f env.yaml -- <COMMAND>` to populate envvars and execute the command.
 - Use `vals env -f env.yaml` to render envvars that are consumable by `eval` or a tool like `direnv`
 
+ToC:
+
+- [Usage](#usage)
+  - [CLI](#cli)
+  - [Helm](#helm)
+  - [Go](#go)
+- [Expression Syntax](#expression-syntax)
+- [Supported Backends](#supported-backends)
+
 ## Usage
 
 - [CLI](#cli)
@@ -162,6 +171,26 @@ foo: $(vault read mykv/foo -o json | jq -r .mykey)
     baz: $(vault read mykv/foo -o json | jq -r .mykey)
 EOF
 ```
+
+## Expression Syntax
+
+`vals` finds and replaces every occurrence of `ref+BACKEND://PATH[?PARAMS][#FRAGMENT][+]` URI-like expression within the string at the value position with the retrieved secret value.
+
+`BACKEND` is the identifier of one of the [supported backends](#supported-backends).
+
+`PATH` is the backend-specific path for the secret to be retried.
+
+`PARAMS` is key-value pairs where the key and the value are combined using the intermediate "=" character while key-value pairs are combined using "&" characters. It's supposed to be the "query" component of the URI as defined in [RFC3986](https://www.rfc-editor.org/rfc/rfc3986).
+
+`FRAGMENT` is a path-like expression that is used to extract a single value within the secret. When a fragment is specified, `vals` parse the secret value denoted by the `PATH` into a YAML or JSON object, and traverses the object following the fragment, and uses the value at the path as the final secret value. It's supposed to be the "fragment" componet of the URI as defined in [RFC3986](https://www.rfc-editor.org/rfc/rfc3986).
+
+Finally, the optional trailing `+` is the explit "end" of the expression. You usually don't need it, as if omitted, it treats anything after `ref+` and before the new-line or the end-of-line as an expression to be evaluated. An explicit `+` is handy when you want to do a simple string interpolation. That is, `foo ref+SECRET1+ ref+SECRET2+ bar` evaluates to `foo SECRET1_VALUE SECRET2_VALUE bar`.
+
+Although we mention the RFC for the sake of explanation, `PARAMS` and `FRAGMENT` might not be fully RFC-compliant as, under the hood, we use a simple regexp that seemed to work for most of use-cases.
+
+The regexp is defined as [DefaultRefRegexp](#https://github.com/helmfile/vals/blob/86bccbee4d5f430b7d24b2e3af781336767c0d35/pkg/expansion/expand_match.go#L15) in our code base.
+
+Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/main/pkg/expansion/expand_match_test.go) for exactly which patterns are supposed to work with `vals`.
 
 ## Supported Backends
 
@@ -620,7 +649,7 @@ This is safe to be committed into git because, as you've told to `vals`, `awsssm
 
 ## Non-Goals
 
-### String-Interpolation / Template Functions
+### Complex String-Interpolation / Template Functions
 
 In the early days of this project, the original author has investigated if it was a good idea to introduce string interpolation like feature to vals:
 
@@ -634,6 +663,8 @@ But the idea had abandoned due to that it seemed to drive the momentum to vals b
 That's not the business of vals.
 
 Instead, use vals solely for composing sets of values that are then input to another templating engine or data manipulation language like Jsonnet and CUE.
+
+Note though, `vals` dose have support for simple string interpolation like usage. See [Expression Syntax](#expression-syntax) for more information.
 
 ### Merge
 
