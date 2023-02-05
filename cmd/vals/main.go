@@ -92,6 +92,7 @@ func main() {
 		o := evalCmd.String("o", "yaml", "Output type which is either \"yaml\" or \"json\"")
 		silent := evalCmd.Bool("s", false, "Silent mode")
 		e := evalCmd.Bool("exclude-secret", false, "Leave secretref+<uri> as-is and only replace ref+<uri>")
+		failOnMissingKeyInMap := evalCmd.Bool("fail-on-missing-key-in-map", true, "When set to false, the vals-eval command exits with code 0 even when the key denoted by the #/key/for/value/in/the/json/or/yaml does not exist in the decoded map")
 		err := evalCmd.Parse(os.Args[2:])
 		if err != nil {
 			fatal("%v", err)
@@ -105,8 +106,9 @@ func main() {
 		nodes := readNodesOrFail(f)
 
 		res, err := vals.EvalNodes(nodes, vals.Options{
-			ExcludeSecret: *e,
-			LogOutput:     logOut,
+			ExcludeSecret:         *e,
+			LogOutput:             logOut,
+			FailOnMissingKeyInMap: *failOnMissingKeyInMap,
 		})
 		if err != nil {
 			fatal("%v", err)
