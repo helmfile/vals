@@ -15,42 +15,26 @@ import (
 
 // Format: ref+gcpsecrets://project/mykey[?version=VERSION][&fallback=value=valuewhenkeyisnotfound][&optional=true]#/yaml_or_json_key/in/secret
 type provider struct {
-	client   *sm.Client
-	ctx      context.Context
 	version  string
 	optional bool
 	fallback *string
 }
 
 func New(cfg api.StaticConfig) *provider {
-	ctx := context.Background()
-
 	p := &provider{
-		ctx:      ctx,
+		version:  "latest",
 		optional: false,
+		fallback: nil,
 	}
-
-	version := cfg.String("version")
-	if version == "" {
-		version = "latest"
+	if v := cfg.String("version"); v != "" {
+		p.version = v
 	}
-	return &provider{
-		version: version,
+	if v := cfg.String("optional"); v != "" {
+		p.optional, _ = strconv.ParseBool(v)
 	}
-
-	optional := cfg.String("optional")
-	if optional != "" {
-		val, err := strconv.ParseBool(optional)
-		if err == nil {
-			p.optional = val
-		}
+	if v := cfg.String("fallback_value"); cfg.Exists("fallback_value") {
+		p.fallback = &v
 	}
-
-	if cfg.Exists("fallback_value") {
-		fallback := cfg.String("fallback_value")
-		p.fallback = &fallback
-	}
-
 	return p
 }
 
