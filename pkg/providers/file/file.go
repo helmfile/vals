@@ -1,11 +1,12 @@
 package file
 
 import (
-	"io/ioutil"
+	"os"
 	"strings"
 
-	"github.com/helmfile/vals/pkg/api"
 	"gopkg.in/yaml.v3"
+
+	"github.com/helmfile/vals/pkg/api"
 )
 
 type provider struct {
@@ -18,7 +19,7 @@ func New(cfg api.StaticConfig) *provider {
 
 func (p *provider) GetString(key string) (string, error) {
 	key = strings.TrimSuffix(key, "/")
-	bs, err := ioutil.ReadFile(key)
+	bs, err := os.ReadFile(key)
 	if err != nil {
 		return "", err
 	}
@@ -27,7 +28,7 @@ func (p *provider) GetString(key string) (string, error) {
 
 func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 	key = strings.TrimSuffix(key, "/")
-	bs, err := ioutil.ReadFile(key)
+	bs, err := os.ReadFile(key)
 	if err != nil {
 		return nil, err
 	}

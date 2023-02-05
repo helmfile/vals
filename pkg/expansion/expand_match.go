@@ -60,9 +60,9 @@ func (e *ExpandRegexMatch) InMap(target map[string]interface{}) (map[string]inte
 		return nil, err
 	}
 
-	switch ret.(type) {
+	switch ret := ret.(type) {
 	case map[string]interface{}:
-		return ret.(map[string]interface{}), nil
+		return ret, nil
 	default:
 		return nil, fmt.Errorf("unexpected type: %v: %T", ret, ret)
 	}

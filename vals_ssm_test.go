@@ -2,8 +2,9 @@ package vals
 
 import (
 	"fmt"
-	config2 "github.com/helmfile/vals/pkg/config"
 	"testing"
+
+	config2 "github.com/helmfile/vals/pkg/config"
 )
 
 func TestValues_SSM_String(t *testing.T) {

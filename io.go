@@ -20,7 +20,9 @@ func Inputs(f string) ([]yaml.Node, error) {
 			return nil, err
 		}
 		reader = fp
-		defer fp.Close()
+		defer func() {
+			_ = fp.Close()
+		}()
 	} else {
 		return nil, fmt.Errorf("Nothing to eval: No file specified")
 	}

@@ -4,8 +4,9 @@ import (
 	"strings"
 
 	envSubst "github.com/a8m/envsubst"
-	"github.com/helmfile/vals/pkg/api"
 	"gopkg.in/yaml.v3"
+
+	"github.com/helmfile/vals/pkg/api"
 )
 
 type provider struct {

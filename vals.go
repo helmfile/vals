@@ -10,12 +10,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/helmfile/vals/pkg/config"
-	"github.com/helmfile/vals/pkg/providers/googlesheets"
-	"github.com/helmfile/vals/pkg/providers/s3"
-
 	lru "github.com/hashicorp/golang-lru"
+	"gopkg.in/yaml.v3"
+
 	"github.com/helmfile/vals/pkg/api"
+	"github.com/helmfile/vals/pkg/config"
 	"github.com/helmfile/vals/pkg/expansion"
 	"github.com/helmfile/vals/pkg/providers/awskms"
 	"github.com/helmfile/vals/pkg/providers/awssecrets"
@@ -26,13 +25,14 @@ import (
 	"github.com/helmfile/vals/pkg/providers/gcpsecrets"
 	"github.com/helmfile/vals/pkg/providers/gcs"
 	"github.com/helmfile/vals/pkg/providers/gitlab"
+	"github.com/helmfile/vals/pkg/providers/googlesheets"
+	"github.com/helmfile/vals/pkg/providers/s3"
 	"github.com/helmfile/vals/pkg/providers/sops"
 	"github.com/helmfile/vals/pkg/providers/ssm"
 	"github.com/helmfile/vals/pkg/providers/tfstate"
 	"github.com/helmfile/vals/pkg/providers/vault"
 	"github.com/helmfile/vals/pkg/stringmapprovider"
 	"github.com/helmfile/vals/pkg/stringprovider"
-	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -120,6 +120,7 @@ func New(opts Options) (*Runtime, error) {
 	return r, nil
 }
 
+// nolint
 func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 	var err error
 
@@ -487,6 +488,7 @@ func Get(code string) (string, error) {
 	return runtime.Get(code)
 }
 
+// nolint
 func Load(conf api.StaticConfig, opt ...Option) (map[string]interface{}, error) {
 	ctx := &ctx{}
 	for _, o := range opt {

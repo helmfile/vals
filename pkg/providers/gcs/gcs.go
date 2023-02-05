@@ -3,16 +3,15 @@ package gcs
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"strconv"
-
-	"cloud.google.com/go/storage"
-
 	"strings"
 	"time"
 
-	"github.com/helmfile/vals/pkg/api"
+	"cloud.google.com/go/storage"
 	"gopkg.in/yaml.v3"
+
+	"github.com/helmfile/vals/pkg/api"
 )
 
 type provider struct {
@@ -52,7 +51,9 @@ func (p *provider) GetString(key string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("storage.NewClient: %v", err)
 	}
-	defer client.Close()
+	defer func() {
+		_ = client.Close()
+	}()
 
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
@@ -81,9 +82,11 @@ func (p *provider) GetString(key string) (string, error) {
 		}
 	}
 
-	defer rc.Close()
+	defer func() {
+		_ = rc.Close()
+	}()
 
-	slurp, err := ioutil.ReadAll(rc)
+	slurp, err := io.ReadAll(rc)
 	if err != nil {
 		return "", err
 	}

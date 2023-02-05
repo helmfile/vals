@@ -8,9 +8,10 @@ import (
 	"strings"
 
 	sm "cloud.google.com/go/secretmanager/apiv1"
-	"github.com/helmfile/vals/pkg/api"
 	smpb "google.golang.org/genproto/googleapis/cloud/secretmanager/v1"
 	"gopkg.in/yaml.v3"
+
+	"github.com/helmfile/vals/pkg/api"
 )
 
 // Format: ref+gcpsecrets://project/mykey[?version=VERSION][&fallback=value=valuewhenkeyisnotfound][&optional=true]#/yaml_or_json_key/in/secret

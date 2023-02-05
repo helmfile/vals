@@ -2,13 +2,16 @@ package vals
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
+
 	"github.com/helmfile/vals/pkg/awsclicompat"
 	config2 "github.com/helmfile/vals/pkg/config"
-	"testing"
 )
 
+// nolint
 func TestValues_AWSSecrets_String(t *testing.T) {
 	client := secretsmanager.New(awsclicompat.NewSession("", ""))
 
@@ -114,6 +117,7 @@ func TestValues_AWSSecrets_String(t *testing.T) {
 	}
 }
 
+// nolint
 func TestValues_AWSSecrets_Map(t *testing.T) {
 	// TODO
 	// Pre-requisite:

@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"os"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/helmfile/vals"
 	"github.com/helmfile/vals/pkg/log"
-	"gopkg.in/yaml.v3"
 )
 
 var (
@@ -91,7 +92,10 @@ func main() {
 		o := evalCmd.String("o", "yaml", "Output type which is either \"yaml\" or \"json\"")
 		evalCmd.BoolVar(&log.Silent, "s", false, "Silent mode")
 		e := evalCmd.Bool("exclude-secret", false, "Leave secretref+<uri> as-is and only replace ref+<uri>")
-		evalCmd.Parse(os.Args[2:])
+		err := evalCmd.Parse(os.Args[2:])
+		if err != nil {
+			fatal("%v", err)
+		}
 
 		nodes := readNodesOrFail(f)
 
@@ -117,7 +121,10 @@ func main() {
 	case CmdGet:
 		getCmd := flag.NewFlagSet(CmdGet, flag.ExitOnError)
 		getCmd.BoolVar(&log.Silent, "s", false, "Silent mode")
-		getCmd.Parse(os.Args[2:])
+		err := getCmd.Parse(os.Args[2:])
+		if err != nil {
+			fatal("%v", err)
+		}
 
 		code := getCmd.Arg(0)
 		if code == "" {
@@ -129,15 +136,21 @@ func main() {
 			fatal("%v", err)
 		}
 
-		os.Stdout.WriteString(v)
+		_, err = os.Stdout.WriteString(v)
+		if err != nil {
+			fatal("%v", err)
+		}
 	case CmdExec:
 		execCmd := flag.NewFlagSet(CmdExec, flag.ExitOnError)
 		f := execCmd.String("f", "", "YAML/JSON file to be loaded to set envvars")
-		execCmd.Parse(os.Args[2:])
+		err := execCmd.Parse(os.Args[2:])
+		if err != nil {
+			fatal("%v", err)
+		}
 
 		m := readOrFail(f)
 
-		err := vals.Exec(m, execCmd.Args())
+		err = vals.Exec(m, execCmd.Args())
 		if err != nil {
 			fatal("%v", err)
 		}
@@ -145,7 +158,10 @@ func main() {
 		execEnv := flag.NewFlagSet(CmdEnv, flag.ExitOnError)
 		f := execEnv.String("f", "", "YAML/JSON file to be loaded to set envvars")
 		export := execEnv.Bool("export", false, "Prepend 'export' to each line")
-		execEnv.Parse(os.Args[2:])
+		err := execEnv.Parse(os.Args[2:])
+		if err != nil {
+			fatal("%v", err)
+		}
 
 		m := readOrFail(f)
 
@@ -163,7 +179,10 @@ func main() {
 		evalCmd := flag.NewFlagSet(CmdKsDecode, flag.ExitOnError)
 		f := evalCmd.String("f", "", "YAML/JSON file to be decoded")
 		o := evalCmd.String("o", "yaml", "Output type which is either \"yaml\" or \"json\"")
-		evalCmd.Parse(os.Args[2:])
+		err := evalCmd.Parse(os.Args[2:])
+		if err != nil {
+			fatal("%v", err)
+		}
 
 		nodes := readNodesOrFail(f)
 
@@ -194,8 +213,7 @@ func KsDecode(node yaml.Node) (*yaml.Node, error) {
 		return nil, fmt.Errorf("unexpected kind of node: expected %d, got %d", yaml.DocumentNode, node.Kind)
 	}
 
-	var res yaml.Node
-	res = node
+	var res yaml.Node = node
 
 	var kk yaml.Node
 	var vv yaml.Node

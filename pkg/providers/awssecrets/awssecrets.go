@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/secretsmanager"
+	"gopkg.in/yaml.v3"
+
 	"github.com/helmfile/vals/pkg/api"
 	"github.com/helmfile/vals/pkg/awsclicompat"
 	"github.com/helmfile/vals/pkg/log"
-	"gopkg.in/yaml.v3"
-
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/secretsmanager"
 )
 
 type provider struct {
@@ -69,7 +69,6 @@ func (p *provider) GetString(key string) (string, error) {
 }
 
 func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
-
 	yamlStr, err := p.GetString(key)
 	if err == nil {
 		m := map[string]interface{}{}
@@ -101,9 +100,7 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 	var suffixes []string
 	switch f := f.(type) {
 	case []string:
-		for _, v := range f {
-			suffixes = append(suffixes, v)
-		}
+		suffixes = append(suffixes, f...)
 	case []interface{}:
 		for _, v := range f {
 			suffixes = append(suffixes, fmt.Sprintf("%v", v))

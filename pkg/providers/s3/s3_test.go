@@ -3,14 +3,16 @@ package s3
 import (
 	"errors"
 	"fmt"
+	"io"
+	"strings"
+	"testing"
+
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/google/go-cmp/cmp"
+
 	"github.com/helmfile/vals/pkg/config"
-	"io/ioutil"
-	"strings"
-	"testing"
 )
 
 type mockedS3 struct {
@@ -23,7 +25,7 @@ type mockedS3 struct {
 
 func Output(b string) *s3.GetObjectOutput {
 	return &s3.GetObjectOutput{
-		Body: ioutil.NopCloser(strings.NewReader(b)),
+		Body: io.NopCloser(strings.NewReader(b)),
 	}
 }
 
