@@ -12,14 +12,18 @@ import (
 )
 
 type provider struct {
+	log *log.Logger
+
 	// KeyType is either "filepath"(default) or "base64".
 	KeyType string
 	// Format is --input-type of sops
 	Format string
 }
 
-func New(cfg api.StaticConfig) *provider {
-	p := &provider{}
+func New(l *log.Logger, cfg api.StaticConfig) *provider {
+	p := &provider{
+		log: l,
+	}
 	p.Format = cfg.String("format")
 	p.KeyType = cfg.String("key_type")
 	if p.KeyType == "" {
@@ -49,7 +53,7 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 		return nil, err
 	}
 
-	log.Debugf("sops: successfully retrieved key=%s", key)
+	p.log.Debugf("sops: successfully retrieved key=%s", key)
 
 	return res, nil
 }

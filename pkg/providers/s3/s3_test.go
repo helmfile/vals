@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"testing"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/helmfile/vals/pkg/config"
+	"github.com/helmfile/vals/pkg/log"
 )
 
 type mockedS3 struct {
@@ -74,7 +76,7 @@ func TestGetString(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		p := New(config.MapConfig{M: map[string]interface{}{}})
+		p := New(log.New(log.Config{Output: os.Stderr}), config.MapConfig{M: map[string]interface{}{}})
 
 		p.s3Client = c.s3
 
@@ -127,7 +129,7 @@ func TestGetStringMap(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		p := New(config.MapConfig{M: map[string]interface{}{}})
+		p := New(log.New(log.Config{Output: os.Stderr}), config.MapConfig{M: map[string]interface{}{}})
 
 		p.s3Client = c.s3
 

@@ -4,12 +4,12 @@ import (
 	"encoding/base64"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 
 	"gopkg.in/yaml.v3"
 
 	"github.com/helmfile/vals"
-	"github.com/helmfile/vals/pkg/log"
 )
 
 var (
@@ -90,11 +90,16 @@ func main() {
 		evalCmd := flag.NewFlagSet(CmdEval, flag.ExitOnError)
 		f := evalCmd.String("f", "-", "YAML/JSON file to be evaluated. When set to \"-\", vals reads from STDIN")
 		o := evalCmd.String("o", "yaml", "Output type which is either \"yaml\" or \"json\"")
-		evalCmd.BoolVar(&log.Silent, "s", false, "Silent mode")
+		silent := evalCmd.Bool("s", false, "Silent mode")
 		e := evalCmd.Bool("exclude-secret", false, "Leave secretref+<uri> as-is and only replace ref+<uri>")
 		err := evalCmd.Parse(os.Args[2:])
 		if err != nil {
 			fatal("%v", err)
+		}
+
+		var logOut io.Writer = os.Stderr
+		if *silent {
+			logOut = io.Discard
 		}
 
 		nodes := readNodesOrFail(f)
@@ -106,7 +111,11 @@ func main() {
 			if err != nil {
 				fatal("%v", err)
 			}
-			evalResult, err := vals.Eval(nodeValue, vals.Options{ExcludeSecret: *e})
+			evalResult, err := vals.Eval(nodeValue,
+				vals.Options{
+					ExcludeSecret: *e,
+					LogOutput:     logOut,
+				})
 			if err != nil {
 				fatal("%v", err)
 			}
@@ -120,7 +129,7 @@ func main() {
 		writeOrFail(o, res)
 	case CmdGet:
 		getCmd := flag.NewFlagSet(CmdGet, flag.ExitOnError)
-		getCmd.BoolVar(&log.Silent, "s", false, "Silent mode")
+		silent := getCmd.Bool("s", false, "Silent mode")
 		err := getCmd.Parse(os.Args[2:])
 		if err != nil {
 			fatal("%v", err)
@@ -131,7 +140,12 @@ func main() {
 			fatal("The first argument of the get command is required")
 		}
 
-		v, err := vals.Get(code)
+		var logOut io.Writer = os.Stderr
+		if *silent {
+			logOut = io.Discard
+		}
+
+		v, err := vals.Get(code, vals.Options{LogOutput: logOut})
 		if err != nil {
 			fatal("%v", err)
 		}

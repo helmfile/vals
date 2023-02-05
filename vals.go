@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"os/exec"
@@ -16,6 +17,7 @@ import (
 	"github.com/helmfile/vals/pkg/api"
 	"github.com/helmfile/vals/pkg/config"
 	"github.com/helmfile/vals/pkg/expansion"
+	"github.com/helmfile/vals/pkg/log"
 	"github.com/helmfile/vals/pkg/providers/awskms"
 	"github.com/helmfile/vals/pkg/providers/awssecrets"
 	"github.com/helmfile/vals/pkg/providers/azurekeyvault"
@@ -95,6 +97,8 @@ type Runtime struct {
 
 	Options Options
 
+	logger *log.Logger
+
 	m sync.Mutex
 }
 
@@ -107,6 +111,9 @@ func New(opts Options) (*Runtime, error) {
 	r := &Runtime{
 		providers: map[string]api.Provider{},
 		Options:   opts,
+		logger: log.New(log.Config{
+			Output: opts.LogOutput,
+		}),
 	}
 	var err error
 	r.docCache, err = lru.New(cacheSize)
@@ -151,13 +158,13 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 
 		switch scheme {
 		case ProviderVault:
-			p := vault.New(conf)
+			p := vault.New(r.logger, conf)
 			return p, nil
 		case ProviderS3:
 			// ref+s3://foo/bar?region=ap-northeast-1#/baz
 			// 1. GetObject for the bucket foo and key bar
 			// 2. Then extracts the value for key baz(=/foo/bar/baz) from the result from step 1.
-			p := s3.New(conf)
+			p := s3.New(r.logger, conf)
 			return p, nil
 		case ProviderGCS:
 			// vals+gcs://foo/bar?generation=timestamp#/baz
@@ -173,16 +180,16 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 			// ref+awsssm://foo/bar?region=ap-northeast-1#/baz
 			// 1. GetParametersByPath for the prefix /foo/bar
 			// 2. Then extracts the value for key baz(=/foo/bar/baz) from the result from step 1.
-			p := ssm.New(conf)
+			p := ssm.New(r.logger, conf)
 			return p, nil
 		case ProviderSecretsManager:
 			// ref+awssecrets://foo/bar?region=ap-northeast-1#/baz
 			// 1. Get secret for key foo/bar, parse it as yaml
 			// 2. Then extracts the value for key baz) from the result from step 1.
-			p := awssecrets.New(conf)
+			p := awssecrets.New(r.logger, conf)
 			return p, nil
 		case ProviderSOPS:
-			p := sops.New(conf)
+			p := sops.New(r.logger, conf)
 			return p, nil
 		case ProviderEcho:
 			p := echo.New(conf)
@@ -431,6 +438,7 @@ func IgnorePrefix(p string) Option {
 }
 
 type Options struct {
+	LogOutput     io.Writer
 	CacheSize     int
 	ExcludeSecret bool
 }
@@ -480,8 +488,8 @@ func Eval(template map[string]interface{}, o ...Options) (map[string]interface{}
 	return runtime.Eval(template)
 }
 
-func Get(code string) (string, error) {
-	runtime, err := New(Options{})
+func Get(code string, opts Options) (string, error) {
+	runtime, err := New(opts)
 	if err != nil {
 		return "", err
 	}
@@ -494,6 +502,8 @@ func Load(conf api.StaticConfig, opt ...Option) (map[string]interface{}, error) 
 	for _, o := range opt {
 		o(ctx)
 	}
+
+	l := log.New(log.Config{Output: os.Stderr})
 
 	type ValuesProvider struct {
 		ID  []string
@@ -622,7 +632,7 @@ func Load(conf api.StaticConfig, opt ...Option) (map[string]interface{}, error) 
 
 	switch tpe {
 	case TypeString:
-		p, err := stringprovider.New(provider)
+		p, err := stringprovider.New(l, provider)
 		if err != nil {
 			return nil, err
 		}
@@ -646,11 +656,11 @@ func Load(conf api.StaticConfig, opt ...Option) (map[string]interface{}, error) 
 			return nil, fmt.Errorf("unexpected type: %T", r)
 		}
 	case TypeMap:
-		p, err := stringmapprovider.New(provider)
+		p, err := stringmapprovider.New(l, provider)
 		if err != nil {
 			return nil, err
 		}
-		pp, err := stringprovider.New(provider)
+		pp, err := stringprovider.New(l, provider)
 		if err != nil {
 			return nil, err
 		}

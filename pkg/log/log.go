@@ -2,15 +2,28 @@ package log
 
 import (
 	"fmt"
+	"io"
 	"os"
 )
 
-var (
-	Silent bool
-)
+type Logger struct {
+	output io.Writer
+}
 
-func Debugf(msg string, args ...interface{}) {
-	if !Silent {
-		fmt.Fprintf(os.Stderr, msg+"\n", args...)
+type Config struct {
+	Output io.Writer
+}
+
+func New(c Config) *Logger {
+	var w io.Writer = os.Stderr
+	if c.Output != nil {
+		w = c.Output
 	}
+	return &Logger{
+		output: w,
+	}
+}
+
+func (l *Logger) Debugf(msg string, args ...interface{}) {
+	fmt.Fprintf(l.output, msg+"\n", args...)
 }

@@ -17,6 +17,7 @@ import (
 type provider struct {
 	// Keeping track of secretsmanager services since we need a service per region
 	client *secretsmanager.SecretsManager
+	log    *log.Logger
 
 	// AWS SecretsManager global configuration
 	Region, VersionStage, VersionId, Profile string
@@ -24,8 +25,10 @@ type provider struct {
 	Format string
 }
 
-func New(cfg api.StaticConfig) *provider {
-	p := &provider{}
+func New(l *log.Logger, cfg api.StaticConfig) *provider {
+	p := &provider{
+		log: l,
+	}
 	p.Region = cfg.String("region")
 	p.VersionStage = cfg.String("version_stage")
 	p.VersionId = cfg.String("version_id")
@@ -63,7 +66,7 @@ func (p *provider) GetString(key string) (string, error) {
 		return "", errors.New("awssecrets: get secret value: no SecretString nor SecretBinary is set")
 	}
 
-	log.Debugf("awssecrets: successfully retrieved key=%s", key)
+	p.log.Debugf("awssecrets: successfully retrieved key=%s", key)
 
 	return v, nil
 }
@@ -123,7 +126,7 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 		res[sufKey] = str
 	}
 
-	log.Debugf("SSM: successfully retrieved key=%s", key)
+	p.log.Debugf("SSM: successfully retrieved key=%s", key)
 
 	return res, nil
 }

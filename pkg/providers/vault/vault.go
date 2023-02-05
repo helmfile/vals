@@ -26,6 +26,7 @@ const (
 //	Success! Enabled the kv secrets engine at: mykv/
 type provider struct {
 	client *vault.Client
+	log    *log.Logger
 
 	Address    string
 	Namespace  string
@@ -39,8 +40,10 @@ type provider struct {
 	Version    string
 }
 
-func New(cfg api.StaticConfig) *provider {
-	p := &provider{}
+func New(l *log.Logger, cfg api.StaticConfig) *provider {
+	p := &provider{
+		log: l,
+	}
 	p.Proto = cfg.String("proto")
 	if p.Proto == "" {
 		p.Proto = "https"
@@ -97,7 +100,7 @@ func (p *provider) GetString(key string) (string, error) {
 
 	secret, err := p.GetStringMap(path)
 	if err != nil {
-		log.Debugf("vault: get string failed: path=%q, key=%q", path, key)
+		p.log.Debugf("vault: get string failed: path=%q, key=%q", path, key)
 		return "", err
 	}
 
@@ -134,7 +137,7 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 
 	secret, err := cli.Logical().ReadWithData(key, data)
 	if err != nil {
-		log.Debugf("vault: read: key=%q", key)
+		p.log.Debugf("vault: read: key=%q", key)
 		return nil, err
 	}
 
@@ -174,7 +177,7 @@ func (p *provider) ensureClient() (*vault.Client, error) {
 		}
 		cli, err := vault.NewClient(cfg)
 		if err != nil {
-			log.Debugf("Vault connections failed")
+			p.log.Debugf("Vault connections failed")
 			return nil, fmt.Errorf("Cannot create Vault Client: %v", err)
 		}
 		if p.Namespace != "" {

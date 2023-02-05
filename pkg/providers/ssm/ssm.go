@@ -19,6 +19,7 @@ import (
 type provider struct {
 	// Keeping track of SSM services since we need a SSM service per region
 	ssmClient ssmiface.SSMAPI
+	log       *log.Logger
 
 	// AWS SSM Parameter store global configuration
 	Region    string
@@ -28,8 +29,10 @@ type provider struct {
 	Recursive bool
 }
 
-func New(cfg api.StaticConfig) *provider {
-	p := &provider{}
+func New(l *log.Logger, cfg api.StaticConfig) *provider {
+	p := &provider{
+		log: l,
+	}
 	p.Region = cfg.String("region")
 	p.Version = cfg.String("version")
 	p.Profile = cfg.String("profile")
@@ -66,7 +69,7 @@ func (p *provider) GetString(key string) (string, error) {
 	if out.Parameter.Value == nil {
 		return "", errors.New("datasource.ssm.Get() out.Parameter.Value is nil")
 	}
-	log.Debugf("SSM: successfully retrieved key=%s", key)
+	p.log.Debugf("SSM: successfully retrieved key=%s", key)
 
 	return *out.Parameter.Value, nil
 }
@@ -106,7 +109,7 @@ func (p *provider) GetStringVersion(key string) (string, error) {
 		return "", errors.New(err.Error())
 	}
 	if result != "" {
-		log.Debugf("SSM: successfully retrieved key=%s", key)
+		p.log.Debugf("SSM: successfully retrieved key=%s", key)
 		return result, nil
 	}
 
@@ -196,7 +199,7 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 		}
 	}
 
-	log.Debugf("SSM: successfully retrieved key=%s", key)
+	p.log.Debugf("SSM: successfully retrieved key=%s", key)
 
 	return res, nil
 }
