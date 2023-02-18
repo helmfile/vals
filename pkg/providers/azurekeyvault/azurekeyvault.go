@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/keyvault/azsecrets"
 	"gopkg.in/yaml.v3"
 
 	"github.com/helmfile/vals/pkg/api"
-	"github.com/helmfile/vals/pkg/azureclicompat"
 )
 
 type provider struct {
@@ -18,7 +17,7 @@ type provider struct {
 	clients map[string]*azsecrets.Client
 }
 
-func New(cfg api.StaticConfig) *provider {
+func New(_ api.StaticConfig) *provider {
 	p := &provider{}
 	p.clients = make(map[string]*azsecrets.Client)
 	return p
@@ -61,22 +60,17 @@ func (p *provider) getClientForKeyVault(vaultBaseURL string) (*azsecrets.Client,
 		return p.clients[vaultBaseURL], nil
 	}
 
-	cred, err := getTokenCredential()
+	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		return nil, err
 	}
 
-	p.clients[vaultBaseURL] = azsecrets.NewClient(vaultBaseURL, cred, nil)
+	p.clients[vaultBaseURL], err = azsecrets.NewClient(vaultBaseURL, cred, nil)
+	if err != nil {
+		return nil, err
+	}
+
 	return p.clients[vaultBaseURL], nil
-}
-
-func getTokenCredential() (azcore.TokenCredential, error) {
-	cred, err := azureclicompat.ResolveIdentity()
-	if err != nil {
-		return nil, err
-	}
-
-	return cred, nil
 }
 
 type secretSpec struct {
