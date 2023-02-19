@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/helmfile/vals/pkg/api"
+	"github.com/helmfile/vals/pkg/log"
 	"github.com/helmfile/vals/pkg/providers/awskms"
 	"github.com/helmfile/vals/pkg/providers/awssecrets"
 	"github.com/helmfile/vals/pkg/providers/azurekeyvault"
@@ -13,20 +14,20 @@ import (
 	"github.com/helmfile/vals/pkg/providers/vault"
 )
 
-func New(provider api.StaticConfig) (api.LazyLoadedStringMapProvider, error) {
+func New(l *log.Logger, provider api.StaticConfig) (api.LazyLoadedStringMapProvider, error) {
 	tpe := provider.String("name")
 
 	switch tpe {
 	case "s3":
-		return ssm.New(provider), nil
+		return ssm.New(l, provider), nil
 	case "ssm":
-		return ssm.New(provider), nil
+		return ssm.New(l, provider), nil
 	case "vault":
-		return vault.New(provider), nil
+		return vault.New(l, provider), nil
 	case "awssecrets":
-		return awssecrets.New(provider), nil
+		return awssecrets.New(l, provider), nil
 	case "sops":
-		return sops.New(provider), nil
+		return sops.New(l, provider), nil
 	case "gcpsecrets":
 		return gcpsecrets.New(provider), nil
 	case "azurekeyvault":

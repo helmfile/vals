@@ -3,6 +3,7 @@ package ssm
 import (
 	"errors"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -12,6 +13,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/helmfile/vals/pkg/config"
+	"github.com/helmfile/vals/pkg/log"
 )
 
 type mockedSSM struct {
@@ -122,7 +124,7 @@ func TestGetStringMap(t *testing.T) {
 				conf["recursive"] = "true"
 			}
 
-			p := New(config.MapConfig{M: conf})
+			p := New(log.New(log.Config{Output: os.Stderr}), config.MapConfig{M: conf})
 
 			p.ssmClient = c.ssm
 

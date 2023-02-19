@@ -18,6 +18,7 @@ import (
 type provider struct {
 	// Keeping track of s3 services since we need a s3 service per region
 	s3Client s3iface.S3API
+	log      *log.Logger
 
 	// AWS s3 Parameter store global configuration
 	Region  string
@@ -26,8 +27,10 @@ type provider struct {
 	Mode    string
 }
 
-func New(cfg api.StaticConfig) *provider {
-	p := &provider{}
+func New(l *log.Logger, cfg api.StaticConfig) *provider {
+	p := &provider{
+		log: l,
+	}
 	p.Region = cfg.String("region")
 	p.Version = cfg.String("version")
 	if p.Version == "" {
@@ -59,7 +62,7 @@ func (p *provider) GetString(key string) (string, error) {
 		return "", fmt.Errorf("getting s3 object: %w", err)
 	}
 
-	log.Debugf("s3: successfully retrieved object for key=%s", key)
+	p.log.Debugf("s3: successfully retrieved object for key=%s", key)
 
 	all, err := io.ReadAll(out.Body)
 	if err != nil {
