@@ -1,6 +1,7 @@
 package vals
 
 import (
+	"bytes"
 	"crypto/md5"
 	"errors"
 	"fmt"
@@ -460,7 +461,23 @@ func Env(template map[string]interface{}) ([]string, error) {
 	return env, nil
 }
 
-func Exec(template map[string]interface{}, args []string) error {
+type ExecConfig struct {
+	// StreamYAML reads the specific YAML file or all the YAML files
+	// stored within the specific directory, evaluate each YAML file,
+	// joining all the YAML files with "---" lines, and stream the
+	// result into the stdin of the executed command.
+	// This is handy when you want to use vals to preprocess
+	// Kubernetes manifests to kubectl-apply, without writing
+	// the vals-eval outputs onto the disk, for security reasons.
+	StreamYAML string
+}
+
+func Exec(template map[string]interface{}, args []string, config ...ExecConfig) error {
+	var c ExecConfig
+	if len(config) > 0 {
+		c = config[0]
+	}
+
 	if len(args) == 0 {
 		return errors.New("missing args")
 	}
@@ -468,11 +485,25 @@ func Exec(template map[string]interface{}, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	cmd := exec.Command(args[0], args[1:]...)
+
+	if path := c.StreamYAML; path != "" {
+		buf := &bytes.Buffer{}
+
+		if err := streamYAML(path, buf); err != nil {
+			return err
+		}
+
+		cmd.Stdin = buf
+	} else {
+		cmd.Stdin = os.Stdin
+	}
+
 	cmd.Env = env
-	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+
 	return cmd.Run()
 }
 
