@@ -104,26 +104,12 @@ func main() {
 
 		nodes := readNodesOrFail(f)
 
-		var res []yaml.Node
-		for _, node := range nodes {
-			var nodeValue map[string]interface{}
-			err := node.Decode(&nodeValue)
-			if err != nil {
-				fatal("%v", err)
-			}
-			evalResult, err := vals.Eval(nodeValue,
-				vals.Options{
-					ExcludeSecret: *e,
-					LogOutput:     logOut,
-				})
-			if err != nil {
-				fatal("%v", err)
-			}
-			err = node.Encode(evalResult)
-			if err != nil {
-				fatal("%v", err)
-			}
-			res = append(res, node)
+		res, err := vals.EvalNodes(nodes, vals.Options{
+			ExcludeSecret: *e,
+			LogOutput:     logOut,
+		})
+		if err != nil {
+			fatal("%v", err)
 		}
 
 		writeOrFail(o, res)

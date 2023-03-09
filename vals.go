@@ -470,12 +470,24 @@ type ExecConfig struct {
 	// Kubernetes manifests to kubectl-apply, without writing
 	// the vals-eval outputs onto the disk, for security reasons.
 	StreamYAML string
+
+	Stdout, Stderr io.Writer
 }
 
 func Exec(template map[string]interface{}, args []string, config ...ExecConfig) error {
 	var c ExecConfig
 	if len(config) > 0 {
 		c = config[0]
+	}
+
+	var stdout io.Writer = os.Stdout
+	if c.Stdout != nil {
+		stdout = c.Stdout
+	}
+
+	var stderr io.Writer = os.Stderr
+	if c.Stderr != nil {
+		stderr = c.Stderr
 	}
 
 	if len(args) == 0 {
@@ -491,7 +503,7 @@ func Exec(template map[string]interface{}, args []string, config ...ExecConfig) 
 	if path := c.StreamYAML; path != "" {
 		buf := &bytes.Buffer{}
 
-		if err := streamYAML(path, buf); err != nil {
+		if err := streamYAML(path, buf, stderr); err != nil {
 			return err
 		}
 
@@ -501,10 +513,32 @@ func Exec(template map[string]interface{}, args []string, config ...ExecConfig) 
 	}
 
 	cmd.Env = env
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
 
 	return cmd.Run()
+}
+
+func EvalNodes(nodes []yaml.Node, c Options) ([]yaml.Node, error) {
+	var res []yaml.Node
+	for _, node := range nodes {
+		var nodeValue map[string]interface{}
+		err := node.Decode(&nodeValue)
+		if err != nil {
+			return nil, err
+		}
+		evalResult, err := Eval(nodeValue, c)
+		if err != nil {
+			return nil, err
+		}
+		err = node.Encode(evalResult)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, node)
+	}
+
+	return res, nil
 }
 
 func Eval(template map[string]interface{}, o ...Options) (map[string]interface{}, error) {

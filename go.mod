@@ -15,6 +15,7 @@ require (
 	github.com/google/go-cmp v0.5.8
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/hashicorp/vault/api v1.0.4
+	github.com/stretchr/testify v1.7.0
 	go.mozilla.org/sops/v3 v3.7.1
 	golang.org/x/oauth2 v0.0.0-20220909003341-f21342109be1
 	google.golang.org/api v0.95.0
@@ -44,6 +45,7 @@ require (
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/alecthomas/participle v0.4.2-0.20191220090139-9fbceec1d131 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dimchansky/utfbom v1.1.1 // indirect
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/form3tech-oss/jwt-go v3.2.2+incompatible // indirect
@@ -84,6 +86,7 @@ require (
 	github.com/pierrec/lz4 v2.0.5+incompatible // indirect
 	github.com/pkg/browser v0.0.0-20210115035449-ce105d075bb4 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/sirupsen/logrus v1.7.0 // indirect
