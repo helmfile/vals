@@ -104,26 +104,12 @@ func main() {
 
 		nodes := readNodesOrFail(f)
 
-		var res []yaml.Node
-		for _, node := range nodes {
-			var nodeValue map[string]interface{}
-			err := node.Decode(&nodeValue)
-			if err != nil {
-				fatal("%v", err)
-			}
-			evalResult, err := vals.Eval(nodeValue,
-				vals.Options{
-					ExcludeSecret: *e,
-					LogOutput:     logOut,
-				})
-			if err != nil {
-				fatal("%v", err)
-			}
-			err = node.Encode(evalResult)
-			if err != nil {
-				fatal("%v", err)
-			}
-			res = append(res, node)
+		res, err := vals.EvalNodes(nodes, vals.Options{
+			ExcludeSecret: *e,
+			LogOutput:     logOut,
+		})
+		if err != nil {
+			fatal("%v", err)
 		}
 
 		writeOrFail(o, res)
@@ -157,14 +143,29 @@ func main() {
 	case CmdExec:
 		execCmd := flag.NewFlagSet(CmdExec, flag.ExitOnError)
 		f := execCmd.String("f", "", "YAML/JSON file to be loaded to set envvars")
+		streamYAML := execCmd.String("stream-yaml", "", `Reads the specific YAML file or all the YAML files
+stored within the specific directory, evaluate each YAML file,
+joining all the YAML files with "---" lines, and stream the
+result into the stdin of the executed command.
+This is handy when you want to use vals to preprocess
+Kubernetes manifests to kubectl-apply, without writing
+the vals-eval outputs onto the disk, for security reasons.`)
 		err := execCmd.Parse(os.Args[2:])
 		if err != nil {
 			fatal("%v", err)
 		}
 
-		m := readOrFail(f)
+		var m map[string]interface{}
 
-		err = vals.Exec(m, execCmd.Args())
+		if *f != "" {
+			m = readOrFail(f)
+		} else {
+			m = map[string]interface{}{}
+		}
+
+		err = vals.Exec(m, execCmd.Args(), vals.ExecConfig{
+			StreamYAML: *streamYAML,
+		})
 		if err != nil {
 			fatal("%v", err)
 		}

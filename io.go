@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"gopkg.in/yaml.v3"
 )
@@ -19,6 +20,33 @@ func Inputs(f string) ([]yaml.Node, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		info, err := fp.Stat()
+		if err != nil {
+			return nil, err
+		}
+
+		if info.IsDir() {
+			entries, err := fp.ReadDir(0)
+			if err != nil {
+				return nil, err
+			}
+
+			var nodes []yaml.Node
+
+			for _, e := range entries {
+				s := filepath.Join(f, e.Name())
+				ns, err := Inputs(s)
+				if err != nil {
+					return nil, err
+				}
+
+				nodes = append(nodes, ns...)
+			}
+
+			return nodes, nil
+		}
+
 		reader = fp
 		defer func() {
 			_ = fp.Close()

@@ -1,6 +1,7 @@
 package vals
 
 import (
+	"bytes"
 	"crypto/md5"
 	"errors"
 	"fmt"
@@ -460,7 +461,35 @@ func Env(template map[string]interface{}) ([]string, error) {
 	return env, nil
 }
 
-func Exec(template map[string]interface{}, args []string) error {
+type ExecConfig struct {
+	// StreamYAML reads the specific YAML file or all the YAML files
+	// stored within the specific directory, evaluate each YAML file,
+	// joining all the YAML files with "---" lines, and stream the
+	// result into the stdin of the executed command.
+	// This is handy when you want to use vals to preprocess
+	// Kubernetes manifests to kubectl-apply, without writing
+	// the vals-eval outputs onto the disk, for security reasons.
+	StreamYAML string
+
+	Stdout, Stderr io.Writer
+}
+
+func Exec(template map[string]interface{}, args []string, config ...ExecConfig) error {
+	var c ExecConfig
+	if len(config) > 0 {
+		c = config[0]
+	}
+
+	var stdout io.Writer = os.Stdout
+	if c.Stdout != nil {
+		stdout = c.Stdout
+	}
+
+	var stderr io.Writer = os.Stderr
+	if c.Stderr != nil {
+		stderr = c.Stderr
+	}
+
 	if len(args) == 0 {
 		return errors.New("missing args")
 	}
@@ -468,12 +497,48 @@ func Exec(template map[string]interface{}, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	cmd := exec.Command(args[0], args[1:]...)
+
+	if path := c.StreamYAML; path != "" {
+		buf := &bytes.Buffer{}
+
+		if err := streamYAML(path, buf, stderr); err != nil {
+			return err
+		}
+
+		cmd.Stdin = buf
+	} else {
+		cmd.Stdin = os.Stdin
+	}
+
 	cmd.Env = env
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
+
 	return cmd.Run()
+}
+
+func EvalNodes(nodes []yaml.Node, c Options) ([]yaml.Node, error) {
+	var res []yaml.Node
+	for _, node := range nodes {
+		var nodeValue map[string]interface{}
+		err := node.Decode(&nodeValue)
+		if err != nil {
+			return nil, err
+		}
+		evalResult, err := Eval(nodeValue, c)
+		if err != nil {
+			return nil, err
+		}
+		err = node.Encode(evalResult)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, node)
+	}
+
+	return res, nil
 }
 
 func Eval(template map[string]interface{}, o ...Options) (map[string]interface{}, error) {
