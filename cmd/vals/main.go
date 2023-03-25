@@ -180,7 +180,7 @@ the vals-eval outputs onto the disk, for security reasons.`)
 
 		m := readOrFail(f)
 
-		env, err := vals.Env(m)
+		env, err := vals.QuotedEnv(m)
 		if err != nil {
 			fatal("%v", err)
 		}
