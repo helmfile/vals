@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -444,7 +445,9 @@ type Options struct {
 	ExcludeSecret bool
 }
 
-func Env(template map[string]interface{}) ([]string, error) {
+var unsafeCharRegexp = regexp.MustCompile(`[^\w@%+=:,./-]`)
+
+func env(template map[string]interface{}, quote bool) ([]string, error) {
 	m, err := Eval(template)
 	if err != nil {
 		return nil, err
@@ -453,13 +456,28 @@ func Env(template map[string]interface{}) ([]string, error) {
 	for k, v := range m {
 		switch s := v.(type) {
 		case string:
-			env = append(env, fmt.Sprintf("%s=%s", k, s))
+			var value string
+			if quote && unsafeCharRegexp.MatchString(s) {
+				value = `'` + strings.ReplaceAll(s, `'`, `'"'"'`) + `'`
+			} else {
+				value = s
+			}
+			env = append(env, fmt.Sprintf("%s=%s", k, value))
 		default:
 			return nil, fmt.Errorf("unexpected type of value: %v(%T)", v, v)
 		}
 	}
 	return env, nil
 }
+
+func applyEnvWithQuote(quote bool) func(map[string]interface{}) ([]string, error) {
+	return func(template map[string]interface{}) ([]string, error) {
+		return env(template, quote)
+	}
+}
+
+var Env = applyEnvWithQuote(false)
+var QuotedEnv = applyEnvWithQuote(true)
 
 type ExecConfig struct {
 	// StreamYAML reads the specific YAML file or all the YAML files
