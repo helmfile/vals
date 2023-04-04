@@ -20,6 +20,7 @@ func kvPreflightVersionRequest(client *api.Client, path string) (string, int, er
 	defer client.SetOutputCurlString(currentOutputCurlString)
 
 	r := client.NewRequest("GET", "/v1/sys/internal/ui/mounts/"+path)
+	//nolint:staticcheck
 	resp, err := client.RawRequest(r)
 	if resp != nil {
 		defer func() {
