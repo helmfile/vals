@@ -73,9 +73,9 @@ func (c *WorkloadIdentityClient) GetToken(
 	)
 
 	client, err := confidential.New(
+		c.authorityUrl,
 		c.clientId,
 		cred,
-		confidential.WithAuthority(c.authorityUrl),
 	)
 	if err != nil {
 		return azcore.AccessToken{}, err

@@ -1,6 +1,7 @@
 package tfstate
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -74,14 +75,14 @@ func (p *provider) ReadTFState(f, k string) (*tfstate.TFState, error) {
 
 	switch p.backend {
 	case "":
-		state, err := tfstate.ReadFile(f)
+		state, err := tfstate.ReadFile(context.TODO(), f)
 		if err != nil {
 			return nil, fmt.Errorf("reading tfstate for %s: %w", k, err)
 		}
 		return state, nil
 	default:
 		url := p.backend + "://" + f
-		state, err := tfstate.ReadURL(url)
+		state, err := tfstate.ReadURL(context.TODO(), url)
 		if err != nil {
 			return nil, fmt.Errorf("reading tfstate for %s: %w", k, err)
 		}
