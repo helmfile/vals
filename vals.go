@@ -364,7 +364,11 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 					obj = newobj
 				}
 
-				return "", fmt.Errorf("no value found for key %s", frag)
+				if r.Options.FailOnMissingKeyInMap {
+					return "", fmt.Errorf("no value found for key %s", frag)
+				}
+
+				return "", nil
 			}
 		},
 	}
@@ -440,9 +444,10 @@ func IgnorePrefix(p string) Option {
 }
 
 type Options struct {
-	LogOutput     io.Writer
-	CacheSize     int
-	ExcludeSecret bool
+	LogOutput             io.Writer
+	CacheSize             int
+	ExcludeSecret         bool
+	FailOnMissingKeyInMap bool
 }
 
 var unsafeCharRegexp = regexp.MustCompile(`[^\w@%+=:,./-]`)
