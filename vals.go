@@ -485,6 +485,7 @@ var Env = applyEnvWithQuote(false)
 var QuotedEnv = applyEnvWithQuote(true)
 
 type ExecConfig struct {
+	InheritEnv bool
 	// StreamYAML reads the specific YAML file or all the YAML files
 	// stored within the specific directory, evaluate each YAML file,
 	// joining all the YAML files with "---" lines, and stream the
@@ -519,6 +520,10 @@ func Exec(template map[string]interface{}, args []string, config ...ExecConfig) 
 	env, err := Env(template)
 	if err != nil {
 		return err
+	}
+
+	if c.InheritEnv {
+		env = append(os.Environ(), env...)
 	}
 
 	cmd := exec.Command(args[0], args[1:]...)
