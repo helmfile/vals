@@ -452,8 +452,8 @@ type Options struct {
 
 var unsafeCharRegexp = regexp.MustCompile(`[^\w@%+=:,./-]`)
 
-func env(template map[string]interface{}, quote bool) ([]string, error) {
-	m, err := Eval(template)
+func env(template map[string]interface{}, quote bool, o ...Options) ([]string, error) {
+	m, err := Eval(template, o...)
 	if err != nil {
 		return nil, err
 	}
@@ -475,9 +475,9 @@ func env(template map[string]interface{}, quote bool) ([]string, error) {
 	return env, nil
 }
 
-func applyEnvWithQuote(quote bool) func(map[string]interface{}) ([]string, error) {
-	return func(template map[string]interface{}) ([]string, error) {
-		return env(template, quote)
+func applyEnvWithQuote(quote bool) func(map[string]interface{}, ...Options) ([]string, error) {
+	return func(template map[string]interface{}, o ...Options) ([]string, error) {
+		return env(template, quote, o...)
 	}
 }
 
@@ -486,6 +486,7 @@ var QuotedEnv = applyEnvWithQuote(true)
 
 type ExecConfig struct {
 	InheritEnv bool
+	Options Options
 	// StreamYAML reads the specific YAML file or all the YAML files
 	// stored within the specific directory, evaluate each YAML file,
 	// joining all the YAML files with "---" lines, and stream the
@@ -517,7 +518,7 @@ func Exec(template map[string]interface{}, args []string, config ...ExecConfig) 
 	if len(args) == 0 {
 		return errors.New("missing args")
 	}
-	env, err := Env(template)
+	env, err := Env(template, c.Options)
 	if err != nil {
 		return err
 	}
