@@ -486,7 +486,7 @@ var QuotedEnv = applyEnvWithQuote(true)
 
 type ExecConfig struct {
 	InheritEnv bool
-	Options Options
+	Options    Options
 	// StreamYAML reads the specific YAML file or all the YAML files
 	// stored within the specific directory, evaluate each YAML file,
 	// joining all the YAML files with "---" lines, and stream the

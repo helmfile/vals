@@ -174,7 +174,7 @@ the vals-eval outputs onto the disk, for security reasons.`)
 
 		err = vals.Exec(m, execCmd.Args(), vals.ExecConfig{
 			InheritEnv: *inheritEnv,
-			Options: vals.Options{LogOutput: logOut},
+			Options:    vals.Options{LogOutput: logOut},
 			StreamYAML: *streamYAML,
 		})
 		if err != nil {
