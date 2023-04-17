@@ -145,6 +145,8 @@ func main() {
 	case CmdExec:
 		execCmd := flag.NewFlagSet(CmdExec, flag.ExitOnError)
 		f := execCmd.String("f", "", "YAML/JSON file to be loaded to set envvars")
+		inheritEnv := execCmd.Bool("i", false, "Inherit environment variables")
+		silent := execCmd.Bool("s", false, "Silent mode")
 		streamYAML := execCmd.String("stream-yaml", "", `Reads the specific YAML file or all the YAML files
 stored within the specific directory, evaluate each YAML file,
 joining all the YAML files with "---" lines, and stream the
@@ -165,7 +167,14 @@ the vals-eval outputs onto the disk, for security reasons.`)
 			m = map[string]interface{}{}
 		}
 
+		var logOut io.Writer = os.Stderr
+		if *silent {
+			logOut = io.Discard
+		}
+
 		err = vals.Exec(m, execCmd.Args(), vals.ExecConfig{
+			InheritEnv: *inheritEnv,
+			Options:    vals.Options{LogOutput: logOut},
 			StreamYAML: *streamYAML,
 		})
 		if err != nil {
