@@ -13,14 +13,16 @@ import (
 )
 
 type provider struct {
-	backend    string
-	awsProfile string
+	backend          string
+	awsProfile       string
+	azSubscriptionId string
 }
 
 func New(cfg api.StaticConfig, backend string) *provider {
 	p := &provider{}
 	p.backend = backend
 	p.awsProfile = cfg.String("aws_profile")
+	p.azSubscriptionId = cfg.String("az_subscription_id")
 	return p
 }
 
@@ -70,6 +72,18 @@ func (p *provider) ReadTFState(f, k string) (*tfstate.TFState, error) {
 		}
 		defer func() {
 			_ = os.Setenv("AWS_PROFILE", v)
+		}()
+	}
+
+	// Allow setting the Subscription ID
+	if p.azSubscriptionId != "" {
+		v := os.Getenv("AZURE_SUBSCRIPTION_ID")
+		err := os.Setenv("AZURE_SUBSCRIPTION_ID", p.azSubscriptionId)
+		if err != nil {
+			return nil, fmt.Errorf("setting AZURE_SUBSCRIPTION_ID envvar: %w", err)
+		}
+		defer func() {
+			_ = os.Setenv("AZURE_SUBSCRIPTION_ID", v)
 		}()
 	}
 

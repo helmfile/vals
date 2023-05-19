@@ -397,12 +397,15 @@ Examples:
 
 ### Terraform (tfstate)
 
-- `ref+tfstate://relative/path/to/some.tfstate/RESOURCE_NAME[?aws_profile=AWS_POFILE]`
-- `ref+tfstate:///absolute/path/to/some.tfstate/RESOURCE_NAME[?aws_profile=AWS_POFILE]`
+- `ref+tfstate://relative/path/to/some.tfstate/RESOURCE_NAME[?aws_profile=AWS_PROFILE]`
+- `ref+tfstate:///absolute/path/to/some.tfstate/RESOURCE_NAME[?aws_profile=AWS_PROFILE]`
+- `ref+tfstate://relative/path/to/some.tfstate/RESOURCE_NAME[?az_subscription_id=AZ_SUBSCRIPTION_ID]`
+- `ref+tfstate:///absolute/path/to/some.tfstate/RESOURCE_NAME[?az_subscription_id=AZ_SUBSCRIPTION_ID]`
 
 Options:
 
 `aws_profile`: If non-empty, `vals` tries to let tfstate-lookup to use the specified AWS profile defined in the well-known `~/.credentials` file.
+`az_subscription_id`: If non-empty, `vals` tries to let tfstate-lookup to use the specified Azure Subscription ID.
 
 Examples:
 
@@ -494,11 +497,12 @@ $ echo 'foo: ref+tfstates3://bucket-with-terraform-state/terraform.tfstate/modul
 ```
 ### Terraform in AzureRM Blob storage (tfstateazurerm)
 
-- `ref+tfstateazurerm://{resource_group_name}/{storage_account_name}/{container_name}/{blob_name}.tfstate/RESOURCE_NAME`
+- `ref+tfstateazurerm://{resource_group_name}/{storage_account_name}/{container_name}/{blob_name}.tfstate/RESOURCE_NAME[?az_subscription_id=SUBSCRIPTION_ID]`
 
 Examples:
 
 - `ref+tfstateazurerm://my_rg/my_storage_account/terraform-backend/unique.terraform.tfstate/output.virtual_network.name`
+- `ref+tfstateazurerm://my_rg/my_storage_account/terraform-backend/unique.terraform.tfstate/output.virtual_network.name?az_subscription_id=abcd-efgh-ijlk-mnop`
 
 It allows to use Terraform state stored in Azure Blob storage given the resource group, storage account, container name and blob name. You can try to read the state with command:
 
