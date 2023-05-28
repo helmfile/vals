@@ -13,6 +13,7 @@ It supports various backends including:
 - [SOPS](https://github.com/mozilla/sops)-encrypted files
 - Terraform State
 - CredHub(Coming soon)
+- Redis
 
 - Use `vals eval -f refs.yaml` to replace all the `ref`s in the file to actual values and secrets.
 - Use `vals exec -f env.yaml -- <COMMAND>` to populate envvars and execute the command.
@@ -210,6 +211,7 @@ Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/
 - [Azure Key Vault](#azure-key-vault)
 - [EnvSubst](#envsubst)
 - [GitLab](#gitlab)
+- [Redis](#redis)
 
 Please see [pkg/providers](https://github.com/helmfile/vals/tree/master/pkg/providers) for the implementations of all the providers. The package names corresponds to the URI schemes.
 
@@ -626,6 +628,29 @@ Examples:
 
 - `ref+gitlab://gitlab.com/11111/password`
 - `ref+gitlab://my-gitlab.org/11111/password?ssl_verify=true&scheme=https`
+
+### Redis
+
+Template format: `ref+redis://PATH[?PARAMS][#/HASHKEY]`
+
+Params:
+
+| Description                  | Params                                    | Envs                                      | Default          |
+| :--------------------------- | :---------------------------------------- | :---------------------------------------- | :--------------- |
+| Server address               | address<br>host<br>port                   | REDIS_ADDRESS<br>REDIS_HOST<br>REDIS_PORT | `localhost:6379` |
+| Username                     | user<br>user_file<br>user_env             | REDIS_USER<br>REDIS_USER_FILE             | -                |
+| Password                     | password<br>password_file<br>password_env | REDIS_PASSWORD<br>REDIS_PASSWORD_FILE     | -                |
+| Database                     | db                                        | REDIS_DB                                  | `0`              |
+| Use TLS (bool)               | tls                                       | REDIS_TLS                                 | `false`          |
+| Skip TLS verification (bool) | skip_tls_verify                           | REDIS_SKIP_TLS_VERIFY                     | `false`          |
+| Path to CA certificate       | ca                                        | REDIS_CA                                  | -                |
+
+Examples:
+
+- `ref+redis://some/key`
+- `ref+redis://some/hash/#hash_key`
+- `ref+redis://some/key?address=redis1.example.com:6379&user_env=USER&password_env=PASS&db=1`
+- `ref+redis://some/key?address=redis1.example.com:6379&user=admin&password_file=/secret/pass&tls=true`
 
 ## Advanced Usages
 
