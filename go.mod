@@ -15,6 +15,7 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/hashicorp/vault/api v1.5.0
+	github.com/redis/go-redis/v9 v9.0.4
 	github.com/stretchr/testify v1.8.2
 	go.mozilla.org/sops/v3 v3.7.3
 	golang.org/x/oauth2 v0.0.0-20220909003341-f21342109be1
@@ -67,7 +68,9 @@ require (
 	github.com/aws/smithy-go v1.13.5 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/cenkalti/backoff/v3 v3.2.2 // indirect
+	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/dimchansky/utfbom v1.1.1 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect

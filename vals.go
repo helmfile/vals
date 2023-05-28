@@ -30,6 +30,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/gcs"
 	"github.com/helmfile/vals/pkg/providers/gitlab"
 	"github.com/helmfile/vals/pkg/providers/googlesheets"
+	"github.com/helmfile/vals/pkg/providers/redis"
 	"github.com/helmfile/vals/pkg/providers/s3"
 	"github.com/helmfile/vals/pkg/providers/sops"
 	"github.com/helmfile/vals/pkg/providers/ssm"
@@ -81,6 +82,7 @@ const (
 	ProviderTFStateRemote    = "tfstateremote"
 	ProviderAzureKeyVault    = "azurekeyvault"
 	ProviderEnvSubst         = "envsubst"
+	ProviderRedis            = "redis"
 )
 
 var (
@@ -227,6 +229,9 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 			return p, nil
 		case ProviderEnvSubst:
 			p := envsubst.New(conf)
+			return p, nil
+		case ProviderRedis:
+			p := redis.New(r.logger, conf)
 			return p, nil
 		}
 		return nil, fmt.Errorf("no provider registered for scheme %q", scheme)
@@ -429,6 +434,7 @@ var KnownValuesTypes = []string{
 	ProviderFile,
 	ProviderEcho,
 	ProviderEnvSubst,
+	ProviderRedis,
 }
 
 type ctx struct {
