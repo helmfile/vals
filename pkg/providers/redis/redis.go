@@ -22,8 +22,8 @@ const (
 	cAddress       = "address"         // also REDIS_ADDR, defaults to host:port
 	cHost          = "host"            // also REDIS_HOST, defaults to defaultHost
 	cPort          = "port"            // also REDIS_PORT, defaults to defaultPort
-	cUser          = "user"            // also REDIS_USER, user_path, REDIS_USER_PATH, user_env
-	cPassword      = "password"        // also REDIS_PASSWORD, password_path, REDIS_PASSWORD_PATH, password_env
+	cUser          = "user"            // also REDIS_USER, user_file, REDIS_USER_FILE, user_env
+	cPassword      = "password"        // also REDIS_PASSWORD, password_file, REDIS_PASSWORD_FILE, password_env
 	cDB            = "db"              // also REDIS_DB, default 0
 	cTLS           = "tls"             // also REDIS_TLS
 	cSkipTLSVerify = "skip_tls_verify" // also REDIS_SKIP_TLS_VERIFY
