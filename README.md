@@ -257,8 +257,8 @@ Both provider have support for specifying AWS region and profile via envvars or 
 
 #### AWS SSM Parameter Store
 
-- `ref+awsssm://PATH/TO/PARAM[?region=REGION]`
-- `ref+awsssm://PREFIX/TO/PARAMS[?region=REGION&mode=MODE&version=VERSION]#/PATH/TO/PARAM`
+- `ref+awsssm://PATH/TO/PARAM[?region=REGION&role_arn=ASSUMED_ROLE_ARN]`
+- `ref+awsssm://PREFIX/TO/PARAMS[?region=REGION&role_arn=ASSUMED_ROLE_ARN&mode=MODE&version=VERSION]#/PATH/TO/PARAM`
 
 The first form result in a `GetParameter` call and result in the reference to be replaced with the value of the parameter.
 
@@ -290,9 +290,9 @@ On the other hand,
 
 #### AWS Secrets Manager
 
-- `ref+awssecrets://PATH/TO/SECRET[?region=REGION&version_stage=STAGE&version_id=ID]`
-- `ref+awssecrets://PATH/TO/SECRET[?region=REGION&version_stage=STAGE&version_id=ID]#/yaml_or_json_key/in/secret`
-- `ref+awssecrets://ACCOUNT:ARN:secret:/PATH/TO/PARAM[?region=REGION]`
+- `ref+awssecrets://PATH/TO/SECRET[?region=REGION&role_arn=ASSUMED_ROLE_ARN&version_stage=STAGE&version_id=ID]`
+- `ref+awssecrets://PATH/TO/SECRET[?region=REGION&role_arn=ASSUMED_ROLE_ARN&version_stage=STAGE&version_id=ID]#/yaml_or_json_key/in/secret`
+- `ref+awssecrets://ACCOUNT:ARN:secret:/PATH/TO/PARAM[?region=REGION&role_arn=ASSUMED_ROLE_ARN]`
 
 The third form allows you to reference a secret in another AWS account (if your cross-account secret permissions are configured).
 
@@ -305,8 +305,8 @@ Examples:
 
 #### AWS S3
 
-- `ref+s3://BUCKET/KEY/OF/OBJECT[?region=REGION&profile=AWS_PROFILE&version_id=ID]`
-- `ref+s3://BUCKET/KEY/OF/OBJECT[?region=REGION&profile=AWS_PROFILE&version_id=ID]#/yaml_or_json_key/in/secret`
+- `ref+s3://BUCKET/KEY/OF/OBJECT[?region=REGION&profile=AWS_PROFILE&role_arn=ASSUMED_ROLE_ARN&version_id=ID]`
+- `ref+s3://BUCKET/KEY/OF/OBJECT[?region=REGION&profile=AWS_PROFILE&role_arn=ASSUMED_ROLE_ARN&version_id=ID]#/yaml_or_json_key/in/secret`
 
 Examples:
 
@@ -318,8 +318,8 @@ Examples:
 
 #### AWS KMS
 
-- `ref+awskms://BASE64CIPHERTEXT[?region=REGION&profile=AWS_PROFILE&alg=ENCRYPTION_ALGORITHM&key=KEY_ID&context=URL_ENCODED_JSON]`
-- `ref+awskms://BASE64CIPHERTEXT[?region=REGION&profile=AWS_PROFILE&alg=ENCRYPTION_ALGORITHM&key=KEY_ID&context=URL_ENCODED_JSON]#/yaml_or_json_key/in/secret`
+- `ref+awskms://BASE64CIPHERTEXT[?region=REGION&profile=AWS_PROFILE&role_arn=ASSUMED_ROLE_ARN&alg=ENCRYPTION_ALGORITHM&key=KEY_ID&context=URL_ENCODED_JSON]`
+- `ref+awskms://BASE64CIPHERTEXT[?region=REGION&profile=AWS_PROFILE&role_arn=ASSUMED_ROLE_ARN&alg=ENCRYPTION_ALGORITHM&key=KEY_ID&context=URL_ENCODED_JSON]#/yaml_or_json_key/in/secret`
 
 Decrypts the URL-safe base64-encoded ciphertext using AWS KMS. Note that URL-safe base64 encoding is
 the same as "traditional" base64 encoding, except it uses `_` and `-` in place of `/` and `+`, respectively.

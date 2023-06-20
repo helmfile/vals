@@ -15,13 +15,15 @@ type provider struct {
 	client *kms.KMS
 
 	// AWS KMS configuration
-	Region, Profile, KeyId, EncryptionAlgorithm, EncryptionContext string
+	Region, Profile, RoleARN                      string
+	KeyId, EncryptionAlgorithm, EncryptionContext string
 }
 
 func New(cfg api.StaticConfig) *provider {
 	p := &provider{}
 	p.Region = cfg.String("region")
 	p.Profile = cfg.String("profile")
+	p.RoleARN = cfg.String("role_arn")
 	p.KeyId = cfg.String("key")
 	p.EncryptionAlgorithm = cfg.String("alg")
 	p.EncryptionContext = cfg.String("context")
@@ -86,7 +88,7 @@ func (p *provider) getClient() *kms.KMS {
 		return p.client
 	}
 
-	sess := awsclicompat.NewSession(p.Region, p.Profile)
+	sess := awsclicompat.NewSession(p.Region, p.Profile, p.RoleARN)
 
 	p.client = kms.New(sess)
 	return p.client

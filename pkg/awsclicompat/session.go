@@ -8,7 +8,29 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 )
 
-// NewSession creates a new AWS session for the given AWS region and AWS PROFILE.
+// NewSession enhances newSession by adding support for assuming a role
+// not specified in the AWS profile.
+// The third parameter is the ARN of the role to assume.
+//
+// Both the session calls the STS API to assume the role
+// and the session uses the assumed role credentials use the
+// specified region and the profile.
+//
+// If we need to use separate regions and profiles for each session,
+// we might need to enhance this function further.
+// That's another story though...
+func NewSession(region string, profile string, roleARN string) *session.Session {
+	sess := newSesssion(region, profile)
+
+	if roleARN != "" {
+		assumeRoleSess := newSesssion(region, profile)
+		sess.Config.Credentials = stscreds.NewCredentials(assumeRoleSess, roleARN)
+	}
+
+	return sess
+}
+
+// newSession creates a new AWS session for the given AWS region and AWS PROFILE.
 //
 // The following credential sources are supported:
 //
@@ -19,7 +41,7 @@ import (
 //
 // The fourth option of using FORCE_AWS_PROFILE=true and AWS_PROFILE=yourprofile is equivalent to `aws --profile ${AWS_PROFILE}`.
 // See https://github.com/helmfile/vals/issues/19#issuecomment-600437486 for more details and why and when this is needed.
-func NewSession(region string, profile string) *session.Session {
+func newSesssion(region string, profile string) *session.Session {
 	var cfg *aws.Config
 	if region != "" {
 		cfg = aws.NewConfig().WithRegion(region)
@@ -38,6 +60,8 @@ func NewSession(region string, profile string) *session.Session {
 	} else if os.Getenv("FORCE_AWS_PROFILE") == "true" {
 		opts.Profile = os.Getenv("AWS_PROFILE")
 	}
+
+	opts.Config.CredentialsChainVerboseErrors = aws.Bool(true)
 
 	sess := session.Must(session.NewSessionWithOptions(opts))
 

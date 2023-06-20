@@ -13,7 +13,7 @@ import (
 
 // nolint
 func TestValues_AWSSecrets_String(t *testing.T) {
-	client := secretsmanager.New(awsclicompat.NewSession("", ""))
+	client := secretsmanager.New(awsclicompat.NewSession("ap-northeast-1", "", ""))
 
 	sec, err := client.CreateSecret(&secretsmanager.CreateSecretInput{
 		Name:         aws.String("/mykv/foo/mykey"),
