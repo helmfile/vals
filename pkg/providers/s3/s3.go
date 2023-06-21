@@ -24,6 +24,7 @@ type provider struct {
 	Region  string
 	Version string
 	Profile string
+	RoleARN string
 	Mode    string
 }
 
@@ -37,6 +38,7 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 		p.Version = cfg.String("version_id")
 	}
 	p.Profile = cfg.String("profile")
+	p.RoleARN = cfg.String("role_arn")
 
 	return p
 }
@@ -92,7 +94,7 @@ func (p *provider) getS3Client() s3iface.S3API {
 		return p.s3Client
 	}
 
-	sess := awsclicompat.NewSession(p.Region, p.Profile)
+	sess := awsclicompat.NewSession(p.Region, p.Profile, p.RoleARN)
 
 	p.s3Client = s3.New(sess)
 	return p.s3Client

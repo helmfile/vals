@@ -25,6 +25,7 @@ type provider struct {
 	Region    string
 	Version   string
 	Profile   string
+	RoleARN   string
 	Mode      string
 	Recursive bool
 }
@@ -36,6 +37,7 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 	p.Region = cfg.String("region")
 	p.Version = cfg.String("version")
 	p.Profile = cfg.String("profile")
+	p.RoleARN = cfg.String("role_arn")
 	p.Mode = cfg.String("mode")
 	p.Recursive = cfg.String("recursive") == "true"
 
@@ -209,7 +211,7 @@ func (p *provider) getSSMClient() ssmiface.SSMAPI {
 		return p.ssmClient
 	}
 
-	sess := awsclicompat.NewSession(p.Region, p.Profile)
+	sess := awsclicompat.NewSession(p.Region, p.Profile, p.RoleARN)
 
 	p.ssmClient = ssm.New(sess)
 	return p.ssmClient
