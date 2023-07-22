@@ -92,6 +92,7 @@ func main() {
 		o := evalCmd.String("o", "yaml", "Output type which is either \"yaml\" or \"json\"")
 		silent := evalCmd.Bool("s", false, "Silent mode")
 		e := evalCmd.Bool("exclude-secret", false, "Leave secretref+<uri> as-is and only replace ref+<uri>")
+		k := evalCmd.Bool("decode-kubernetes-secrets", false, "Decode Kubernetes secrets before evaluate them, then encode it again.")
 		failOnMissingKeyInMap := evalCmd.Bool("fail-on-missing-key-in-map", true, "When set to false, the vals-eval command exits with code 0 even when the key denoted by the #/key/for/value/in/the/json/or/yaml does not exist in the decoded map")
 		err := evalCmd.Parse(os.Args[2:])
 		if err != nil {
@@ -105,11 +106,38 @@ func main() {
 
 		nodes := readNodesOrFail(f)
 
+		if *k {
+			var res []yaml.Node
+			for _, node := range nodes {
+				n, err := KsDecode(node)
+				if err != nil {
+					fatal("error on decoding secrets: %v", err)
+				}
+				res = append(res, *n)
+			}
+
+			nodes = res
+		}
+
 		res, err := vals.EvalNodes(nodes, vals.Options{
 			ExcludeSecret:         *e,
 			LogOutput:             logOut,
 			FailOnMissingKeyInMap: *failOnMissingKeyInMap,
 		})
+
+		if *k {
+			var nodes []yaml.Node
+			for _, node := range res {
+				n, err := KsEncode(node)
+				if err != nil {
+					fatal("error on encoding secrets: %v", err)
+				}
+				nodes = append(nodes, *n)
+			}
+
+			res = nodes
+		}
+
 		if err != nil {
 			fatal("%v", err)
 		}
@@ -276,6 +304,57 @@ func KsDecode(node yaml.Node) (*yaml.Node, error) {
 				return nil, err
 			}
 			nestedMappings[i+1].Value = string(decoded)
+
+			v.Content[i] = nestedMappings[i]
+			v.Content[i+1] = nestedMappings[i+1]
+		}
+
+		res.Content[0].Content[ii] = &kk
+		res.Content[0].Content[ii+1] = &v
+	}
+
+	return &res, nil
+}
+
+func KsEncode(node yaml.Node) (*yaml.Node, error) {
+	if node.Kind != yaml.DocumentNode {
+		return nil, fmt.Errorf("unexpected kind of node: expected %d, got %d", yaml.DocumentNode, node.Kind)
+	}
+
+	var res yaml.Node = node
+
+	var kk yaml.Node
+	var vv yaml.Node
+	var ii int
+
+	isSecret := false
+	mappings := node.Content[0].Content
+	for i := 0; i < len(mappings); i += 2 {
+		j := i + 1
+		k := mappings[i]
+		v := mappings[j]
+
+		if k.Value == "kind" && v.Value == "Secret" {
+			isSecret = true
+		}
+
+		if k.Value == "stringData" {
+			ii = i
+			kk = *k
+			vv = *v
+		}
+	}
+
+	if isSecret && !kk.IsZero() {
+		kk.Value = "data"
+
+		v := vv
+		nestedMappings := v.Content
+		v.Content = make([]*yaml.Node, len(v.Content))
+		for i := 0; i < len(nestedMappings); i += 2 {
+			b64 := nestedMappings[i+1].Value
+			encode := base64.StdEncoding.EncodeToString([]byte(b64))
+			nestedMappings[i+1].Value = encode
 
 			v.Content[i] = nestedMappings[i]
 			v.Content[i+1] = nestedMappings[i+1]

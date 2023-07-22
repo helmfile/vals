@@ -549,8 +549,9 @@ func Exec(template map[string]interface{}, args []string, config ...ExecConfig) 
 }
 
 func EvalNodes(nodes []yaml.Node, c Options) ([]yaml.Node, error) {
-	var res []yaml.Node
+	var res []*yaml.Node
 	for _, node := range nodes {
+		node := node
 		var nodeValue map[string]interface{}
 		err := node.Decode(&nodeValue)
 		if err != nil {
@@ -564,10 +565,14 @@ func EvalNodes(nodes []yaml.Node, c Options) ([]yaml.Node, error) {
 		if err != nil {
 			return nil, err
 		}
-		res = append(res, node)
+		res = append(res, &node)
 	}
-
-	return res, nil
+	return []yaml.Node{
+		{
+			Kind:    yaml.DocumentNode,
+			Content: res,
+		},
+	}, nil
 }
 
 func Eval(template map[string]interface{}, o ...Options) (map[string]interface{}, error) {
