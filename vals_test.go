@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -75,4 +76,43 @@ func TestQuotedEnv(t *testing.T) {
 
 	sort.Strings(got)
 	require.Equal(t, expected, got)
+}
+
+func TestEvalNodes(t *testing.T) {
+	var yamlDocs = `apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+---
+apiVersion: v1
+data:
+  username: ref+echo://secrets.enc.yaml
+kind: Secret
+`
+
+	var expected = `apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+---
+apiVersion: v1
+data:
+  username: secrets.enc.yaml
+kind: Secret
+`
+
+	tmpFile, err := os.CreateTemp("", "secrets.yaml")
+	defer os.Remove(tmpFile.Name())
+	require.NoError(t, err)
+
+	_, err = tmpFile.WriteString(yamlDocs)
+	require.NoError(t, err)
+
+	input, err := Inputs(tmpFile.Name())
+	require.NoError(t, err)
+
+	nodes, err := EvalNodes(input, Options{})
+	require.NoError(t, err)
+	buf := new(strings.Builder)
+
+	err = Output(buf, "", nodes)
+	require.NoError(t, err)
+
+	require.Equal(t, expected, buf.String())
 }
