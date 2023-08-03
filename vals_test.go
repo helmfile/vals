@@ -99,11 +99,11 @@ kind: Secret
 
 	tmpFile, err := os.CreateTemp("", "secrets.yaml")
 	defer os.Remove(tmpFile.Name())
+	require.NoError(t, err)
 
 	_, err = tmpFile.WriteString(yamlDocs)
 	require.NoError(t, err)
 
-	require.NoError(t, err)
 	input, err := Inputs(tmpFile.Name())
 	require.NoError(t, err)
 
