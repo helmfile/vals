@@ -6,11 +6,11 @@ import (
 	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/keyvault/azsecrets"
 	"gopkg.in/yaml.v3"
 
 	"github.com/helmfile/vals/pkg/api"
-	"github.com/helmfile/vals/pkg/azureclicompat"
 )
 
 type provider struct {
@@ -71,7 +71,7 @@ func (p *provider) getClientForKeyVault(vaultBaseURL string) (*azsecrets.Client,
 }
 
 func getTokenCredential() (azcore.TokenCredential, error) {
-	cred, err := azureclicompat.ResolveIdentity()
+	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		return nil, err
 	}
