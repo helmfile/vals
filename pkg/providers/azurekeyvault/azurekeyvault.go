@@ -7,7 +7,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	"github.com/Azure/azure-sdk-for-go/sdk/keyvault/azsecrets"
+	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
 	"gopkg.in/yaml.v3"
 
 	"github.com/helmfile/vals/pkg/api"
@@ -66,7 +66,11 @@ func (p *provider) getClientForKeyVault(vaultBaseURL string) (*azsecrets.Client,
 		return nil, err
 	}
 
-	p.clients[vaultBaseURL] = azsecrets.NewClient(vaultBaseURL, cred, nil)
+	p.clients[vaultBaseURL], err = azsecrets.NewClient(vaultBaseURL, cred, nil)
+	if err != nil {
+		return nil, err
+	}
+
 	return p.clients[vaultBaseURL], nil
 }
 
