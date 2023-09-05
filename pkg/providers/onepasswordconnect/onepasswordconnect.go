@@ -61,7 +61,6 @@ func (p *provider) GetString(key string) (string, error) {
 			data[key] = f.Value
 			key = strings.Join([]string{f.Section.ID, f.ID}, ".")
 			data[key] = f.Value
-
 		}
 	}
 	var yamlData []byte
