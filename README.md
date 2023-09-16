@@ -576,6 +576,7 @@ Examples:
 
 - `ref+file://foo/bar` loads the file at `foo/bar`
 - `ref+file:///home/foo/bar` loads the file at `/home/foo/bar`
+- `ref+file://foo/bar?encode=base64` loads the file at `foo/bar` and encodes its content to a base64 string
 - `ref+file://some.yaml#/foo/bar` loads the YAML file at `some.yaml` and reads the value for the path `$.foo.bar`.
   Let's say `some.yaml` contains `{"foo":{"bar":"BAR"}}`, `key1: ref+file://some.yaml#/foo/bar` results in `key1: BAR`.
 
