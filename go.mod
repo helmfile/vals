@@ -15,7 +15,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/hashicorp/vault/api v1.5.0
 	github.com/stretchr/testify v1.8.4
-	go.mozilla.org/sops/v3 v3.7.3
+	github.com/getsops/sops/v3 v3.7.3
 	golang.org/x/oauth2 v0.0.0-20220909003341-f21342109be1
 	google.golang.org/api v0.95.0
 	google.golang.org/genproto v0.0.0-20220930163606-c98284e70a91
