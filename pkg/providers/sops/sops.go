@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	"go.mozilla.org/sops/v3/decrypt"
+	"github.com/getsops/sops/v3/decrypt"
 	"gopkg.in/yaml.v3"
 
 	"github.com/helmfile/vals/pkg/api"
