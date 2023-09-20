@@ -10,7 +10,7 @@ It supports various backends including:
 - AWS S3
 - GCP Secrets Manager
 - [Google Sheets](#google-sheets)
-- [SOPS](https://github.com/mozilla/sops)-encrypted files
+- [SOPS](https://github.com/getsops/sops)-encrypted files
 - Terraform State
 - 1Password Connect
 - CredHub(Coming soon)
@@ -204,7 +204,7 @@ Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/
 - [GCP Secrets Manager](#gcp-secrets-manager)
 - [Google Sheets](#google-sheets)
 - [Google GCS](#google-gcs)
-- [SOPS](#sops) powered by [sops](https://github.com/mozilla/sops)
+- [SOPS](#sops) powered by [sops](https://github.com/getsops/sops)
 - [Terraform (tfstate)](#terraform-tfstate) powered by [tfstate-lookup](https://github.com/fujiwara/tfstate-lookup)
 - [Echo](#echo)
 - [File](#file)
