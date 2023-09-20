@@ -77,3 +77,53 @@ func Test_InputOutput(t *testing.T) {
 		})
 	}
 }
+
+func Test_NodesFromReader(t *testing.T) {
+	simpleDocument := "---\nfoo: bar\n"
+	commentDocument := "---\n# comment\n"
+
+	tests := []struct {
+		name  string
+		input string
+		nodes int
+	}{
+		{
+			name:  "single document",
+			input: simpleDocument,
+			nodes: 1,
+		},
+		{
+			name:  "multi document",
+			input: simpleDocument + simpleDocument,
+			nodes: 2,
+		},
+		{
+			name:  "single comment document",
+			input: commentDocument,
+			nodes: 0,
+		},
+		{
+			name:  "multiple comment document",
+			input: commentDocument + commentDocument,
+			nodes: 0,
+		},
+		{
+			name:  "mixed documents",
+			input: simpleDocument + commentDocument,
+			nodes: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			nodes, err := nodesFromReader(strings.NewReader(tt.input))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if len(nodes) != tt.nodes {
+				t.Errorf("Expected %v nodes, got %v", tt.nodes, len(nodes))
+			}
+		})
+	}
+}
