@@ -69,7 +69,9 @@ func nodesFromReader(reader io.Reader) ([]yaml.Node, error) {
 			}
 			break
 		}
-		nodes = append(nodes, node)
+		if len(node.Content[0].Content) > 0 {
+			nodes = append(nodes, node)
+		}
 	}
 	return nodes, nil
 }
