@@ -30,6 +30,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/gcs"
 	"github.com/helmfile/vals/pkg/providers/gitlab"
 	"github.com/helmfile/vals/pkg/providers/googlesheets"
+	"github.com/helmfile/vals/pkg/providers/onepasswordconnect"
 	"github.com/helmfile/vals/pkg/providers/s3"
 	"github.com/helmfile/vals/pkg/providers/sops"
 	"github.com/helmfile/vals/pkg/providers/ssm"
@@ -62,25 +63,26 @@ const (
 	// secret cache size
 	defaultCacheSize = 512
 
-	ProviderVault            = "vault"
-	ProviderS3               = "s3"
-	ProviderGCS              = "gcs"
-	ProviderGitLab           = "gitlab"
-	ProviderSSM              = "awsssm"
-	ProviderKms              = "awskms"
-	ProviderSecretsManager   = "awssecrets"
-	ProviderSOPS             = "sops"
-	ProviderEcho             = "echo"
-	ProviderFile             = "file"
-	ProviderGCPSecretManager = "gcpsecrets"
-	ProviderGoogleSheets     = "googlesheets"
-	ProviderTFState          = "tfstate"
-	ProviderTFStateGS        = "tfstategs"
-	ProviderTFStateS3        = "tfstates3"
-	ProviderTFStateAzureRM   = "tfstateazurerm"
-	ProviderTFStateRemote    = "tfstateremote"
-	ProviderAzureKeyVault    = "azurekeyvault"
-	ProviderEnvSubst         = "envsubst"
+	ProviderVault              = "vault"
+	ProviderS3                 = "s3"
+	ProviderGCS                = "gcs"
+	ProviderGitLab             = "gitlab"
+	ProviderSSM                = "awsssm"
+	ProviderKms                = "awskms"
+	ProviderSecretsManager     = "awssecrets"
+	ProviderSOPS               = "sops"
+	ProviderEcho               = "echo"
+	ProviderFile               = "file"
+	ProviderGCPSecretManager   = "gcpsecrets"
+	ProviderGoogleSheets       = "googlesheets"
+	ProviderTFState            = "tfstate"
+	ProviderTFStateGS          = "tfstategs"
+	ProviderTFStateS3          = "tfstates3"
+	ProviderTFStateAzureRM     = "tfstateazurerm"
+	ProviderTFStateRemote      = "tfstateremote"
+	ProviderAzureKeyVault      = "azurekeyvault"
+	ProviderEnvSubst           = "envsubst"
+	ProviderOnePasswordConnect = "onepasswordconnect"
 )
 
 var (
@@ -227,6 +229,9 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 			return p, nil
 		case ProviderEnvSubst:
 			p := envsubst.New(conf)
+			return p, nil
+		case ProviderOnePasswordConnect:
+			p := onepasswordconnect.New(conf)
 			return p, nil
 		}
 		return nil, fmt.Errorf("no provider registered for scheme %q", scheme)

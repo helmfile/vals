@@ -12,6 +12,7 @@ It supports various backends including:
 - [Google Sheets](#google-sheets)
 - [SOPS](https://github.com/getsops/sops)-encrypted files
 - Terraform State
+- 1Password Connect
 - CredHub(Coming soon)
 
 - Use `vals eval -f refs.yaml` to replace all the `ref`s in the file to actual values and secrets.
@@ -210,6 +211,7 @@ Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/
 - [Azure Key Vault](#azure-key-vault)
 - [EnvSubst](#envsubst)
 - [GitLab](#gitlab)
+- [1Password Connect](#1password-connect)
 
 Please see [pkg/providers](https://github.com/helmfile/vals/tree/master/pkg/providers) for the implementations of all the providers. The package names corresponds to the URI schemes.
 
@@ -627,6 +629,27 @@ Examples:
 
 - `ref+gitlab://gitlab.com/11111/password`
 - `ref+gitlab://my-gitlab.org/11111/password?ssl_verify=true&scheme=https`
+
+### 1Password Connect
+
+For this provider to work you require a working and accessible [1Password connect server](https://developer.1password.com/docs/connect).
+The following env vars have to be configured:
+- `OP_CONNECT_HOST`
+- `OP_CONNET_TOKEN`
+
+1Password is organized in vaults and items.
+An item can have multiple fields with or without a section. Labels can be set on fields and sections.
+Vaults, items, sections and labels can be accessed by ID or by label/name (and IDs and labels can be mixed and matched in one URL).
+
+If a section does not have a label the field is only accessible via the section ID. This does not hold true for some default fields which may have no section at all (e.g.username and password for a `Login` item).
+
+*Caution: vals-expressions are parsed as URIs. For the 1Password connect provider the host component of the URI identifies the vault (by ID or name). Therefore vaults containing certain characters not allowed in the host component (e.g. whitespaces, see [RFC-3986](https://www.rfc-editor.org/rfc/rfc3986#section-3.2.2) for details) can only be accessed by ID.*
+
+Examples:
+
+- `ref+onepasswordconnect://VAULT_ID/ITEM_ID#/[SECTION_ID.]FIELD_ID`
+- `ref+onepasswordconnect://VAULT_LABEL/ITEM_LABEL#/[SECTION_LABEL.]FIELD_LABEL`
+- `ref+onepasswordconnect://VAULT_LABEL/ITEM_ID#/[SECTION_LABEL.]FIELD_ID`
 
 ## Advanced Usages
 
