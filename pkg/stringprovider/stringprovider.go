@@ -8,6 +8,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/awskms"
 	"github.com/helmfile/vals/pkg/providers/awssecrets"
 	"github.com/helmfile/vals/pkg/providers/azurekeyvault"
+	"github.com/helmfile/vals/pkg/providers/doppler"
 	"github.com/helmfile/vals/pkg/providers/gcpsecrets"
 	"github.com/helmfile/vals/pkg/providers/gcs"
 	"github.com/helmfile/vals/pkg/providers/gitlab"
@@ -55,6 +56,8 @@ func New(l *log.Logger, provider api.StaticConfig) (api.LazyLoadedStringProvider
 		return gitlab.New(provider), nil
 	case "onepasswordconnect":
 		return onepasswordconnect.New(provider), nil
+	case "doppler":
+		return doppler.New(l, provider), nil
 	}
 
 	return nil, fmt.Errorf("failed initializing string provider from config: %v", provider)

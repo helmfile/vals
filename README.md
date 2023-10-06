@@ -13,6 +13,7 @@ It supports various backends including:
 - [SOPS](https://github.com/getsops/sops)-encrypted files
 - Terraform State
 - 1Password Connect
+- [Doppler](https://doppler.com/)
 - CredHub(Coming soon)
 
 - Use `vals eval -f refs.yaml` to replace all the `ref`s in the file to actual values and secrets.
@@ -212,6 +213,7 @@ Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/
 - [EnvSubst](#envsubst)
 - [GitLab](#gitlab)
 - [1Password Connect](#1password-connect)
+- [Doppler](#doppler)
 
 Please see [pkg/providers](https://github.com/helmfile/vals/tree/master/pkg/providers) for the implementations of all the providers. The package names corresponds to the URI schemes.
 
@@ -650,6 +652,28 @@ Examples:
 - `ref+onepasswordconnect://VAULT_ID/ITEM_ID#/[SECTION_ID.]FIELD_ID`
 - `ref+onepasswordconnect://VAULT_LABEL/ITEM_LABEL#/[SECTION_LABEL.]FIELD_LABEL`
 - `ref+onepasswordconnect://VAULT_LABEL/ITEM_ID#/[SECTION_LABEL.]FIELD_ID`
+
+### Doppler
+
+- `ref+doppler://PROJECT/ENVIRONMENT/SECRET_KEY[?token=dp.XX.XXXXXX&address=https://api.doppler.com&no_verify_tls=false&include_doppler_defaults=false]`
+
+* `PROJECT` can be absent if the Token is a `Service Token` for that project. It can be set via `DOPPLER_PROJECT` envvar. See [Doppler docs](https://docs.doppler.com/docs/enclave-service-tokens) for more information.
+* `ENVIRONMENT` (aka: "Config") can be absent if the Token is a `Service Token` for that project. It can be set via `DOPPLER_ENVIRONMENT` envvar. See [Doppler docs](https://docs.doppler.com/docs/enclave-service-tokens) for more information.
+* `SECRET_KEY` can be absent and it will fetch all secrets for the project/environment.
+* `token` defaults to the value of the `DOPPLER_TOKEN` envvar.
+* `address` defaults to the value of the `DOPPLER_API_ADDR` envvar, if unset: `https://api.doppler.com`.
+* `no_verify_tls` default `false`.
+* `include_doppler_defaults` defaults to `false`, if set to `true` it will include the Doppler defaults for the project/environment (DOPPLER_ENVIRONMENT, DOPPLER_PROJECT and DOPPLER_CONFIG). It only works when `SECRET_KEY` is absent.
+
+Examples:
+
+(DOPPLER_TOKEN set as environment variable)
+
+- `ref+doppler:////` fetches all secrets for the project/environment when using a Service Token.
+- `ref+doppler:////FOO` fetches the value of secret with name `FOO` for the project/environment when using a Service Token.
+- `ref+doppler://#FOO` fetches the value of secret with name `FOO` for the project/environment when using a Service Token.
+- `ref+doppler://MyProject/development/DB_PASSWORD` fetches the value of secret with name `DB_PASSWORD` for the project named `MyProject` and environment named `development`.
+- `ref+doppler://MyProject/development/#DB_PASSWORD` fetches the value of secret with name `DB_PASSWORD` for the project named `MyProject` and environment named `development`.
 
 ## Advanced Usages
 
