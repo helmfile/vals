@@ -23,6 +23,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/awskms"
 	"github.com/helmfile/vals/pkg/providers/awssecrets"
 	"github.com/helmfile/vals/pkg/providers/azurekeyvault"
+	"github.com/helmfile/vals/pkg/providers/doppler"
 	"github.com/helmfile/vals/pkg/providers/echo"
 	"github.com/helmfile/vals/pkg/providers/envsubst"
 	"github.com/helmfile/vals/pkg/providers/file"
@@ -83,6 +84,7 @@ const (
 	ProviderAzureKeyVault      = "azurekeyvault"
 	ProviderEnvSubst           = "envsubst"
 	ProviderOnePasswordConnect = "onepasswordconnect"
+	ProviderDoppler            = "doppler"
 )
 
 var (
@@ -232,6 +234,9 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 			return p, nil
 		case ProviderOnePasswordConnect:
 			p := onepasswordconnect.New(conf)
+			return p, nil
+		case ProviderDoppler:
+			p := doppler.New(r.logger, conf)
 			return p, nil
 		}
 		return nil, fmt.Errorf("no provider registered for scheme %q", scheme)
