@@ -42,11 +42,25 @@ func NewSession(region string, profile string, roleARN string) *session.Session 
 // The fourth option of using FORCE_AWS_PROFILE=true and AWS_PROFILE=yourprofile is equivalent to `aws --profile ${AWS_PROFILE}`.
 // See https://github.com/helmfile/vals/issues/19#issuecomment-600437486 for more details and why and when this is needed.
 func newSesssion(region string, profile string) *session.Session {
-	var cfg *aws.Config
+	cfg := aws.NewConfig()
+
 	if region != "" {
-		cfg = aws.NewConfig().WithRegion(region)
-	} else {
-		cfg = aws.NewConfig()
+		cfg = cfg.WithRegion(region)
+	}
+
+	// AWS_ENDPOINT_URL
+	//
+	// Whenever AWS gets around to having their Golang libraries
+	// reach parity with their Python libraries and CLI, this
+	// workaround can go away. In the meantime, this level of
+	// configurability is useful for integrating with non-AWS
+	// infrastructure like Localstack and Moto for testing and
+	// development.
+	//
+	// https://github.com/aws/aws-sdk-go/issues/4942
+	endpointUrl := os.Getenv("AWS_ENDPOINT_URL")
+	if endpointUrl != "" {
+		cfg = cfg.WithEndpoint(endpointUrl)
 	}
 
 	opts := session.Options{
