@@ -13,6 +13,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/gcs"
 	"github.com/helmfile/vals/pkg/providers/gitlab"
 	"github.com/helmfile/vals/pkg/providers/onepasswordconnect"
+	"github.com/helmfile/vals/pkg/providers/pulumi"
 	"github.com/helmfile/vals/pkg/providers/s3"
 	"github.com/helmfile/vals/pkg/providers/sops"
 	"github.com/helmfile/vals/pkg/providers/ssm"
@@ -58,6 +59,8 @@ func New(l *log.Logger, provider api.StaticConfig) (api.LazyLoadedStringProvider
 		return onepasswordconnect.New(provider), nil
 	case "doppler":
 		return doppler.New(l, provider), nil
+	case "pulumistateapi":
+		return pulumi.New(l, provider, "pulumistateapi"), nil
 	}
 
 	return nil, fmt.Errorf("failed initializing string provider from config: %v", provider)

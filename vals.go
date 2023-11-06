@@ -32,6 +32,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/gitlab"
 	"github.com/helmfile/vals/pkg/providers/googlesheets"
 	"github.com/helmfile/vals/pkg/providers/onepasswordconnect"
+	"github.com/helmfile/vals/pkg/providers/pulumi"
 	"github.com/helmfile/vals/pkg/providers/s3"
 	"github.com/helmfile/vals/pkg/providers/sops"
 	"github.com/helmfile/vals/pkg/providers/ssm"
@@ -85,6 +86,7 @@ const (
 	ProviderEnvSubst           = "envsubst"
 	ProviderOnePasswordConnect = "onepasswordconnect"
 	ProviderDoppler            = "doppler"
+	ProviderPulumiStateAPI     = "pulumistateapi"
 )
 
 var (
@@ -237,6 +239,9 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 			return p, nil
 		case ProviderDoppler:
 			p := doppler.New(r.logger, conf)
+			return p, nil
+		case ProviderPulumiStateAPI:
+			p := pulumi.New(r.logger, conf, "pulumistateapi")
 			return p, nil
 		}
 		return nil, fmt.Errorf("no provider registered for scheme %q", scheme)
@@ -439,6 +444,7 @@ var KnownValuesTypes = []string{
 	ProviderFile,
 	ProviderEcho,
 	ProviderEnvSubst,
+	ProviderPulumiStateAPI,
 }
 
 type ctx struct {
