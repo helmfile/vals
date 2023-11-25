@@ -15,6 +15,7 @@ It supports various backends including:
 - 1Password Connect
 - [Doppler](https://doppler.com/)
 - CredHub(Coming soon)
+- Pulumi State
 
 - Use `vals eval -f refs.yaml` to replace all the `ref`s in the file to actual values and secrets.
 - Use `vals exec -f env.yaml -- <COMMAND>` to populate envvars and execute the command.
@@ -214,6 +215,7 @@ Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/
 - [GitLab](#gitlab)
 - [1Password Connect](#1password-connect)
 - [Doppler](#doppler)
+- [Pulumi State](#pulumi-state)
 
 Please see [pkg/providers](https://github.com/helmfile/vals/tree/master/pkg/providers) for the implementations of all the providers. The package names corresponds to the URI schemes.
 
@@ -674,6 +676,31 @@ Examples:
 - `ref+doppler://#FOO` fetches the value of secret with name `FOO` for the project/environment when using a Service Token.
 - `ref+doppler://MyProject/development/DB_PASSWORD` fetches the value of secret with name `DB_PASSWORD` for the project named `MyProject` and environment named `development`.
 - `ref+doppler://MyProject/development/#DB_PASSWORD` fetches the value of secret with name `DB_PASSWORD` for the project named `MyProject` and environment named `development`.
+
+### Pulumi State
+
+Obtain value in state pulled from Pulumi Cloud REST API:
+
+- `ref+pulumistateapi://RESOURCE_TYPE/RESOURCE_LOGICAL_NAME/ATTRIBUTE_TYPE/ATTRIBUTE_KEY_PATH?project=PROJECT&stack=STACK`
+
+* `RESOURCE_TYPE` is a Pulumi [resource type](https://www.pulumi.com/docs/concepts/resources/names/#types) of the form `<package>:<module>:<type>`, where forward slashes (`/`) are replaced by a double underscore (`__`) and colons (`:`) are replaced by a single underscore (`_`). For example `aws:s3:Bucket` would be encoded as `aws__s3__Bucket` and `kubernetes:storage.k8s.io/v1:StorageClass` would be encoded as `kubernetes_storage.k8s.io__v1_StorageClass`.
+* `RESOURCE_LOGICAL_NAME` is the [logical name](https://www.pulumi.com/docs/concepts/resources/names/#logicalname) of the resource in the Pulumi program.
+* `ATTRIBUTE_TYPE` is either `outputs` or `inputs`.
+* `ATTRIBUTE_KEY_PATH` is a [GJSON](https://github.com/tidwall/gjson/blob/master/SYNTAX.md) expression that selects the desired attribute from the resource's inputs or outputs per the chosen `ATTRIBUTE_TYPE` value. You must encode any characters that would otherwise not comply with URI syntax, for example `#` becomes `%23`.
+* `project` is the Pulumi project name.
+* `stack` is the Pulumi stack name.
+
+Environment variables:
+
+- `PULUMI_API_ENDPOINT_URL` is the Pulumi API endpoint URL. Defaults to `https://api.pulumi.com`. You may also provide this as the `pulumi_api_endpoint_url` query parameter.
+- `PULUMI_ACCESS_TOKEN` is the Pulumi access token to use for authentication.
+- `PULUMI_ORGANIZATION` is the Pulumi organization to use for authentication. You may also provide this as an `organization` query parameter.
+
+Examples:
+
+- `ref+pulumistateapi://aws-native_s3_Bucket/my-bucket/outputs/bucketName?project=my-project&stack=my-stack`
+- `ref+pulumistateapi://aws-native_s3_Bucket/my-bucket/outputs/tags.%23(key==SomeKey).value?project=my-project&stack=my-stack`
+- `ref+pulumistateapi://kubernetes_storage.k8s.io__v1_StorageClass/gp2-encrypted/inputs/metadata.name?project=my-project&stack=my-stack`
 
 ## Advanced Usages
 
