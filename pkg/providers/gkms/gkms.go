@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/helmfile/vals/pkg/api"
-	"github.com/helmfile/vals/pkg/log"
-	"gopkg.in/yaml.v3"
-
 	kms "cloud.google.com/go/kms/apiv1"
 	kmspb "cloud.google.com/go/kms/apiv1/kmspb"
+	"gopkg.in/yaml.v3"
+
+	"github.com/helmfile/vals/pkg/api"
+	"github.com/helmfile/vals/pkg/log"
 )
 
 type provider struct {
