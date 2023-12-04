@@ -9,6 +9,7 @@ It supports various backends including:
 - AWS Secrets Manager
 - AWS S3
 - GCP Secrets Manager
+- GCP KMS
 - [Google Sheets](#google-sheets)
 - [SOPS](https://github.com/getsops/sops)-encrypted files
 - Terraform State
@@ -204,6 +205,7 @@ Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/
 - [AWS Secrets Manager](#aws-secrets-manager)
 - [AWS S3](#aws-s3)
 - [GCP Secrets Manager](#gcp-secrets-manager)
+- [GCP KMS](#gcp-kms)
 - [Google Sheets](#google-sheets)
 - [Google GCS](#google-gcs)
 - [SOPS](#sops) powered by [sops](https://github.com/getsops/sops)
@@ -392,6 +394,24 @@ Examples:
 >
 > In some cases like you need to use an alternative credentials or project,
 > you'll likely need to set `GOOGLE_APPLICATION_CREDENTIALS` and/or `GCP_PROJECT` envvars.
+
+### GCP KMS
+
+- `ref+gkms://BASE64CIPHERTEXT?project=myproject&location=global&keyring=mykeyring&crypto_key=mykey`
+- `ref+gkms://BASE64CIPHERTEXT?project=myproject&location=global&keyring=mykeyring&crypto_key=mykey#/yaml_or_json_key/in/secret`
+
+Decrypts the URL-safe base64-encoded ciphertext using GCP KMS. Note that URL-safe base64 encoding is the same as "traditional" base64 encoding, except it uses _ and - in place of / and +, respectively. For example, to get a URL-safe base64-encoded ciphertext using the GCP CLI, you might run
+```
+echo test | gcloud kms encrypt \
+  --project myproject \
+  --location global \
+  --keyring mykeyring \
+  --key mykey \
+  --plaintext-file - \
+  --ciphertext-file - \
+  | base64 -w0 \
+  | tr '/+' '_-'
+```
 
 ### Google Sheets
 

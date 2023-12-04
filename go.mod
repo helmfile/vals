@@ -3,6 +3,7 @@ module github.com/helmfile/vals
 go 1.21
 
 require (
+	cloud.google.com/go/kms v1.15.2
 	cloud.google.com/go/secretmanager v1.11.1
 	cloud.google.com/go/storage v1.33.0
 	github.com/1Password/connect-sdk-go v1.5.3
@@ -28,7 +29,6 @@ require (
 	cloud.google.com/go/compute v1.23.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v1.1.1 // indirect
-	cloud.google.com/go/kms v1.15.2 // indirect
 	filippo.io/age v1.1.1 // indirect
 	github.com/AlecAivazis/survey/v2 v2.3.6 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.5.0 // indirect
