@@ -6,13 +6,13 @@ import (
 	"os"
 	"strings"
 
-	"github.com/helmfile/vals/pkg/api"
-	"github.com/helmfile/vals/pkg/log"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/helmfile/vals/pkg/api"
+	"github.com/helmfile/vals/pkg/log"
 )
 
 type provider struct {
@@ -26,31 +26,35 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 		log: l,
 	}
 
-	kubeConfig, err := getKubeConfig(cfg, *l)
+	kubeConfig, err := getKubeConfig(cfg)
 	if err != nil {
-		fmt.Printf("An error occurred getting the Kubeconfig path: %s", err)
+		fmt.Printf("An error occurred getting the Kubeconfig path: %s\n", err)
+		return p
 	}
 
 	p.KubeConfigPath = kubeConfig
-	p.KubeContext = getKubeContext(cfg, *l)
+	p.KubeContext = getKubeContext(cfg)
 
 	return p
 }
 
-func getKubeConfig(cfg api.StaticConfig, logger log.Logger) (string, error) {
+func getKubeConfig(cfg api.StaticConfig) (string, error) {
 	// Use kubeConfigPath from URI parameters if specified
 	if cfg.String("kubeConfigPath") != "" {
-		return cfg.String("kubeConfigPath"), nil
+		if _, err := os.Stat(cfg.String("kubeConfigPath")); err != nil {
+			return cfg.String("kubeConfigPath"), fmt.Errorf("kubeConfigPath URI parameter is set but path %s does not exist.", cfg.String("kubeConfigPath"))
+		}
 	}
 
 	// Use path in KUBECONFIG environment variable if set
 	if envPath := os.Getenv("KUBECONFIG"); envPath != "" {
-		return envPath, nil
+		if _, err := os.Stat(envPath); err != nil {
+			return envPath, fmt.Errorf("KUBECONFIG environment variable is set but path %s does not exist.", envPath)
+		}
 	}
 
 	// Use default kubeconfig path if it exists
 	homeDir, err := os.UserHomeDir()
-
 	if err != nil {
 		return "", fmt.Errorf("An error occurred getting the user's home directory: %s", err)
 	}
@@ -60,7 +64,7 @@ func getKubeConfig(cfg api.StaticConfig, logger log.Logger) (string, error) {
 		return defaultPath, nil
 	}
 
-	return "", fmt.Errorf("No Kubeconfig path was provided. Please provide a path to a Kubeconfig file using the 'kubeConfigPath' key in your config file.")
+	return "", fmt.Errorf("No path was found in any of the following: kubeContext URI param, KUBECONFIG environment variable, or default path %s does not exist.", defaultPath)
 }
 
 func (p *provider) GetString(path string) (string, error) {
@@ -75,15 +79,22 @@ func (p *provider) GetString(path string) (string, error) {
 	secretName := splits[1]
 	key := splits[2]
 
-	secretData, err := getSecret(namespace, secretName, p.KubeConfigPath, p.KubeContext, context.Background())
-	secret, exists := secretData[key]
-
-	if err != nil || !exists {
-		err := fmt.Errorf("Key %s does not exist in %s/%s", key, secretName, namespace)
-		return "", err
+	if p.KubeConfigPath == "" {
+		return "", fmt.Errorf("No Kubeconfig path was found")
 	}
 
-	p.log.Debugf("vals-k8s: Retrieved secret %s/%s/%s (KubeContext: %s)", namespace, secretName, key, p.KubeContext)
+	secretData, err := getSecret(namespace, secretName, p.KubeConfigPath, p.KubeContext, context.Background())
+	secret, exists := secretData[key]
+	if err != nil || !exists {
+		return "", fmt.Errorf("Key %s does not exist in %s/%s", key, namespace, secretName)
+	}
+
+	// Print success message with kubeContext if provided
+	message := fmt.Sprintf("vals-k8s: Retrieved secret %s/%s/%s", namespace, secretName, key)
+	if p.KubeContext != "" {
+		message += fmt.Sprintf(" (KubeContext: %s)", p.KubeContext)
+	}
+	p.log.Debugf(message)
 
 	return string(secret), nil
 }
@@ -93,7 +104,7 @@ func (p *provider) GetStringMap(path string) (map[string]interface{}, error) {
 }
 
 // Return an empty Kube context if none is provided
-func getKubeContext(cfg api.StaticConfig, logger log.Logger) string {
+func getKubeContext(cfg api.StaticConfig) string {
 	if cfg.String("kubeContext") != "" {
 		return cfg.String("kubeContext")
 	} else {
@@ -113,7 +124,7 @@ func buildConfigWithContextFromFlags(context string, kubeconfigPath string) (*re
 // Fetch the secret from the Kubernetes cluster
 func getSecret(namespace string, secretName string, kubeConfigPath string, kubeContext string, ctx context.Context) (map[string][]byte, error) {
 	if kubeContext == "" {
-		fmt.Printf("vals-k8s: kubeContext was not provided. Using current context.")
+		fmt.Printf("vals-k8s: kubeContext was not provided. Using current context.\n")
 	}
 
 	config, err := buildConfigWithContextFromFlags(kubeContext, kubeConfigPath)
