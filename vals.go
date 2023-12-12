@@ -251,8 +251,7 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 			p := gkms.New(r.logger, conf)
 			return p, nil
 		case ProviderK8s:
-			p := k8s.New(r.logger, conf)
-			return p, nil
+			return k8s.New(r.logger, conf)
 		}
 		return nil, fmt.Errorf("no provider registered for scheme %q", scheme)
 	}

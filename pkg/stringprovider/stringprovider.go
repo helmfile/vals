@@ -66,7 +66,7 @@ func New(l *log.Logger, provider api.StaticConfig) (api.LazyLoadedStringProvider
 	case "gkms":
 		return gkms.New(l, provider), nil
 	case "k8s":
-		return k8s.New(l, provider), nil
+		return k8s.New(l, provider)
 	}
 
 	return nil, fmt.Errorf("failed initializing string provider from config: %v", provider)

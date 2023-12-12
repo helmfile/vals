@@ -731,7 +731,7 @@ Fetch values from Kubernetes secrets:
 - `ref+k8s://NAMESPACE/SECRET_NAME/KEY[?kubeConfigPath=<path_to_kubeconfig>&kubeContext=<kubernetes context name>]`
 
 Authentication to the Kubernetes cluster is done by referencing the local kubeconfig file.
-The path to the kubeconfig can be specified as a URI parameter, read from the `KUBECONFIG` environment variable or the provider with attempt to read `$HOME/.kube/config`.
+The path to the kubeconfig can be specified as a URI parameter, read from the `KUBECONFIG` environment variable or the provider will attempt to read `$HOME/.kube/config`.
 The Kubernetes context can be specified as a URI parameteter.
 
 Environment variables:
@@ -792,7 +792,7 @@ That's not the business of vals.
 
 Instead, use vals solely for composing sets of values that are then input to another templating engine or data manipulation language like Jsonnet and CUE.
 
-Note though, `vals` dose have support for simple string interpolation like usage. See [Expression Syntax](#expression-syntax) for more information.
+Note though, `vals` does have support for simple string interpolation like usage. See [Expression Syntax](#expression-syntax) for more information.
 
 ### Merge
 

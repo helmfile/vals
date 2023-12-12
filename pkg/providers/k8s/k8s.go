@@ -21,21 +21,21 @@ type provider struct {
 	KubeContext    string
 }
 
-func New(l *log.Logger, cfg api.StaticConfig) *provider {
+func New(l *log.Logger, cfg api.StaticConfig) (*provider, error) {
 	p := &provider{
 		log: l,
 	}
 
 	kubeConfig, err := getKubeConfig(cfg)
 	if err != nil {
-		fmt.Printf("An error occurred getting the Kubeconfig path: %s\n", err)
-		return p
+		fmt.Printf("Unable to get a valid Kubeconfig path: %s\n", err)
+		return nil, err
 	}
 
 	p.KubeConfigPath = kubeConfig
 	p.KubeContext = getKubeContext(cfg)
 
-	return p
+	return p, nil
 }
 
 func getKubeConfig(cfg api.StaticConfig) (string, error) {
@@ -79,13 +79,13 @@ func (p *provider) GetString(path string) (string, error) {
 	secretName := splits[1]
 	key := splits[2]
 
-	if p.KubeConfigPath == "" {
-		return "", fmt.Errorf("No Kubeconfig path was found")
+	secretData, err := getSecret(namespace, secretName, p.KubeConfigPath, p.KubeContext, context.Background())
+	if err != nil {
+		return "", fmt.Errorf("Unable to get secret %s/%s: %s", namespace, secretName, err)
 	}
 
-	secretData, err := getSecret(namespace, secretName, p.KubeConfigPath, p.KubeContext, context.Background())
 	secret, exists := secretData[key]
-	if err != nil || !exists {
+	if !exists {
 		return "", fmt.Errorf("Key %s does not exist in %s/%s", key, namespace, secretName)
 	}
 
