@@ -28,7 +28,7 @@ func New(l *log.Logger, cfg api.StaticConfig) (*provider, error) {
 
 	kubeConfig, err := getKubeConfig(cfg)
 	if err != nil {
-		fmt.Printf("Unable to get a valid Kubeconfig path: %s\n", err)
+		p.log.Debugf("Unable to get a valid Kubeconfig path: %s\n", err)
 		return nil, err
 	}
 
@@ -42,14 +42,14 @@ func getKubeConfig(cfg api.StaticConfig) (string, error) {
 	// Use kubeConfigPath from URI parameters if specified
 	if cfg.String("kubeConfigPath") != "" {
 		if _, err := os.Stat(cfg.String("kubeConfigPath")); err != nil {
-			return cfg.String("kubeConfigPath"), fmt.Errorf("kubeConfigPath URI parameter is set but path %s does not exist.", cfg.String("kubeConfigPath"))
+			return "", fmt.Errorf("kubeConfigPath URI parameter is set but path %s does not exist.", cfg.String("kubeConfigPath"))
 		}
 	}
 
 	// Use path in KUBECONFIG environment variable if set
 	if envPath := os.Getenv("KUBECONFIG"); envPath != "" {
 		if _, err := os.Stat(envPath); err != nil {
-			return envPath, fmt.Errorf("KUBECONFIG environment variable is set but path %s does not exist.", envPath)
+			return "", fmt.Errorf("KUBECONFIG environment variable is set but path %s does not exist.", envPath)
 		}
 	}
 
@@ -71,32 +71,44 @@ func (p *provider) GetString(path string) (string, error) {
 	separator := "/"
 	splits := strings.Split(path, separator)
 
-	if len(splits) != 3 {
-		return "", fmt.Errorf("Invalid path %s. Path must be in the format <namespace>/<secret>/<key>", path)
+	if len(splits) != 5 {
+		return "", fmt.Errorf("Invalid path %s. Path must be in the format <apiVersion>/<kind>/<namespace>/<name>/<key>", path)
 	}
 
-	namespace := splits[0]
-	secretName := splits[1]
-	key := splits[2]
+	apiVersion := splits[0]
+	kind := splits[1]
+	namespace := splits[2]
+	name := splits[3]
+	key := splits[4]
 
-	secretData, err := getSecret(namespace, secretName, p.KubeConfigPath, p.KubeContext, context.Background())
+	if apiVersion != "v1" {
+		return "", fmt.Errorf("Invalid apiVersion %s. Only apiVersion v1 is supported at this time.", apiVersion)
+	}
+	if kind != "Secret" {
+		return "", fmt.Errorf("Invalid kind %s. Only kind Secret is supported at this time.", kind)
+	}
+
+	//TODO:
+	// At this time, only Secret kind with v1 apiVersion version is supported.
+	// getObject() should be extended to support both ConfigMap and Secrets kind in other apiVersions.
+	objectData, err := getObject(namespace, name, p.KubeConfigPath, p.KubeContext, context.Background())
 	if err != nil {
-		return "", fmt.Errorf("Unable to get secret %s/%s: %s", namespace, secretName, err)
+		return "", fmt.Errorf("Unable to get %s %s/%s: %s", kind, namespace, name, err)
 	}
 
-	secret, exists := secretData[key]
+	object, exists := objectData[key]
 	if !exists {
-		return "", fmt.Errorf("Key %s does not exist in %s/%s", key, namespace, secretName)
+		return "", fmt.Errorf("Key %s does not exist in %s/%s", key, namespace, name)
 	}
 
 	// Print success message with kubeContext if provided
-	message := fmt.Sprintf("vals-k8s: Retrieved secret %s/%s/%s", namespace, secretName, key)
+	message := fmt.Sprintf("vals-k8s: Retrieved %s: %s/%s/%s", kind, namespace, name, key)
 	if p.KubeContext != "" {
 		message += fmt.Sprintf(" (KubeContext: %s)", p.KubeContext)
 	}
 	p.log.Debugf(message)
 
-	return string(secret), nil
+	return string(object), nil
 }
 
 func (p *provider) GetStringMap(path string) (map[string]interface{}, error) {
@@ -121,8 +133,8 @@ func buildConfigWithContextFromFlags(context string, kubeconfigPath string) (*re
 		}).ClientConfig()
 }
 
-// Fetch the secret from the Kubernetes cluster
-func getSecret(namespace string, secretName string, kubeConfigPath string, kubeContext string, ctx context.Context) (map[string][]byte, error) {
+// Fetch the object from the Kubernetes cluster
+func getObject(namespace string, name string, kubeConfigPath string, kubeContext string, ctx context.Context) (map[string][]byte, error) {
 	if kubeContext == "" {
 		fmt.Printf("vals-k8s: kubeContext was not provided. Using current context.\n")
 	}
@@ -138,10 +150,10 @@ func getSecret(namespace string, secretName string, kubeConfigPath string, kubeC
 		return nil, fmt.Errorf("Unable to create the Kubernetes client: %s", err)
 	}
 
-	secret, err := clientset.CoreV1().Secrets(namespace).Get(ctx, secretName, metav1.GetOptions{})
+	object, err := clientset.CoreV1().Secrets(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("Unable to get the secret from Kubernetes: %s", err)
+		return nil, fmt.Errorf("Unable to get the object from Kubernetes: %s", err)
 	}
 
-	return secret.Data, nil
+	return object.Data, nil
 }

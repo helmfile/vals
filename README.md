@@ -726,9 +726,9 @@ Examples:
 
 ### Kubernetes secrets
 
-Fetch values from Kubernetes secrets:
+Fetch value from a Kubernetes secret:
 
-- `ref+k8s://NAMESPACE/SECRET_NAME/KEY[?kubeConfigPath=<path_to_kubeconfig>&kubeContext=<kubernetes context name>]`
+- `ref+k8s://API_VERSION/KIND/NAMESPACE/NAME/KEY[?kubeConfigPath=<path_to_kubeconfig>&kubeContext=<kubernetes context name>]`
 
 Authentication to the Kubernetes cluster is done by referencing the local kubeconfig file.
 The path to the kubeconfig can be specified as a URI parameter, read from the `KUBECONFIG` environment variable or the provider will attempt to read `$HOME/.kube/config`.
@@ -740,10 +740,12 @@ Environment variables:
 
 Examples:
 
-- `ref+k8s://mynamespace/mysecret/foo`
-- `ref+k8s://mynamespace/mysecret/bar?kubeConfigPath=/home/user/kubeconfig`
-- `secretref+k8s://mynamespace/secrets/baz`
-- `secretref+k8s://mynamespace/secrets/baz?kubeContext=minikube`
+- `ref+k8s://v1/Secret/mynamespace/mysecret/foo`
+- `ref+k8s://v1/Secret/mynamespace/mysecret/bar?kubeConfigPath=/home/user/kubeconfig`
+- `secretref+k8s://v1/Secret/mynamespace/secrets/baz`
+- `secretref+k8s://v1/Secret/mynamespace/secrets/baz?kubeContext=minikube`
+
+> NOTE: This provider only supports kind "Secret" in apiVersion "v1" at this time.
 
 ## Advanced Usages
 
