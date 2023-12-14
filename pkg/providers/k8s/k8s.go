@@ -44,6 +44,7 @@ func getKubeConfig(cfg api.StaticConfig) (string, error) {
 		if _, err := os.Stat(cfg.String("kubeConfigPath")); err != nil {
 			return "", fmt.Errorf("kubeConfigPath URI parameter is set but path %s does not exist.", cfg.String("kubeConfigPath"))
 		}
+		return cfg.String("kubeConfigPath"), nil
 	}
 
 	// Use path in KUBECONFIG environment variable if set
@@ -51,6 +52,7 @@ func getKubeConfig(cfg api.StaticConfig) (string, error) {
 		if _, err := os.Stat(envPath); err != nil {
 			return "", fmt.Errorf("KUBECONFIG environment variable is set but path %s does not exist.", envPath)
 		}
+		return envPath, nil
 	}
 
 	// Use default kubeconfig path if it exists
