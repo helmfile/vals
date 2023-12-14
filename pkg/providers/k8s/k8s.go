@@ -1,0 +1,160 @@
+package k8s
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"strings"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/helmfile/vals/pkg/api"
+	"github.com/helmfile/vals/pkg/log"
+)
+
+type provider struct {
+	log            *log.Logger
+	KubeConfigPath string
+	KubeContext    string
+}
+
+func New(l *log.Logger, cfg api.StaticConfig) (*provider, error) {
+	p := &provider{
+		log: l,
+	}
+
+	kubeConfig, err := getKubeConfig(cfg)
+	if err != nil {
+		p.log.Debugf("Unable to get a valid Kubeconfig path: %s\n", err)
+		return nil, err
+	}
+
+	p.KubeConfigPath = kubeConfig
+	p.KubeContext = getKubeContext(cfg)
+
+	return p, nil
+}
+
+func getKubeConfig(cfg api.StaticConfig) (string, error) {
+	// Use kubeConfigPath from URI parameters if specified
+	if cfg.String("kubeConfigPath") != "" {
+		if _, err := os.Stat(cfg.String("kubeConfigPath")); err != nil {
+			return "", fmt.Errorf("kubeConfigPath URI parameter is set but path %s does not exist.", cfg.String("kubeConfigPath"))
+		}
+		return cfg.String("kubeConfigPath"), nil
+	}
+
+	// Use path in KUBECONFIG environment variable if set
+	if envPath := os.Getenv("KUBECONFIG"); envPath != "" {
+		if _, err := os.Stat(envPath); err != nil {
+			return "", fmt.Errorf("KUBECONFIG environment variable is set but path %s does not exist.", envPath)
+		}
+		return envPath, nil
+	}
+
+	// Use default kubeconfig path if it exists
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("An error occurred getting the user's home directory: %s", err)
+	}
+
+	defaultPath := homeDir + "/.kube/config"
+	if _, err := os.Stat(defaultPath); err == nil {
+		return defaultPath, nil
+	}
+
+	return "", fmt.Errorf("No path was found in any of the following: kubeContext URI param, KUBECONFIG environment variable, or default path %s does not exist.", defaultPath)
+}
+
+func (p *provider) GetString(path string) (string, error) {
+	separator := "/"
+	splits := strings.Split(path, separator)
+
+	if len(splits) != 5 {
+		return "", fmt.Errorf("Invalid path %s. Path must be in the format <apiVersion>/<kind>/<namespace>/<name>/<key>", path)
+	}
+
+	apiVersion := splits[0]
+	kind := splits[1]
+	namespace := splits[2]
+	name := splits[3]
+	key := splits[4]
+
+	if apiVersion != "v1" {
+		return "", fmt.Errorf("Invalid apiVersion %s. Only apiVersion v1 is supported at this time.", apiVersion)
+	}
+	if kind != "Secret" {
+		return "", fmt.Errorf("Invalid kind %s. Only kind Secret is supported at this time.", kind)
+	}
+
+	//TODO:
+	// At this time, only Secret kind with v1 apiVersion version is supported.
+	// getObject() should be extended to support both ConfigMap and Secrets kind in other apiVersions.
+	objectData, err := getObject(namespace, name, p.KubeConfigPath, p.KubeContext, context.Background())
+	if err != nil {
+		return "", fmt.Errorf("Unable to get %s %s/%s: %s", kind, namespace, name, err)
+	}
+
+	object, exists := objectData[key]
+	if !exists {
+		return "", fmt.Errorf("Key %s does not exist in %s/%s", key, namespace, name)
+	}
+
+	// Print success message with kubeContext if provided
+	message := fmt.Sprintf("vals-k8s: Retrieved %s: %s/%s/%s", kind, namespace, name, key)
+	if p.KubeContext != "" {
+		message += fmt.Sprintf(" (KubeContext: %s)", p.KubeContext)
+	}
+	p.log.Debugf(message)
+
+	return string(object), nil
+}
+
+func (p *provider) GetStringMap(path string) (map[string]interface{}, error) {
+	return nil, fmt.Errorf("This provider does not support values from URI fragments")
+}
+
+// Return an empty Kube context if none is provided
+func getKubeContext(cfg api.StaticConfig) string {
+	if cfg.String("kubeContext") != "" {
+		return cfg.String("kubeContext")
+	}
+	return ""
+}
+
+// Build the client-go config using a specific context
+func buildConfigWithContextFromFlags(context string, kubeconfigPath string) (*rest.Config, error) {
+	return clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+		&clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeconfigPath},
+		&clientcmd.ConfigOverrides{
+			CurrentContext: context,
+		}).ClientConfig()
+}
+
+// Fetch the object from the Kubernetes cluster
+func getObject(namespace string, name string, kubeConfigPath string, kubeContext string, ctx context.Context) (map[string][]byte, error) {
+	if kubeContext == "" {
+		fmt.Printf("vals-k8s: kubeContext was not provided. Using current context.\n")
+	}
+
+	config, err := buildConfigWithContextFromFlags(kubeContext, kubeConfigPath)
+
+	if err != nil {
+		return nil, fmt.Errorf("Unable to build Kubeconfig from vals configuration: %s", err)
+	}
+
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to create the Kubernetes client: %s", err)
+	}
+
+	object, err := clientset.CoreV1().Secrets(namespace).Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("Unable to get the object from Kubernetes: %s", err)
+	}
+
+	return object.Data, nil
+}

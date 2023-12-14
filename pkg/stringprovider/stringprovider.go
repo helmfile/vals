@@ -13,6 +13,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/gcs"
 	"github.com/helmfile/vals/pkg/providers/gitlab"
 	"github.com/helmfile/vals/pkg/providers/gkms"
+	"github.com/helmfile/vals/pkg/providers/k8s"
 	"github.com/helmfile/vals/pkg/providers/onepasswordconnect"
 	"github.com/helmfile/vals/pkg/providers/pulumi"
 	"github.com/helmfile/vals/pkg/providers/s3"
@@ -64,6 +65,8 @@ func New(l *log.Logger, provider api.StaticConfig) (api.LazyLoadedStringProvider
 		return pulumi.New(l, provider, "pulumistateapi"), nil
 	case "gkms":
 		return gkms.New(l, provider), nil
+	case "k8s":
+		return k8s.New(l, provider)
 	}
 
 	return nil, fmt.Errorf("failed initializing string provider from config: %v", provider)

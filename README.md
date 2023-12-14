@@ -17,6 +17,7 @@ It supports various backends including:
 - [Doppler](https://doppler.com/)
 - CredHub(Coming soon)
 - Pulumi State
+- Kubernetes secrets
 
 - Use `vals eval -f refs.yaml` to replace all the `ref`s in the file to actual values and secrets.
 - Use `vals exec -f env.yaml -- <COMMAND>` to populate envvars and execute the command.
@@ -190,7 +191,7 @@ EOF
 
 `FRAGMENT` is a path-like expression that is used to extract a single value within the secret. When a fragment is specified, `vals` parse the secret value denoted by the `PATH` into a YAML or JSON object, and traverses the object following the fragment, and uses the value at the path as the final secret value. It's supposed to be the "fragment" componet of the URI as defined in [RFC3986](https://www.rfc-editor.org/rfc/rfc3986).
 
-Finally, the optional trailing `+` is the explit "end" of the expression. You usually don't need it, as if omitted, it treats anything after `ref+` and before the new-line or the end-of-line as an expression to be evaluated. An explicit `+` is handy when you want to do a simple string interpolation. That is, `foo ref+SECRET1+ ref+SECRET2+ bar` evaluates to `foo SECRET1_VALUE SECRET2_VALUE bar`.
+Finally, the optional trailing `+` is the explicit "end" of the expression. You usually don't need it, as if omitted, it treats anything after `ref+` and before the new-line or the end-of-line as an expression to be evaluated. An explicit `+` is handy when you want to do a simple string interpolation. That is, `foo ref+SECRET1+ ref+SECRET2+ bar` evaluates to `foo SECRET1_VALUE SECRET2_VALUE bar`.
 
 Although we mention the RFC for the sake of explanation, `PARAMS` and `FRAGMENT` might not be fully RFC-compliant as, under the hood, we use a simple regexp that seemed to work for most of use-cases.
 
@@ -218,6 +219,7 @@ Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/
 - [1Password Connect](#1password-connect)
 - [Doppler](#doppler)
 - [Pulumi State](#pulumi-state)
+- [Kubernetes secrets](#kubernetes-secrets)
 
 Please see [pkg/providers](https://github.com/helmfile/vals/tree/master/pkg/providers) for the implementations of all the providers. The package names corresponds to the URI schemes.
 
@@ -722,6 +724,29 @@ Examples:
 - `ref+pulumistateapi://aws-native_s3_Bucket/my-bucket/outputs/tags.%23(key==SomeKey).value?project=my-project&stack=my-stack`
 - `ref+pulumistateapi://kubernetes_storage.k8s.io__v1_StorageClass/gp2-encrypted/inputs/metadata.name?project=my-project&stack=my-stack`
 
+### Kubernetes secrets
+
+Fetch value from a Kubernetes secret:
+
+- `ref+k8s://API_VERSION/KIND/NAMESPACE/NAME/KEY[?kubeConfigPath=<path_to_kubeconfig>&kubeContext=<kubernetes context name>]`
+
+Authentication to the Kubernetes cluster is done by referencing the local kubeconfig file.
+The path to the kubeconfig can be specified as a URI parameter, read from the `KUBECONFIG` environment variable or the provider will attempt to read `$HOME/.kube/config`.
+The Kubernetes context can be specified as a URI parameteter.
+
+Environment variables:
+
+- `KUBECONFIG` contains the path to the Kubeconfig that will be used to fetch the secret.
+
+Examples:
+
+- `ref+k8s://v1/Secret/mynamespace/mysecret/foo`
+- `ref+k8s://v1/Secret/mynamespace/mysecret/bar?kubeConfigPath=/home/user/kubeconfig`
+- `secretref+k8s://v1/Secret/mynamespace/mysecret/baz`
+- `secretref+k8s://v1/Secret/mynamespace/mysecret/baz?kubeContext=minikube`
+
+> NOTE: This provider only supports kind "Secret" in apiVersion "v1" at this time.
+
 ## Advanced Usages
 
 ### Discriminating config and secrets
@@ -769,7 +794,7 @@ That's not the business of vals.
 
 Instead, use vals solely for composing sets of values that are then input to another templating engine or data manipulation language like Jsonnet and CUE.
 
-Note though, `vals` dose have support for simple string interpolation like usage. See [Expression Syntax](#expression-syntax) for more information.
+Note though, `vals` does have support for simple string interpolation like usage. See [Expression Syntax](#expression-syntax) for more information.
 
 ### Merge
 

@@ -11,6 +11,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/doppler"
 	"github.com/helmfile/vals/pkg/providers/gcpsecrets"
 	"github.com/helmfile/vals/pkg/providers/gkms"
+	"github.com/helmfile/vals/pkg/providers/k8s"
 	"github.com/helmfile/vals/pkg/providers/onepasswordconnect"
 	"github.com/helmfile/vals/pkg/providers/sops"
 	"github.com/helmfile/vals/pkg/providers/ssm"
@@ -43,6 +44,8 @@ func New(l *log.Logger, provider api.StaticConfig) (api.LazyLoadedStringMapProvi
 		return doppler.New(l, provider), nil
 	case "gkms":
 		return gkms.New(l, provider), nil
+	case "k8s":
+		return k8s.New(l, provider)
 	}
 
 	return nil, fmt.Errorf("failed initializing string-map provider from config: %v", provider)
