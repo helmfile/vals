@@ -742,8 +742,8 @@ Examples:
 
 - `ref+k8s://v1/Secret/mynamespace/mysecret/foo`
 - `ref+k8s://v1/Secret/mynamespace/mysecret/bar?kubeConfigPath=/home/user/kubeconfig`
-- `secretref+k8s://v1/Secret/mynamespace/secrets/baz`
-- `secretref+k8s://v1/Secret/mynamespace/secrets/baz?kubeContext=minikube`
+- `secretref+k8s://v1/Secret/mynamespace/mysecret/baz`
+- `secretref+k8s://v1/Secret/mynamespace/mysecret/baz?kubeContext=minikube`
 
 > NOTE: This provider only supports kind "Secret" in apiVersion "v1" at this time.
 

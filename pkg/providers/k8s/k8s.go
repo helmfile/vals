@@ -119,9 +119,8 @@ func (p *provider) GetStringMap(path string) (map[string]interface{}, error) {
 func getKubeContext(cfg api.StaticConfig) string {
 	if cfg.String("kubeContext") != "" {
 		return cfg.String("kubeContext")
-	} else {
-		return ""
 	}
+	return ""
 }
 
 // Build the client-go config using a specific context

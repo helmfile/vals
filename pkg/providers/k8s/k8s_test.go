@@ -128,7 +128,6 @@ func Test_getKubeConfig(t *testing.T) {
 			}
 		})
 	}
-
 }
 func Test_getKubeContext(t *testing.T) {
 	testcases := []struct {
