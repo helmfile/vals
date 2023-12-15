@@ -33,11 +33,7 @@ func New(l *log.Logger, cfg api.StaticConfig) (*provider) {
 		return nil
 	}
 
-	p.KubeContext, err = getKubeContext(cfg)
-	if err != nil {
-		p.log.Debugf("vals-k8s: Unable to get a valid kubeContext: %s", err)
-		return nil
-	}
+	p.KubeContext = getKubeContext(cfg)
 
 	if p.KubeContext == "" {
 		p.log.Debugf("vals-k8s: kubeContext was not provided. Using current context.")
@@ -120,12 +116,11 @@ func (p *provider) GetStringMap(path string) (map[string]interface{}, error) {
 }
 
 // Return an empty Kube context if none is provided
-//nolint:unparam // TODO: https://github.com/mvdan/unparam/issues/40
-func getKubeContext(cfg api.StaticConfig) (string, error) {
+func getKubeContext(cfg api.StaticConfig) string {
 	if cfg.String("kubeContext") != "" {
-		return cfg.String("kubeContext"), nil
+		return cfg.String("kubeContext")
 	}
-	return "", nil
+	return ""
 }
 
 // Build the client-go config using a specific context

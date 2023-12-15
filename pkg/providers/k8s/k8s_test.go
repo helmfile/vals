@@ -242,10 +242,7 @@ func Test_getKubeContext(t *testing.T) {
 	for i := range testcases {
 		tc := testcases[i]
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			got, err := getKubeContext(tc.config)
-			if err != nil {
-				t.Fatalf("unexpected error: %s", err)
-			}
+			got := getKubeContext(tc.config)
 			if diff := cmp.Diff(tc.want, got); diff != "" {
 				t.Errorf("unexpected result: -(want), +(got)\n%s", diff)
 			}
