@@ -17,7 +17,7 @@ It supports various backends including:
 - [Doppler](https://doppler.com/)
 - CredHub(Coming soon)
 - Pulumi State
-- Kubernetes secrets
+- Kubernetes
 
 - Use `vals eval -f refs.yaml` to replace all the `ref`s in the file to actual values and secrets.
 - Use `vals exec -f env.yaml -- <COMMAND>` to populate envvars and execute the command.
@@ -219,7 +219,7 @@ Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/
 - [1Password Connect](#1password-connect)
 - [Doppler](#doppler)
 - [Pulumi State](#pulumi-state)
-- [Kubernetes secrets](#kubernetes-secrets)
+- [Kubernetes](#kubernetes)
 
 Please see [pkg/providers](https://github.com/helmfile/vals/tree/master/pkg/providers) for the implementations of all the providers. The package names corresponds to the URI schemes.
 
@@ -724,9 +724,9 @@ Examples:
 - `ref+pulumistateapi://aws-native_s3_Bucket/my-bucket/outputs/tags.%23(key==SomeKey).value?project=my-project&stack=my-stack`
 - `ref+pulumistateapi://kubernetes_storage.k8s.io__v1_StorageClass/gp2-encrypted/inputs/metadata.name?project=my-project&stack=my-stack`
 
-### Kubernetes secrets
+### Kubernetes
 
-Fetch value from a Kubernetes secret:
+Fetch value from a Kubernetes:
 
 - `ref+k8s://API_VERSION/KIND/NAMESPACE/NAME/KEY[?kubeConfigPath=<path_to_kubeconfig>&kubeContext=<kubernetes context name>]`
 

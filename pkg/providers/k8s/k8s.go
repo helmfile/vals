@@ -21,24 +21,32 @@ type provider struct {
 	KubeContext    string
 }
 
-func New(l *log.Logger, cfg api.StaticConfig) (*provider, error) {
+func New(l *log.Logger, cfg api.StaticConfig) (*provider) {
 	p := &provider{
 		log: l,
 	}
+	var err error
 
-	kubeConfig, err := getKubeConfig(cfg)
+	p.KubeConfigPath, err = getKubeConfigPath(cfg)
 	if err != nil {
-		p.log.Debugf("Unable to get a valid Kubeconfig path: %s\n", err)
-		return nil, err
+		p.log.Debugf("vals-k8s: Unable to get a valid kubeConfig path: %s", err)
+		return nil
 	}
 
-	p.KubeConfigPath = kubeConfig
-	p.KubeContext = getKubeContext(cfg)
+	p.KubeContext, err = getKubeContext(cfg)
+	if err != nil {
+		p.log.Debugf("vals-k8s: Unable to get a valid kubeContext: %s", err)
+		return nil
+	}
 
-	return p, nil
+	if p.KubeContext == "" {
+		p.log.Debugf("vals-k8s: kubeContext was not provided. Using current context.")
+	}
+
+	return p
 }
 
-func getKubeConfig(cfg api.StaticConfig) (string, error) {
+func getKubeConfigPath(cfg api.StaticConfig) (string, error) {
 	// Use kubeConfigPath from URI parameters if specified
 	if cfg.String("kubeConfigPath") != "" {
 		if _, err := os.Stat(cfg.String("kubeConfigPath")); err != nil {
@@ -112,11 +120,12 @@ func (p *provider) GetStringMap(path string) (map[string]interface{}, error) {
 }
 
 // Return an empty Kube context if none is provided
-func getKubeContext(cfg api.StaticConfig) string {
+//nolint:unparam // TODO: https://github.com/mvdan/unparam/issues/40
+func getKubeContext(cfg api.StaticConfig) (string, error) {
 	if cfg.String("kubeContext") != "" {
-		return cfg.String("kubeContext")
+		return cfg.String("kubeContext"), nil
 	}
-	return ""
+	return "", nil
 }
 
 // Build the client-go config using a specific context
@@ -130,10 +139,6 @@ func buildConfigWithContextFromFlags(context string, kubeconfigPath string) (*re
 
 // Fetch the object from the Kubernetes cluster
 func getObject(kind string, namespace string, name string, kubeConfigPath string, kubeContext string, ctx context.Context) (map[string]string, error) {
-	if kubeContext == "" {
-		fmt.Printf("vals-k8s: kubeContext was not provided. Using current context.\n")
-	}
-
 	config, err := buildConfigWithContextFromFlags(kubeContext, kubeConfigPath)
 
 	if err != nil {

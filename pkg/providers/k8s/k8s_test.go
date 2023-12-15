@@ -136,7 +136,7 @@ func Test_getObject(t *testing.T) {
 	}
 }
 
-func Test_getKubeConfig(t *testing.T) {
+func Test_getKubeConfigPath(t *testing.T) {
 	homeDir, _ := os.UserHomeDir()
 	testcases := []struct {
 		config           config.MapConfig
@@ -198,7 +198,7 @@ func Test_getKubeConfig(t *testing.T) {
 			if tc.kubeConfigEnvVar != "" {
 				os.Setenv("KUBECONFIG", tc.kubeConfigEnvVar)
 			}
-			got, err := getKubeConfig(tc.config)
+			got, err := getKubeConfigPath(tc.config)
 			if err != nil {
 				if err.Error() != tc.wantErr {
 					t.Fatalf("unexpected error: want %q, got %q", tc.wantErr, err.Error())
@@ -242,7 +242,10 @@ func Test_getKubeContext(t *testing.T) {
 	for i := range testcases {
 		tc := testcases[i]
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			got := getKubeContext(tc.config)
+			got, err := getKubeContext(tc.config)
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
 			if diff := cmp.Diff(tc.want, got); diff != "" {
 				t.Errorf("unexpected result: -(want), +(got)\n%s", diff)
 			}
@@ -337,7 +340,7 @@ func Test_GetString(t *testing.T) {
 			conf := map[string]interface{}{}
 			conf["kubeConfigPath"] = fmt.Sprintf("%s/.kube/config", homeDir)
 			conf["kubeContext"] = "minikube"
-			p, _ := New(logger, config.MapConfig{M: conf})
+			p := New(logger, config.MapConfig{M: conf})
 
 			got, err := p.GetString(tc.path)
 			if err != nil {
