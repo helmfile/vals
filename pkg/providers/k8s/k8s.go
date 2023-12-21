@@ -86,14 +86,8 @@ func (p *provider) GetString(path string) (string, error) {
 	if apiVersion != "v1" {
 		return "", fmt.Errorf("Invalid apiVersion %s. Only apiVersion v1 is supported at this time.", apiVersion)
 	}
-	if kind != "Secret" {
-		return "", fmt.Errorf("Invalid kind %s. Only kind Secret is supported at this time.", kind)
-	}
 
-	//TODO:
-	// At this time, only Secret kind with v1 apiVersion version is supported.
-	// getObject() should be extended to support both ConfigMap and Secrets kind in other apiVersions.
-	objectData, err := getObject(namespace, name, p.KubeConfigPath, p.KubeContext, context.Background())
+	objectData, err := getObject(kind, namespace, name, p.KubeConfigPath, p.KubeContext, context.Background())
 	if err != nil {
 		return "", fmt.Errorf("Unable to get %s %s/%s: %s", kind, namespace, name, err)
 	}
@@ -110,7 +104,7 @@ func (p *provider) GetString(path string) (string, error) {
 	}
 	p.log.Debugf(message)
 
-	return string(object), nil
+	return object, nil
 }
 
 func (p *provider) GetStringMap(path string) (map[string]interface{}, error) {
@@ -135,7 +129,7 @@ func buildConfigWithContextFromFlags(context string, kubeconfigPath string) (*re
 }
 
 // Fetch the object from the Kubernetes cluster
-func getObject(namespace string, name string, kubeConfigPath string, kubeContext string, ctx context.Context) (map[string][]byte, error) {
+func getObject(kind string, namespace string, name string, kubeConfigPath string, kubeContext string, ctx context.Context) (map[string]string, error) {
 	if kubeContext == "" {
 		fmt.Printf("vals-k8s: kubeContext was not provided. Using current context.\n")
 	}
@@ -151,10 +145,34 @@ func getObject(namespace string, name string, kubeConfigPath string, kubeContext
 		return nil, fmt.Errorf("Unable to create the Kubernetes client: %s", err)
 	}
 
-	object, err := clientset.CoreV1().Secrets(namespace).Get(ctx, name, metav1.GetOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("Unable to get the object from Kubernetes: %s", err)
+	var object map[string]string
+
+	switch kind {
+	case "Secret":
+		secret, err := clientset.CoreV1().Secrets(namespace).Get(ctx, name, metav1.GetOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("Unable to get the Secret object from Kubernetes: %s", err)
+		}
+		object = convertByteMapToStringMap(secret.Data)
+	case "ConfigMap":
+		configmap, err := clientset.CoreV1().ConfigMaps(namespace).Get(ctx, name, metav1.GetOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("Unable to get the ConfigMap object from Kubernetes: %s", err)
+		}
+		object = configmap.Data
+	default:
+		return nil, fmt.Errorf("The specified kind is not valid. Valid kinds: Secret, ConfigMap")
 	}
 
-	return object.Data, nil
+	return object, nil
+}
+
+func convertByteMapToStringMap(byteMap map[string][]byte) map[string]string {
+	stringMap := make(map[string]string)
+
+	for key, value := range byteMap {
+		stringMap[key] = string(value)
+	}
+
+	return stringMap
 }

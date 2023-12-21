@@ -19,54 +19,106 @@ import (
 //   kubectl create namespace test-namespace
 // create a secret:
 //   kubectl create secret generic mysecret -n test-namespace --from-literal=key=p4ssw0rd
+// create a configmap:
+//   kubectl create configmap myconfigmap -n test-namespace --from-literal=key=configValue
 
 func Test_getObject(t *testing.T) {
 	homeDir, _ := os.UserHomeDir()
 	testcases := []struct {
 		namespace      string
+		kind           string
 		name           string
 		kubeConfigPath string
-		want           map[string][]uint8
+		want           map[string]string
 		wantErr        string
 	}{
-		// valid kubeConfigPath is specified
+		// (secret) valid kubeConfigPath is specified
 		{
 			namespace:      "test-namespace",
+			kind:           "Secret",
 			name:           "mysecret",
 			kubeConfigPath: fmt.Sprintf("%s/.kube/config", homeDir),
-			want:           map[string][]uint8{"key": []uint8("p4ssw0rd")},
+			want:           map[string]string{"key": "p4ssw0rd"},
 			wantErr:        "",
 		},
-		// kubeConfigPath does not exist
+		// (secret) kubeConfigPath does not exist
 		{
 			namespace:      "test-namespace",
+			kind:           "Secret",
 			name:           "mysecret",
 			kubeConfigPath: "/tmp/does-not-exist",
 			want:           nil,
 			wantErr:        "Unable to build Kubeconfig from vals configuration: stat /tmp/does-not-exist: no such file or directory",
 		},
-		// namespace does not exist
+		// (secret) namespace does not exist
 		{
 			namespace:      "non-existent-namespace",
+			kind:           "Secret",
 			name:           "mysecret",
 			kubeConfigPath: fmt.Sprintf("%s/.kube/config", homeDir),
 			want:           nil,
-			wantErr:        "Unable to get the object from Kubernetes: secrets \"mysecret\" not found",
+			wantErr:        "Unable to get the Secret object from Kubernetes: secrets \"mysecret\" not found",
 		},
-		// secret does not exist
+		// (secret) secret does not exist
 		{
 			namespace:      "test-namespace",
+			kind:           "Secret",
 			name:           "non-existent-secret",
 			kubeConfigPath: fmt.Sprintf("%s/.kube/config", homeDir),
 			want:           nil,
-			wantErr:        "Unable to get the object from Kubernetes: secrets \"non-existent-secret\" not found",
+			wantErr:        "Unable to get the Secret object from Kubernetes: secrets \"non-existent-secret\" not found",
+		},
+		// (configmap) valid kubeConfigPath is specified
+		{
+			namespace:      "test-namespace",
+			kind:           "ConfigMap",
+			name:           "myconfigmap",
+			kubeConfigPath: fmt.Sprintf("%s/.kube/config", homeDir),
+			want:           map[string]string{"key": "configValue"},
+			wantErr:        "",
+		},
+		// (configmap) kubeConfigPath does not exist
+		{
+			namespace:      "test-namespace",
+			kind:           "ConfigMap",
+			name:           "myconfigmap",
+			kubeConfigPath: "/tmp/does-not-exist",
+			want:           nil,
+			wantErr:        "Unable to build Kubeconfig from vals configuration: stat /tmp/does-not-exist: no such file or directory",
+		},
+		// (configmap) namespace does not exist
+		{
+			namespace:      "non-existent-namespace",
+			kind:           "ConfigMap",
+			name:           "myconfigmap",
+			kubeConfigPath: fmt.Sprintf("%s/.kube/config", homeDir),
+			want:           nil,
+			wantErr:        "Unable to get the ConfigMap object from Kubernetes: configmaps \"myconfigmap\" not found",
+		},
+		// (configmap) configmap does not exist
+		{
+			namespace:      "test-namespace",
+			kind:           "ConfigMap",
+			name:           "non-existent-configmap",
+			kubeConfigPath: fmt.Sprintf("%s/.kube/config", homeDir),
+			want:           nil,
+			wantErr:        "Unable to get the ConfigMap object from Kubernetes: configmaps \"non-existent-configmap\" not found",
+		},
+		// unsupported kind
+		{
+			namespace:      "test-namespace",
+			kind:           "UnsupportedKind",
+			name:           "myconfigmap",
+			kubeConfigPath: fmt.Sprintf("%s/.kube/config", homeDir),
+			want:           nil,
+			wantErr:        "The specified kind is not valid. Valid kinds: Secret, ConfigMap",
 		},
 	}
 
 	for i := range testcases {
 		tc := testcases[i]
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			got, err := getObject(tc.namespace, tc.name, tc.kubeConfigPath, "", context.Background())
+			got, err := getObject(tc.kind, tc.namespace, tc.name, tc.kubeConfigPath, "", context.Background())
 			if err != nil {
 				if err.Error() != tc.wantErr {
 					t.Fatalf("unexpected error: want %q, got %q", tc.wantErr, err.Error())
@@ -205,53 +257,77 @@ func Test_GetString(t *testing.T) {
 		want    string
 		wantErr string
 	}{
-		// Valid path is specified
+		// (secret) Valid path is specified
 		{
 			path:    "v1/Secret/test-namespace/mysecret/key",
 			want:    "p4ssw0rd",
 			wantErr: "",
 		},
-		// Invalid path is specified
+		// (configmap) Valid path is specified
+		{
+			path:    "v1/ConfigMap/test-namespace/myconfigmap/key",
+			want:    "configValue",
+			wantErr: "",
+		},
+		// (secret) Invalid path is specified
 		{
 			path:    "v1/Secret/test-namespace/mysecret/key/more/path",
 			want:    "",
 			wantErr: "Invalid path v1/Secret/test-namespace/mysecret/key/more/path. Path must be in the format <apiVersion>/<kind>/<namespace>/<name>/<key>",
 		},
-		// Bad path is specified
+		// (configmap) Invalid path is specified
 		{
-			path:    "bad/data/path",
+			path:    "v1/ConfigMap/test-namespace/myconfigmap/key/more/path",
 			want:    "",
-			wantErr: "Invalid path bad/data/path. Path must be in the format <apiVersion>/<kind>/<namespace>/<name>/<key>",
+			wantErr: "Invalid path v1/ConfigMap/test-namespace/myconfigmap/key/more/path. Path must be in the format <apiVersion>/<kind>/<namespace>/<name>/<key>",
 		},
-		// Non-existent namespace is specified
+		// (secret) Non-existent namespace is specified
 		{
 			path:    "v1/Secret/badnamespace/secret/key",
 			want:    "",
-			wantErr: "Unable to get Secret badnamespace/secret: Unable to get the object from Kubernetes: secrets \"secret\" not found",
+			wantErr: "Unable to get Secret badnamespace/secret: Unable to get the Secret object from Kubernetes: secrets \"secret\" not found",
 		},
-		// Non-existent secret is specified
+		// (configmap) Non-existent secret is specified
 		{
 			path:    "v1/Secret/test-namespace/badsecret/key",
 			want:    "",
-			wantErr: "Unable to get Secret test-namespace/badsecret: Unable to get the object from Kubernetes: secrets \"badsecret\" not found",
+			wantErr: "Unable to get Secret test-namespace/badsecret: Unable to get the Secret object from Kubernetes: secrets \"badsecret\" not found",
 		},
-		// Non-existent key is requested
+		// (secret) Non-existent key is requested
 		{
 			path:    "v1/Secret/test-namespace/mysecret/non-existent-key",
 			want:    "",
 			wantErr: "Key non-existent-key does not exist in test-namespace/mysecret",
 		},
-		// Invalid apiVersion specified
+		// (configmap) Non-existent key is requested
+		{
+			path:    "v1/ConfigMap/test-namespace/myconfigmap/non-existent-key",
+			want:    "",
+			wantErr: "Key non-existent-key does not exist in test-namespace/myconfigmap",
+		},
+		// (secret) Invalid apiVersion specified
 		{
 			path:    "v2/Secret/test-namespace/mysecret/non-existent-key",
 			want:    "",
 			wantErr: "Invalid apiVersion v2. Only apiVersion v1 is supported at this time.",
 		},
-		// Invalid kind specified
+		// (configmap) Invalid apiVersion specified
 		{
-			path:    "v1/ConfigMap/test-namespace/mysecret/non-existent-key",
+			path:    "v2/ConfigMap/test-namespace/myconfigmap/non-existent-key",
 			want:    "",
-			wantErr: "Invalid kind ConfigMap. Only kind Secret is supported at this time.",
+			wantErr: "Invalid apiVersion v2. Only apiVersion v1 is supported at this time.",
+		},
+		// Incorrect path is specified
+		{
+			path:    "bad/data/path",
+			want:    "",
+			wantErr: "Invalid path bad/data/path. Path must be in the format <apiVersion>/<kind>/<namespace>/<name>/<key>",
+		},
+		// Unsupported kind is specified
+		{
+			path:    "v1/UnsupportedKind/test-namespace/myconfigmap/key",
+			want:    "",
+			wantErr: "Unable to get UnsupportedKind test-namespace/myconfigmap: The specified kind is not valid. Valid kinds: Secret, ConfigMap",
 		},
 	}
 	for _, tc := range tests {
