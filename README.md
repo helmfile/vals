@@ -726,7 +726,7 @@ Examples:
 
 ### Kubernetes
 
-Fetch value from a Kubernetes:
+Fetch value from Kubernetes:
 
 - `ref+k8s://API_VERSION/KIND/NAMESPACE/NAME/KEY[?kubeConfigPath=<path_to_kubeconfig>&kubeContext=<kubernetes context name>]`
 
@@ -741,11 +741,12 @@ Environment variables:
 Examples:
 
 - `ref+k8s://v1/Secret/mynamespace/mysecret/foo`
+- `ref+k8s://v1/ConfigMap/mynamespace/myconfigmap/foo`
 - `ref+k8s://v1/Secret/mynamespace/mysecret/bar?kubeConfigPath=/home/user/kubeconfig`
 - `secretref+k8s://v1/Secret/mynamespace/mysecret/baz`
 - `secretref+k8s://v1/Secret/mynamespace/mysecret/baz?kubeContext=minikube`
 
-> NOTE: This provider only supports kind "Secret" in apiVersion "v1" at this time.
+> NOTE: This provider only supports kind "Secret" or "ConfigMap" in apiVersion "v1" at this time.
 
 ## Advanced Usages
 
