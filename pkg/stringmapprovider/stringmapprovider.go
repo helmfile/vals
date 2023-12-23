@@ -45,7 +45,7 @@ func New(l *log.Logger, provider api.StaticConfig) (api.LazyLoadedStringMapProvi
 	case "gkms":
 		return gkms.New(l, provider), nil
 	case "k8s":
-		return k8s.New(l, provider)
+		return k8s.New(l, provider), nil
 	}
 
 	return nil, fmt.Errorf("failed initializing string-map provider from config: %v", provider)

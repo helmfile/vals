@@ -7,3 +7,6 @@ build:
 
 install: build
 	mv bin/vals ~/bin/
+
+lint:
+	golangci-lint run -v --out-format=github-actions
