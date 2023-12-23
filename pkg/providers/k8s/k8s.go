@@ -21,7 +21,7 @@ type provider struct {
 	KubeContext    string
 }
 
-func New(l *log.Logger, cfg api.StaticConfig) (*provider) {
+func New(l *log.Logger, cfg api.StaticConfig) *provider {
 	p := &provider{
 		log: l,
 	}
