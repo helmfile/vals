@@ -111,7 +111,7 @@ metadata:
   name: release-name-mysql
   namespace: default
 stringData:
-  mysql-password: refs+vault://secret/data/foo#/mykey
+  mysql-password: ref+vault://secret/data/foo#/mykey
   mysql-root-password: vZQmqdGw3z
 type: Opaque
 ```
