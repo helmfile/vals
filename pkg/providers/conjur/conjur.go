@@ -10,12 +10,6 @@ import (
 	"github.com/helmfile/vals/pkg/log"
 )
 
-const (
-	FormatYAML             = "yaml"
-	FormatRaw              = "raw"
-	kubernetesJwtTokenPath = "/var/run/secrets/kubernetes.io/serviceaccount/token"
-)
-
 type provider struct {
 	client *conjurapi.Client
 	log    *log.Logger
