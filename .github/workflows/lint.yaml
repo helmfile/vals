@@ -8,22 +8,19 @@ on:
     branches: [ main ]
     paths-ignore: [ '**.md' ]
 
-env:
-  GO_VERSION: 1.20
-
 jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - uses: actions/setup-go@v3
         with:
           go-version-file: 'go.mod'
           cache: true
-
-      - name: Checkout code
-        uses: actions/checkout@v3
 
       - name: Golangci lint
         uses: golangci/golangci-lint-action@v3
