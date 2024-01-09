@@ -2,6 +2,7 @@ package vals
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -13,6 +14,9 @@ import (
 
 // nolint
 func TestValues_AWSSecrets_String(t *testing.T) {
+	if os.Getenv("SKIP_TESTS") != "" {
+		t.Skip("Skipping tests")
+	}
 	client := secretsmanager.New(awsclicompat.NewSession("ap-northeast-1", "", ""))
 
 	sec, err := client.CreateSecret(&secretsmanager.CreateSecretInput{
@@ -123,6 +127,9 @@ func TestValues_AWSSecrets_Map(t *testing.T) {
 	// Pre-requisite:
 	//   aws secretsmanager create-secret --name /mykv/foo/meta --secret-string '{"github.com/helmfile/vals":["mykey"]}'
 	//   aws secretsmanager create-secret --name /mykv/foo/mykey --secret-string myvalue
+	if os.Getenv("SKIP_TESTS") != "" {
+		t.Skip("Skipping tests")
+	}
 
 	type testcase struct {
 		provider map[string]interface{}
