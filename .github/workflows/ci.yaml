@@ -25,6 +25,8 @@ jobs:
     steps:
     - name: Create k8s Kind Cluster
       uses: helm/kind-action@v1.8.0
+      with:
+        cluster-name: cluster
     - name: Set k8s provider
       run: |
         kubectl create namespace test-namespace

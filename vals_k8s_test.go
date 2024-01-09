@@ -10,8 +10,6 @@ import (
 
 func TestValues_k8s(t *testing.T) {
 	// Setup:
-	// create a local Kubernetes cluster using minikube:
-	//   minikube start
 	// create a namespace:
 	//   kubectl create namespace test-namespace
 	// create a secret:
@@ -41,7 +39,7 @@ func TestValues_k8s(t *testing.T) {
 		// (secret) valid Secret is specified, with specific kube context
 		{
 			template: map[string]interface{}{
-				"test_key": "secretref+k8s://v1/Secret/test-namespace/mysecret/key?kubeContext=minikube",
+				"test_key": "secretref+k8s://v1/Secret/test-namespace/mysecret/key?kubeContext=kind-cluster",
 			},
 			want: map[string]interface{}{
 				"test_key": "p4ssw0rd",
@@ -51,7 +49,7 @@ func TestValues_k8s(t *testing.T) {
 		// (secret) valid Secret is specified, with specific kube context and kube config path
 		{
 			template: map[string]interface{}{
-				"test_key": fmt.Sprintf("secretref+k8s://v1/Secret/test-namespace/mysecret/key?kubeContext=minikube&kubeConfigPath=%s/.kube/config", homeDir),
+				"test_key": fmt.Sprintf("secretref+k8s://v1/Secret/test-namespace/mysecret/key?kubeContext=kind-cluster&kubeConfigPath=%s/.kube/config", homeDir),
 			},
 			want: map[string]interface{}{
 				"test_key": "p4ssw0rd",
@@ -89,7 +87,7 @@ func TestValues_k8s(t *testing.T) {
 		// (configmap) valid Secret is specified, with specific kube context
 		{
 			template: map[string]interface{}{
-				"test_key": "ref+k8s://v1/ConfigMap/test-namespace/myconfigmap/key?kubeContext=minikube",
+				"test_key": "ref+k8s://v1/ConfigMap/test-namespace/myconfigmap/key?kubeContext=kind-cluster",
 			},
 			want: map[string]interface{}{
 				"test_key": "configValue",
@@ -99,7 +97,7 @@ func TestValues_k8s(t *testing.T) {
 		// (configmap) valid ConfigMap is specified, with specific kube context and kube config path
 		{
 			template: map[string]interface{}{
-				"test_key": fmt.Sprintf("ref+k8s://v1/ConfigMap/test-namespace/myconfigmap/key?kubeContext=minikube&kubeConfigPath=%s/.kube/config", homeDir),
+				"test_key": fmt.Sprintf("ref+k8s://v1/ConfigMap/test-namespace/myconfigmap/key?kubeContext=kind-cluster&kubeConfigPath=%s/.kube/config", homeDir),
 			},
 			want: map[string]interface{}{
 				"test_key": "configValue",
