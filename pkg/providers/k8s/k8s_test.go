@@ -339,7 +339,7 @@ func Test_GetString(t *testing.T) {
 			conf["kubeConfigPath"] = fmt.Sprintf("%s/.kube/config", homeDir)
 			conf["kubeContext"] = "minikube"
 			p, err := New(logger, config.MapConfig{M: conf})
-			require.NoError(t, err)
+			require.NoErrorf(t, err, "unexpected error creating provider: %v", err)
 
 			got, err := p.GetString(tc.path)
 			if err != nil {
