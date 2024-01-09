@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
 
 	"github.com/helmfile/vals/pkg/config"
 	"github.com/helmfile/vals/pkg/log"
@@ -337,7 +338,8 @@ func Test_GetString(t *testing.T) {
 			conf := map[string]interface{}{}
 			conf["kubeConfigPath"] = fmt.Sprintf("%s/.kube/config", homeDir)
 			conf["kubeContext"] = "minikube"
-			p := New(logger, config.MapConfig{M: conf})
+			p, err := New(logger, config.MapConfig{M: conf})
+			require.NoError(t, err)
 
 			got, err := p.GetString(tc.path)
 			if err != nil {

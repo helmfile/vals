@@ -21,7 +21,7 @@ type provider struct {
 	KubeContext    string
 }
 
-func New(l *log.Logger, cfg api.StaticConfig) *provider {
+func New(l *log.Logger, cfg api.StaticConfig) (*provider, error) {
 	p := &provider{
 		log: l,
 	}
@@ -30,7 +30,7 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 	p.KubeConfigPath, err = getKubeConfigPath(cfg)
 	if err != nil {
 		p.log.Debugf("vals-k8s: Unable to get a valid kubeConfig path: %s", err)
-		return nil
+		return nil, err
 	}
 
 	p.KubeContext = getKubeContext(cfg)
@@ -39,7 +39,7 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 		p.log.Debugf("vals-k8s: kubeContext was not provided. Using current context.")
 	}
 
-	return p
+	return p, nil
 }
 
 func getKubeConfigPath(cfg api.StaticConfig) (string, error) {
