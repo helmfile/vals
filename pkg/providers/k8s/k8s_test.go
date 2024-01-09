@@ -337,7 +337,7 @@ func Test_GetString(t *testing.T) {
 			homeDir, _ := os.UserHomeDir()
 			conf := map[string]interface{}{}
 			conf["kubeConfigPath"] = fmt.Sprintf("%s/.kube/config", homeDir)
-			conf["kubeContext"] = "minikube"
+			conf["kubeContext"] = "kind-cluster"
 			p, err := New(logger, config.MapConfig{M: conf})
 			require.NoErrorf(t, err, "unexpected error creating provider: %v", err)
 
