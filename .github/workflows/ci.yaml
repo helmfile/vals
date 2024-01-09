@@ -8,7 +8,7 @@ on:
 
 jobs:
 
-  tests:
+  build-test:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -17,5 +17,17 @@ jobs:
       with:
         go-version-file: 'go.mod'
         cache: true
-    - name: Build
+    - name: build 
       run: make build
+
+  unit-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version-file: 'go.mod'
+        cache: true
+    - name: test
+      run: make test
