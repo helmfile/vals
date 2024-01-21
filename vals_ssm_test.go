@@ -2,6 +2,7 @@ package vals
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	config2 "github.com/helmfile/vals/pkg/config"
@@ -10,6 +11,9 @@ import (
 func TestValues_SSM_String(t *testing.T) {
 	// TODO
 	// Pre-requisite: aws ssm put-parameter --name /mykv/foo/mykey --value myvalue --type String
+	if os.Getenv("SKIP_TESTS") != "" {
+		t.Skip("Skipping tests")
+	}
 
 	type testcase struct {
 		config map[string]interface{}
@@ -96,6 +100,9 @@ func TestValues_SSM_String(t *testing.T) {
 func TestValues_SSM_Map(t *testing.T) {
 	// TODO
 	// Pre-requisite: aws ssm put-parameter --name /mykv/foo/mykey --value myvalue --type String
+	if os.Getenv("SKIP_TESTS") != "" {
+		t.Skip("Skipping tests")
+	}
 
 	type testcase struct {
 		provider map[string]interface{}
@@ -192,6 +199,9 @@ func TestValues_SSM_Map(t *testing.T) {
 func TestValues_SSM_Map_Raw(t *testing.T) {
 	// TODO
 	// Pre-requisite: aws ssm put-parameter --name /mykv/foo/mykey --value myvalue --type String
+	if os.Getenv("SKIP_TESTS") != "" {
+		t.Skip("Skipping tests")
+	}
 
 	type testcase struct {
 		provider map[string]interface{}
@@ -294,6 +304,9 @@ func TestValues_SSM_Map_YAML(t *testing.T) {
 	// Pre-requisite:
 	//   aws ssm put-parameter --name /mykv/yamltest/myyaml --value "$(cat myyaml.yaml)" --type String
 	//   aws ssm put-parameter --name /mykv/yamltest/myjson --value "$(cat myjson.json)" --type String
+	if os.Getenv("SKIP_TESTS") != "" {
+		t.Skip("Skipping tests")
+	}
 
 	type testcase struct {
 		provider map[string]interface{}
@@ -389,6 +402,9 @@ func TestValues_SSM_Map_YAML_Root(t *testing.T) {
 	// Pre-requisite:
 	//   aws ssm put-parameter --name /mykv/yamltest/myyaml --value "$(cat myyaml.yaml)" --type String
 	//   aws ssm put-parameter --name /mykv/yamltest/myjson --value "$(cat myjson.json)" --type String
+	if os.Getenv("SKIP_TESTS") != "" {
+		t.Skip("Skipping tests")
+	}
 
 	type provider struct {
 		config map[string]interface{}
@@ -492,6 +508,9 @@ func TestValues_SSM_Map_Raw_Root(t *testing.T) {
 	// Pre-requisite:
 	//   aws ssm put-parameter --name /mykv/yamltest/myyaml --value "$(cat myyaml.yaml)" --type String
 	//   aws ssm put-parameter --name /mykv/yamltest/myjson --value "$(cat myjson.json)" --type String
+	if os.Getenv("SKIP_TESTS") != "" {
+		t.Skip("Skipping tests")
+	}
 
 	type testcase struct {
 		config map[string]interface{}

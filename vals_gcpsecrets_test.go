@@ -12,6 +12,9 @@ import (
 // echo -n "foo: bar" | gcloud secrets create valstestvar --data-file=- --replication-policy=automatic
 // GCP_PROJECT=secret-test-99234 go test -run '^(TestValues_GCPSecretsManager)$'
 func TestValues_GCPSecretsManager(t *testing.T) {
+	if os.Getenv("SKIP_TESTS") != "" {
+		t.Skip("Skipping tests")
+	}
 	projectId := os.Getenv("GCP_PROJECT")
 	if projectId == "" {
 		t.Fatalf("gcpsecrets tests require GCP_PROJECT env var set correctly")
