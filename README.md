@@ -18,6 +18,7 @@ It supports various backends including:
 - CredHub(Coming soon)
 - Pulumi State
 - Kubernetes
+- Conjur
 
 - Use `vals eval -f refs.yaml` to replace all the `ref`s in the file to actual values and secrets.
 - Use `vals exec -f env.yaml -- <COMMAND>` to populate envvars and execute the command.
@@ -220,6 +221,7 @@ Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/
 - [Doppler](#doppler)
 - [Pulumi State](#pulumi-state)
 - [Kubernetes](#kubernetes)
+- [Conjur](#conjur)
 
 Please see [pkg/providers](https://github.com/helmfile/vals/tree/master/pkg/providers) for the implementations of all the providers. The package names corresponds to the URI schemes.
 
@@ -747,6 +749,23 @@ Examples:
 - `secretref+k8s://v1/Secret/mynamespace/mysecret/baz?kubeContext=minikube`
 
 > NOTE: This provider only supports kind "Secret" or "ConfigMap" in apiVersion "v1" at this time.
+
+### Conjur
+
+This provider retrieves the value of secrets stored in [Conjur](https://www.conjur.org/).
+It's based on the https://github.com/cyberark/conjur-api-go lib.
+
+The following env vars have to be configured:
+- `CONJUR_APPLIANCE_URL`
+- `CONJUR_ACCOUNT`
+- `CONJUR_AUTHN_LOGIN`
+- `CONJUR_AUTHN_API_KEY`
+
+- `ref+conjur://PATH/TO/VARIABLE[?address=CONJUR_APPLIANCE_URL&account=CONJUR_ACCOUNT&login=CONJUR_AUTHN_LOGIN&apikey=CONJUR_AUTHN_API_KEY]/CONJUR_SECRET_ID`
+
+Example:
+
+- `ref+conjur://branch/variable_name`
 
 ## Advanced Usages
 

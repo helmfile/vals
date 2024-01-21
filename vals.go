@@ -23,6 +23,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/awskms"
 	"github.com/helmfile/vals/pkg/providers/awssecrets"
 	"github.com/helmfile/vals/pkg/providers/azurekeyvault"
+	"github.com/helmfile/vals/pkg/providers/conjur"
 	"github.com/helmfile/vals/pkg/providers/doppler"
 	"github.com/helmfile/vals/pkg/providers/echo"
 	"github.com/helmfile/vals/pkg/providers/envsubst"
@@ -91,6 +92,7 @@ const (
 	ProviderPulumiStateAPI     = "pulumistateapi"
 	ProviderGKMS               = "gkms"
 	ProviderK8s                = "k8s"
+	ProviderConjur             = "conjur"
 )
 
 var (
@@ -252,6 +254,9 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 			return p, nil
 		case ProviderK8s:
 			return k8s.New(r.logger, conf)
+		case ProviderConjur:
+			p := conjur.New(r.logger, conf)
+			return p, nil
 		}
 		return nil, fmt.Errorf("no provider registered for scheme %q", scheme)
 	}
