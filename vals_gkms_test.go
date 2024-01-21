@@ -2,6 +2,7 @@ package vals
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -25,6 +26,9 @@ func TestValues_GKMS(t *testing.T) {
 	// run with:
 	//
 	//	go test -run '^(TestValues_GKMS)$'
+	if os.Getenv("SKIP_TESTS") != "" {
+		t.Skip("Skipping tests")
+	}
 
 	type testcase struct {
 		template map[string]interface{}

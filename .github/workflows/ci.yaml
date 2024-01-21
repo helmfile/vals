@@ -8,7 +8,7 @@ on:
 
 jobs:
 
-  tests:
+  build-test:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -17,5 +17,28 @@ jobs:
       with:
         go-version-file: 'go.mod'
         cache: true
-    - name: Build
+    - name: build 
       run: make build
+
+  unit-test:
+    runs-on: ubuntu-latest
+    env:
+      SKIP_TESTS: true 
+    steps:
+    - name: Create k8s Kind Cluster
+      uses: helm/kind-action@v1.8.0
+      with:
+        cluster_name: cluster
+    - name: Set k8s provider
+      run: |
+        kubectl create namespace test-namespace
+        kubectl create secret generic mysecret -n test-namespace --from-literal=key=p4ssw0rd
+        kubectl create configmap myconfigmap -n test-namespace --from-literal=key=configValue
+    - uses: actions/checkout@v3
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version-file: 'go.mod'
+        cache: true
+    - name: test
+      run: make test

@@ -2,6 +2,7 @@ package vals
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	config2 "github.com/helmfile/vals/pkg/config"
@@ -22,6 +23,9 @@ func TestValues_AzureKeyVault_String(t *testing.T) {
 	//  "AZURE_CLIENT_ID":  "...",
 	//  "AZURE_CLIENT_SECRET": "...",
 	//  "AZURE_TENANT_ID": "..."
+	if os.Getenv("SKIP_TESTS") != "" {
+		t.Skip("Skipping tests")
+	}
 
 	type testcase struct {
 		config map[string]interface{}

@@ -87,6 +87,9 @@ func TestValues_Vault_EvalTemplate(t *testing.T) {
 	//   vault secrets enable -path=mykv kv
 	//   vault write mykv/foo mykey=myvalue
 	//   vault read mykv/foo
+	if os.Getenv("SKIP_TESTS") != "" {
+		t.Skip("Skipping tests")
+	}
 
 	addr, stop := SetupVaultKV(
 		t,
@@ -170,6 +173,9 @@ func TestValues_Vault_EvalTemplate(t *testing.T) {
 func TestValues_Vault_String(t *testing.T) {
 	// TODO
 	// Pre-requisite: vault write mykv/foo mykey=myvalue
+	if os.Getenv("SKIP_TESTS") != "" {
+		t.Skip("Skipping tests")
+	}
 
 	type testcase struct {
 		config map[string]interface{}
@@ -255,6 +261,9 @@ func TestValues_Vault_String(t *testing.T) {
 func TestValues_Vault_Map(t *testing.T) {
 	// TODO
 	// Pre-requisite: vault write mykv/foo mykey=myvalue
+	if os.Getenv("SKIP_TESTS") != "" {
+		t.Skip("Skipping tests")
+	}
 
 	type testcase struct {
 		name   string
@@ -437,6 +446,9 @@ func TestValues_Vault_Map(t *testing.T) {
 func TestValues_Vault_Map_Raw(t *testing.T) {
 	// TODO
 	// Pre-requisite: vault write mykv/foo mykey=myvalue
+	if os.Getenv("SKIP_TESTS") != "" {
+		t.Skip("Skipping tests")
+	}
 
 	type testcase struct {
 		provider map[string]interface{}
@@ -536,6 +548,9 @@ func TestValues_Vault_Map_YAML(t *testing.T) {
 	// EOF
 	//
 	// vault write mykv/yamltest myyaml="$(cat myyaml.yaml)" myjson="$(cat myjson.json)"
+	if os.Getenv("SKIP_TESTS") != "" {
+		t.Skip("Skipping tests")
+	}
 
 	yamlContent, err := os.ReadFile("myyaml.yaml")
 	if err != nil {
@@ -649,6 +664,9 @@ func TestValues_Vault_Map_YAML_Root(t *testing.T) {
 	// EOF
 	//
 	// vault write mykv/yamltest myyaml="$(cat myyaml.yaml)" myjson="$(cat myjson.json)"
+	if os.Getenv("SKIP_TESTS") != "" {
+		t.Skip("Skipping tests")
+	}
 
 	type provider struct {
 		config map[string]interface{}
@@ -750,6 +768,9 @@ func TestValues_Vault_Map_Raw_Root(t *testing.T) {
 	// EOF
 	//
 	// vault write mykv/yamltest myyaml="$(cat myyaml.yaml)" myjson="$(cat myjson.json)"
+	if os.Getenv("SKIP_TESTS") != "" {
+		t.Skip("Skipping tests")
+	}
 
 	type testcase struct {
 		config map[string]interface{}
