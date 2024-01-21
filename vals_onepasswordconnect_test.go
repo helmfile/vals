@@ -2,6 +2,7 @@ package vals
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -19,6 +20,9 @@ func TestValues_OnePasswordConnect_EvalTemplate(t *testing.T) {
 	// set up service principal credentials in the environment:
 	//  "OP_CONNECT_TOKEN":  "...",
 	//  "OP_CONNECT_HOST": "...",
+	if os.Getenv("SKIP_TESTS") != "" {
+		t.Skip("Skipping tests")
+	}
 
 	type testcase struct {
 		template map[string]interface{}

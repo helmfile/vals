@@ -253,8 +253,7 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 			p := gkms.New(r.logger, conf)
 			return p, nil
 		case ProviderK8s:
-			p := k8s.New(r.logger, conf)
-			return p, nil
+			return k8s.New(r.logger, conf)
 		case ProviderConjur:
 			p := conjur.New(r.logger, conf)
 			return p, nil

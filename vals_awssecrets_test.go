@@ -2,6 +2,7 @@ package vals
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -13,6 +14,9 @@ import (
 
 // nolint
 func TestValues_AWSSecrets_String(t *testing.T) {
+	if os.Getenv("SKIP_TESTS") != "" {
+		t.Skip("Skipping tests")
+	}
 	client := secretsmanager.New(awsclicompat.NewSession("ap-northeast-1", "", ""))
 
 	sec, err := client.CreateSecret(&secretsmanager.CreateSecretInput{
@@ -123,6 +127,9 @@ func TestValues_AWSSecrets_Map(t *testing.T) {
 	// Pre-requisite:
 	//   aws secretsmanager create-secret --name /mykv/foo/meta --secret-string '{"github.com/helmfile/vals":["mykey"]}'
 	//   aws secretsmanager create-secret --name /mykv/foo/mykey --secret-string myvalue
+	if os.Getenv("SKIP_TESTS") != "" {
+		t.Skip("Skipping tests")
+	}
 
 	type testcase struct {
 		provider map[string]interface{}
@@ -219,6 +226,10 @@ func TestValues_AWSSecrets_Map(t *testing.T) {
 func TestValues_AWSSecrets_Map_Raw(t *testing.T) {
 	// TODO
 	// Pre-requisite: aws ssm put-parameter --name /mykv/foo/mykey --value myvalue --type String
+
+	if os.Getenv("SKIP_TESTS") != "" {
+		t.Skip("Skipping tests")
+	}
 
 	type testcase struct {
 		provider map[string]interface{}
@@ -321,6 +332,9 @@ func TestValues_AWSSecrets_Map_YAML(t *testing.T) {
 	// Pre-requisite:
 	//   aws secretsmanager create-secret --name /mykv/yamltest/myyaml --secret-string "$(cat myyaml.yaml)"
 	//   aws secretsmanager create-secret --name /mykv/yamltest/myjson --secret-string "$(cat myjson.json)"
+	if os.Getenv("SKIP_TESTS") != "" {
+		t.Skip("Skipping tests")
+	}
 
 	type testcase struct {
 		provider map[string]interface{}
@@ -416,6 +430,9 @@ func TestValues_AWSSecrets_Map_YAML_Root(t *testing.T) {
 	// Pre-requisite:
 	//   aws secretsmanager create-secret --name /mykv/yamltest/myyaml --secret-string "$(cat myyaml.yaml)"
 	//   aws secretsmanager create-secret --name /mykv/yamltest/myjson --secret-string "$(cat myjson.json)"
+	if os.Getenv("SKIP_TESTS") != "" {
+		t.Skip("Skipping tests")
+	}
 
 	type provider struct {
 		config map[string]interface{}
@@ -518,6 +535,9 @@ func TestValues_AWSSecrets_Map_Raw_Root(t *testing.T) {
 	//
 	// Pre-requisite:
 	//   aws secretsmanager create-secret --name /mykv/foo/mykey --secret-string myvalue
+	if os.Getenv("SKIP_TESTS") != "" {
+		t.Skip("Skipping tests")
+	}
 
 	type testcase struct {
 		config map[string]interface{}

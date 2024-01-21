@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
 
 	"github.com/helmfile/vals/pkg/config"
 	"github.com/helmfile/vals/pkg/log"
@@ -336,8 +337,9 @@ func Test_GetString(t *testing.T) {
 			homeDir, _ := os.UserHomeDir()
 			conf := map[string]interface{}{}
 			conf["kubeConfigPath"] = fmt.Sprintf("%s/.kube/config", homeDir)
-			conf["kubeContext"] = "minikube"
-			p := New(logger, config.MapConfig{M: conf})
+			conf["kubeContext"] = "kind-cluster"
+			p, err := New(logger, config.MapConfig{M: conf})
+			require.NoErrorf(t, err, "unexpected error creating provider: %v", err)
 
 			got, err := p.GetString(tc.path)
 			if err != nil {
