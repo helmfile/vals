@@ -11,9 +11,9 @@ jobs:
   build-test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Go
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v5
       with:
         go-version-file: 'go.mod'
         cache: true
@@ -34,9 +34,9 @@ jobs:
         kubectl create namespace test-namespace
         kubectl create secret generic mysecret -n test-namespace --from-literal=key=p4ssw0rd
         kubectl create configmap myconfigmap -n test-namespace --from-literal=key=configValue
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Go
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v5
       with:
         go-version-file: 'go.mod'
         cache: true
