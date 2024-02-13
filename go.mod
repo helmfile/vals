@@ -5,7 +5,7 @@ go 1.22
 require (
 	cloud.google.com/go/kms v1.15.5
 	cloud.google.com/go/secretmanager v1.11.5
-	cloud.google.com/go/storage v1.33.0
+	cloud.google.com/go/storage v1.38.0
 	github.com/1Password/connect-sdk-go v1.5.3
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.9.0
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.4.0
@@ -22,17 +22,17 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/tidwall/gjson v1.17.0
 	golang.org/x/oauth2 v0.16.0
-	google.golang.org/api v0.160.0
+	google.golang.org/api v0.162.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.29.1
 	k8s.io/client-go v0.29.1
 )
 
 require (
-	cloud.google.com/go v0.111.0 // indirect
+	cloud.google.com/go v0.112.0 // indirect
 	cloud.google.com/go/compute v1.23.3 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
-	cloud.google.com/go/iam v1.1.5 // indirect
+	cloud.google.com/go/iam v1.1.6 // indirect
 	filippo.io/age v1.1.1 // indirect
 	github.com/AlecAivazis/survey/v2 v2.3.6 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.5.0 // indirect
@@ -100,7 +100,7 @@ require (
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/s2a-go v0.1.7 // indirect
-	github.com/google/uuid v1.5.0 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
 	github.com/googleapis/gax-go/v2 v2.12.0 // indirect
 	github.com/goware/prefixer v0.0.0-20160118172347-395022866408 // indirect
@@ -166,9 +166,9 @@ require (
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
-	google.golang.org/genproto v0.0.0-20240116215550-a9fa1716bcac // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240125205218-1f4bbc51befe // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240116215550-a9fa1716bcac // indirect
+	google.golang.org/genproto v0.0.0-20240125205218-1f4bbc51befe // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20240205150955-31a09d347014 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240125205218-1f4bbc51befe // indirect
 	google.golang.org/grpc v1.61.0 // indirect
 	google.golang.org/protobuf v1.32.0 // indirect
 	gopkg.in/gookit/color.v1 v1.1.6 // indirect
