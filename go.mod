@@ -17,7 +17,7 @@ require (
 	github.com/fujiwara/tfstate-lookup v1.1.5
 	github.com/getsops/sops/v3 v3.8.0
 	github.com/google/go-cmp v0.6.0
-	github.com/hashicorp/golang-lru v0.5.4
+	github.com/hashicorp/golang-lru v1.0.2
 	github.com/hashicorp/vault/api v1.12.0
 	github.com/stretchr/testify v1.8.4
 	github.com/tidwall/gjson v1.17.0
