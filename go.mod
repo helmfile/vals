@@ -18,7 +18,7 @@ require (
 	github.com/getsops/sops/v3 v3.8.0
 	github.com/google/go-cmp v0.6.0
 	github.com/hashicorp/golang-lru v0.5.4
-	github.com/hashicorp/vault/api v1.10.0
+	github.com/hashicorp/vault/api v1.12.0
 	github.com/stretchr/testify v1.8.4
 	github.com/tidwall/gjson v1.17.0
 	golang.org/x/oauth2 v0.17.0
