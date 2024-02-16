@@ -14,7 +14,7 @@ require (
 	github.com/a8m/envsubst v1.4.2
 	github.com/aws/aws-sdk-go v1.50.18
 	github.com/cyberark/conjur-api-go v0.11.1
-	github.com/fujiwara/tfstate-lookup v1.1.5
+	github.com/fujiwara/tfstate-lookup v1.1.6
 	github.com/getsops/sops/v3 v3.8.1
 	github.com/google/go-cmp v0.6.0
 	github.com/hashicorp/golang-lru v1.0.2
