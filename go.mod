@@ -12,7 +12,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets v1.1.0
 	github.com/DopplerHQ/cli v0.5.11-0.20230908185655-7aef4713e1a4
 	github.com/a8m/envsubst v1.4.2
-	github.com/aws/aws-sdk-go v1.50.20
+	github.com/aws/aws-sdk-go v1.50.21
 	github.com/cyberark/conjur-api-go v0.11.1
 	github.com/fujiwara/tfstate-lookup v1.1.6
 	github.com/getsops/sops/v3 v3.8.1
