@@ -33,6 +33,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/gitlab"
 	"github.com/helmfile/vals/pkg/providers/gkms"
 	"github.com/helmfile/vals/pkg/providers/googlesheets"
+	"github.com/helmfile/vals/pkg/providers/hcpvaultsecrets"
 	"github.com/helmfile/vals/pkg/providers/k8s"
 	"github.com/helmfile/vals/pkg/providers/onepasswordconnect"
 	"github.com/helmfile/vals/pkg/providers/pulumi"
@@ -93,6 +94,7 @@ const (
 	ProviderGKMS               = "gkms"
 	ProviderK8s                = "k8s"
 	ProviderConjur             = "conjur"
+	ProviderHCPVaultSecrets    = "hcpvaultsecrets"
 )
 
 var (
@@ -256,6 +258,9 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 			return k8s.New(r.logger, conf)
 		case ProviderConjur:
 			p := conjur.New(r.logger, conf)
+			return p, nil
+		case ProviderHCPVaultSecrets:
+			p := hcpvaultsecrets.New(r.logger, conf)
 			return p, nil
 		}
 		return nil, fmt.Errorf("no provider registered for scheme %q", scheme)

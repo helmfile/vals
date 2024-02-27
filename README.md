@@ -19,6 +19,7 @@ It supports various backends including:
 - Pulumi State
 - Kubernetes
 - Conjur
+- HCP Vault Secrets
 
 - Use `vals eval -f refs.yaml` to replace all the `ref`s in the file to actual values and secrets.
 - Use `vals exec -f env.yaml -- <COMMAND>` to populate envvars and execute the command.
@@ -222,6 +223,7 @@ Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/
 - [Pulumi State](#pulumi-state)
 - [Kubernetes](#kubernetes)
 - [Conjur](#conjur)
+- [HCP Vault Secrets](#hcp-vault-secrets)
 
 Please see [pkg/providers](https://github.com/helmfile/vals/tree/master/pkg/providers) for the implementations of all the providers. The package names corresponds to the URI schemes.
 
@@ -766,6 +768,37 @@ The following env vars have to be configured:
 Example:
 
 - `ref+conjur://branch/variable_name`
+
+### HCP Vault Secrets
+
+This provider retrieves the value of secrets stored in [HCP Vault Secrets](https://developer.hashicorp.com/hcp/docs/vault-secrets).
+
+It is based on the [HashiCorp Cloud Platform Go SDK](https://github.com/hashicorp/hcp-sdk-go) lib.
+
+Environment variables:
+
+- `HCP_CLIENT_ID`: The service principal Client ID for the HashiCorp Cloud Platform.
+- `HCP_CLIENT_SECRET`: The service principal Client Secret for the HashiCorp Cloud Platform.
+- `HCP_ORGANIZATION_ID`: (Optional) The organization ID for the HashiCorp Cloud Platform. It can be omitted. If "Organization Name" is set, it will be used to fetch the organization ID, otherwise the organization ID will be set to the first organization ID found.
+- `HCP_ORGANIZATION_NAME`: (Optional) The organization name for the HashiCorp Cloud Platform to fetch the organization ID.
+- `HCP_PROJECT_ID`: (Optional) The project ID for the HashiCorp Cloud Platform. It can be omitted. If "Project Name" is set, it will be used to fetch the project ID, otherwise the project ID will be set to the first project ID found in the provided organization.
+- `HCP_PROJECT_NAME`: (Optional) The project name for the HashiCorp Cloud Platform to fetch the project ID.
+
+Parameters:
+
+Parameters are optional and can be passed as query parameters in the URI, taking precedence over environment variables.
+
+- `client_id`: The service principal Client ID for the HashiCorp Cloud Platform.
+- `client_secret`: The service principal Client Secret for the HashiCorp Cloud Platform.
+- `organization_id`: The organization ID for the HashiCorp Cloud Platform. It can be omitted. If "Organization Name" is set, it will be used to fetch the organization ID, otherwise the organization ID will be set to the first organization ID found.
+- `organization_name`: The organization name for the HashiCorp Cloud Platform to fetch the organization ID.
+- `project_id`: The project ID for the HashiCorp Cloud Platform. It can be omitted. If "Project Name" is set, it will be used to fetch the project ID, otherwise the project ID will be set to the first project ID found in the provided organization.
+- `project_name`: The project name for the HashiCorp Cloud Platform to fetch the project ID.
+- `version`: The version digit of the secret to fetch. If omitted or fail to parse, the latest version will be fetched.
+
+Example:
+
+`ref+hcpvaultsecrets://APPLICATION_NAME/SECRET_NAME[?client_id=HCP_CLIENT_ID&client_secret=HCP_CLIENT_SECRET&organization_id=HCP_ORGANIZATION_ID&organization_name=HCP_ORGANIZATION_NAME&project_id=HCP_PROJECT_ID&project_name=HCP_PROJECT_NAME&version=2]`
 
 ## Advanced Usages
 
