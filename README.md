@@ -800,6 +800,27 @@ Example:
 
 `ref+hcpvaultsecrets://APPLICATION_NAME/SECRET_NAME[?client_id=HCP_CLIENT_ID&client_secret=HCP_CLIENT_SECRET&organization_id=HCP_ORGANIZATION_ID&organization_name=HCP_ORGANIZATION_NAME&project_id=HCP_PROJECT_ID&project_name=HCP_PROJECT_NAME&version=2]`
 
+
+### Bitwarden
+This provider retrieves the secrets stored in Bitwarden. It uses the [Bitwarden Vault-Management API](https://bitwarden.com/help/vault-management-api/) that is included in the [Bitwarden CLI](https://github.com/bitwarden/clients) by executing `bw serve`. 
+
+Environment variables:
+
+- `BW_API_ADDR`: The Bitwarden Vault Management API service address, defaults to http://localhost:8087
+
+Parameters:
+
+Parameters are optional and can be passed as query parameters in the URI, taking precedence over environment variables.
+
+* `address` defaults to the value of the `BW_API_ADDR` envvar.
+
+Examples:
+
+- `ref+bw://4d084b01-87e7-4411-8de9-2476ab9f3f48` gets the password of the item id
+- `ref+bw://4d084b01-87e7-4411-8de9-2476ab9f3f48/password` gets the password of the item id
+- `ref+bw://4d084b01-87e7-4411-8de9-2476ab9f3f48/{username,password,uri,notes}` gets username, password, uri or notes of the item
+- `ref+bw://4d084b01-87e7-4411-8de9-2476ab9f3f48/notes#/key1` gets the *key1* from the yaml stored as note in the item
+
 ## Advanced Usages
 
 ### Discriminating config and secrets
