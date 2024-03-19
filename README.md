@@ -20,6 +20,7 @@ It supports various backends including:
 - Kubernetes
 - Conjur
 - HCP Vault Secrets
+- Bitwarden
 
 - Use `vals eval -f refs.yaml` to replace all the `ref`s in the file to actual values and secrets.
 - Use `vals exec -f env.yaml -- <COMMAND>` to populate envvars and execute the command.
@@ -224,6 +225,7 @@ Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/
 - [Kubernetes](#kubernetes)
 - [Conjur](#conjur)
 - [HCP Vault Secrets](#hcp-vault-secrets)
+- [Bitwarden](#bitwarden)
 
 Please see [pkg/providers](https://github.com/helmfile/vals/tree/master/pkg/providers) for the implementations of all the providers. The package names corresponds to the URI schemes.
 
@@ -818,7 +820,7 @@ Examples:
 
 - `ref+bw://4d084b01-87e7-4411-8de9-2476ab9f3f48` gets the password of the item id
 - `ref+bw://4d084b01-87e7-4411-8de9-2476ab9f3f48/password` gets the password of the item id
-- `ref+bw://4d084b01-87e7-4411-8de9-2476ab9f3f48/{username,password,uri,notes}` gets username, password, uri or notes of the item
+- `ref+bw://4d084b01-87e7-4411-8de9-2476ab9f3f48/{username,password,uri,notes,item}` gets username, password, uri, notes or the whole item of the given item id
 - `ref+bw://4d084b01-87e7-4411-8de9-2476ab9f3f48/notes#/key1` gets the *key1* from the yaml stored as note in the item
 
 ## Advanced Usages
