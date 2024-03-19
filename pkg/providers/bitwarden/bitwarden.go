@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"slices"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -33,33 +34,17 @@ type provider struct {
 
 func New(l *log.Logger, cfg api.StaticConfig) *provider {
 	p := &provider{
-		log: l,
-	}
-
-	p.Address = cfg.String("address")
-
-	if p.Address == "" {
-		p.Address = os.Getenv("BW_API_ADDR")
-		if p.Address == "" {
-			p.Address = "http://localhost:8087"
-		}
+		log:     l,
+		Address: getAddressConfig(cfg.String("address")),
 	}
 
 	return p
 }
 
 func (p *provider) GetString(key string) (string, error) {
-	splits := strings.Split(key, "/")
-
-	itemId := splits[0]
-	keyType := "password"
-
-	if len(splits) > 1 {
-		keyType = splits[1]
-	}
-
-	if !(keyType == "username" || keyType == "password" || keyType == "uri" || keyType == "notes") {
-		return "", fmt.Errorf("bitwarden: get string: key %q unknown keytype %q", key, keyType)
+	itemId, keyType, err := extractItemAndType(key)
+	if err != nil {
+		return "", err
 	}
 
 	url := fmt.Sprintf("%s/object/%s/%s",
@@ -111,4 +96,42 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 	}
 
 	return secretMap, nil
+}
+
+func getAddressConfig(cfgAddress string) string {
+	if cfgAddress != "" {
+		return cfgAddress
+	}
+
+	envAddr := os.Getenv("BW_API_ADDR")
+	if envAddr != "" {
+		return envAddr
+	}
+
+	return "http://localhost:8087"
+}
+
+func extractItemAndType(key string) (string, string, error) {
+	keyType := "password"
+
+	if len(key) == 0 {
+		return "", "", fmt.Errorf("bitwarden: key cannot be empty")
+	}
+
+	splits := strings.Split(key, "/")
+	itemId := splits[0]
+
+	if len(itemId) == 0 {
+		return "", "", fmt.Errorf("bitwarden: key cannot be empty")
+	}
+
+	if len(splits) > 1 {
+		keyType = splits[1]
+	}
+
+	if !slices.Contains([]string{"username", "password", "uri", "notes", "item"}, keyType) {
+		return "", "", fmt.Errorf("bitwarden: get string: key %q unknown keytype %q", key, keyType)
+	}
+
+	return itemId, keyType, nil
 }
