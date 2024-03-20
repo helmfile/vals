@@ -4,7 +4,7 @@ go 1.22
 
 require (
 	cloud.google.com/go/kms v1.15.8
-	cloud.google.com/go/secretmanager v1.11.6
+	cloud.google.com/go/secretmanager v1.12.0
 	cloud.google.com/go/storage v1.39.1
 	github.com/1Password/connect-sdk-go v1.5.3
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.10.0
