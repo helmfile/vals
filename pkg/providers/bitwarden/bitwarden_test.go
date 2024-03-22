@@ -18,6 +18,7 @@ func TestGetAddressConfig(t *testing.T) {
 	os.Setenv("BW_API_ADDR", "http://env.example.com")
 	expected = "http://env.example.com"
 	result = getAddressConfig("")
+	os.Unsetenv("BW_API_ADDR")
 	if result != expected {
 		t.Errorf("Expected %s, but got %s", expected, result)
 	}
@@ -26,6 +27,7 @@ func TestGetAddressConfig(t *testing.T) {
 	os.Setenv("BW_API_ADDR", "")
 	expected = "http://localhost:8087"
 	result = getAddressConfig("")
+	os.Unsetenv("BW_API_ADDR")
 	if result != expected {
 		t.Errorf("Expected %s, but got %s", expected, result)
 	}
