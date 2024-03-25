@@ -12,7 +12,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets v1.1.0
 	github.com/DopplerHQ/cli v0.5.11-0.20230908185655-7aef4713e1a4
 	github.com/a8m/envsubst v1.4.2
-	github.com/aws/aws-sdk-go v1.51.5
+	github.com/aws/aws-sdk-go v1.51.6
 	github.com/cyberark/conjur-api-go v0.11.1
 	github.com/fujiwara/tfstate-lookup v1.2.0
 	github.com/getsops/sops/v3 v3.8.1
@@ -191,7 +191,7 @@ require (
 	gopkg.in/gookit/color.v1 v1.1.6 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
+	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.29.3 // indirect
 	k8s.io/klog/v2 v2.110.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20231010175941-2dd684a91f00 // indirect
