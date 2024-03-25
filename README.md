@@ -21,6 +21,7 @@ It supports various backends including:
 - Conjur
 - HCP Vault Secrets
 - Bitwarden
+- HTTP JSON
 
 - Use `vals eval -f refs.yaml` to replace all the `ref`s in the file to actual values and secrets.
 - Use `vals exec -f env.yaml -- <COMMAND>` to populate envvars and execute the command.
@@ -225,6 +226,7 @@ Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/
 - [Kubernetes](#kubernetes)
 - [Conjur](#conjur)
 - [HCP Vault Secrets](#hcp-vault-secrets)
+- [HTTP JSON](#http-json)
 - [Bitwarden](#bitwarden)
 
 Please see [pkg/providers](https://github.com/helmfile/vals/tree/master/pkg/providers) for the implementations of all the providers. The package names corresponds to the URI schemes.
@@ -822,6 +824,65 @@ Examples:
 - `ref+bw://4d084b01-87e7-4411-8de9-2476ab9f3f48/password` gets the password of the item id
 - `ref+bw://4d084b01-87e7-4411-8de9-2476ab9f3f48/{username,password,uri,notes,item}` gets username, password, uri, notes or the whole item of the given item id
 - `ref+bw://4d084b01-87e7-4411-8de9-2476ab9f3f48/notes#/key1` gets the *key1* from the yaml stored as note in the item
+
+### HTTP JSON
+
+This provider retrieves values stored in JSON hosted by an HTTP frontend.  
+
+This provider is built on top of [jsonquery](https://pkg.go.dev/github.com/antchfx/jsonquery@v1.3.3) and [xpath](https://pkg.go.dev/github.com/antchfx/xpath@v1.2.3) packages.  
+
+Given the diverse array of JSON structures that can be encountered, utilizing jsonquery with XPath presents a more effective approach for handling this variability in data structures.
+
+This provider requires an xpath to be provided in singleparam mode (as last argument).  
+
+Do not include the protocol scheme i.e. http/https. Provider defaults to scheme https
+
+Examples:
+
+#### Fetch string value
+
+`ref+httpjson://<subdomain>/<path>?[insecure=false&floatAsInt=false]mode=singleparam#/<xpath>`  
+
+Let's say you want to fetch the below JSON object from https://api.github.com/users/helmfile/repos:
+```json
+[
+    {
+        "name": "chartify"
+    },
+    {
+        "name": "go-yaml"
+    }
+]
+``` 
+```
+# To get name="chartify" using https protocol you would use: 
+ref+httpjson://api.github.com/users/helmfile/repos?mode=singleparam#///*[1]/name
+# To get name="go-yaml" using https protocol you would use:  
+ref+httpjson://api.github.com/users/helmfile/repos?mode=singleparam#///*[2]/name  
+# To get name="go-yaml" using http protocol you would use:  
+ref+httpjson://api.github.com/users/helmfile/repos?insecure=true&mode=singleparam#///*[2]/name  
+```
+
+#### Fetch integer value
+
+`ref+httpjson://<subdomain>/<path>?[insecure=false&floatAsInt=false]mode=singleparam#/<xpath>`  
+
+Let's say you want to fetch the below JSON object from https://api.github.com/users/helmfile/repos:
+```json
+[
+    {
+        "id": 251296379
+    }
+]
+``` 
+```
+# Running the following will return: 2.51296379e+08
+ref+httpjson://api.github.com/users/helmfile/repos?mode=singleparam#///*[1]/id
+# Running the following will return: 251296379
+ref+httpjson://api.github.com/users/helmfile/repos?floatAsInt=true&mode=singleparam#///*[1]/id
+```
+
+
 
 ## Advanced Usages
 
