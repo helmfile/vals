@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	// nolint
 	"github.com/antchfx/jsonquery"
 	"github.com/helmfile/vals/pkg/api"
 	"github.com/helmfile/vals/pkg/log"
@@ -108,7 +109,6 @@ func (p *provider) GetString(uri string) (string, error) {
 			values = append(values, child.Value().(string))
 		}
 		returnValue = strings.Join(values, ",")
-
 	} else {
 		returnValue = node.FirstChild.Value().(string)
 	}
