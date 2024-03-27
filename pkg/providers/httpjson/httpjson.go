@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	// nolint
 	"github.com/antchfx/jsonquery"
+
 	"github.com/helmfile/vals/pkg/api"
 	"github.com/helmfile/vals/pkg/log"
 )

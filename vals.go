@@ -372,7 +372,6 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 				}
 
 				return str, nil
-
 			} else {
 				mapRequestURI := key[:strings.LastIndex(key, uri.Fragment)-1]
 				var obj map[string]interface{}
