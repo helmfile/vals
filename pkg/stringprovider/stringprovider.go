@@ -15,6 +15,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/gitlab"
 	"github.com/helmfile/vals/pkg/providers/gkms"
 	"github.com/helmfile/vals/pkg/providers/hcpvaultsecrets"
+	"github.com/helmfile/vals/pkg/providers/httpjson"
 	"github.com/helmfile/vals/pkg/providers/k8s"
 	"github.com/helmfile/vals/pkg/providers/onepasswordconnect"
 	"github.com/helmfile/vals/pkg/providers/pulumi"
@@ -73,6 +74,8 @@ func New(l *log.Logger, provider api.StaticConfig) (api.LazyLoadedStringProvider
 		return conjur.New(l, provider), nil
 	case "hcpvaultsecrets":
 		return hcpvaultsecrets.New(l, provider), nil
+	case "httpjson":
+		return httpjson.New(l, provider), nil
 	}
 
 	return nil, fmt.Errorf("failed initializing string provider from config: %v", provider)
