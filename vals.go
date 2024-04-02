@@ -388,7 +388,6 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 					// to reliably parse using conventional methods.
 					// This alternative approach allows for flexible handling of the JSON
 					// object, accommodating different configurations and variations.
-					//value, err := p.GetString(uri.String())
 					value, err := p.GetString(key)
 					if err != nil {
 						return "", err
