@@ -2,10 +2,12 @@ package httpjson
 
 import (
 	"fmt"
+	"net/url"
 	"strconv"
 	"strings"
 
 	"github.com/antchfx/jsonquery"
+	"github.com/antchfx/xpath"
 
 	"github.com/helmfile/vals/pkg/api"
 	"github.com/helmfile/vals/pkg/log"
@@ -46,23 +48,42 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 	return p
 }
 
-func GetXpathFromUri(uri string) (xpath string, err error) {
-	found := strings.Split(uri, "mode=singleparam#")[1]
-	found = strings.Split(found, "&")[0]
-	xpath = strings.TrimPrefix(found, "/")
+func GetXpathFromUri(uri string) (xpathExpression string, err error) {
+	paths := strings.Split(uri, "#/")
+	if len(paths) == 1 {
+		return "", fmt.Errorf("no xpath expression found in uri: %s", uri)
+	}
+	_, err = xpath.Compile(paths[1])
+	if err != nil {
+		return "", fmt.Errorf("unable to compile xpath expression '%s' from uri: %s", xpathExpression, uri)
+	}
+	xpathExpression = paths[1]
 
-	return xpath, nil
+	return xpathExpression, nil
 }
 
-func getUrlFromUri(uri string, protocol string) (string, error) {
-	// Grab url from uri
-	uriParts := strings.Split(uri, "?")
-	if len(uriParts) < 2 {
-		return "", fmt.Errorf("error getting url from uri: %v, ensure xpath singleparam is set as a query parameter", uri)
+func GetUrlFromUri(uri string, protocol string) (string, error) {
+	// Remove httpjson:// prefix
+	trimmedStr := strings.TrimPrefix(uri, "httpjson://")
+	// Attempt to split uri on argument
+	uriParts := strings.Split(trimmedStr, "?")
+	urlDomain := ""
+	if len(uriParts) == 1 {
+		// Attempt to split uri on parameter
+		urlDomain = strings.Split(trimmedStr, "#")[0]
+	} else {
+		urlDomain = uriParts[0]
 	}
-	url := strings.Replace(uriParts[0], "httpjson", protocol, 1)
+	if urlDomain == "" {
+		return "", fmt.Errorf("no domain found in uri: %s", uri)
+	}
+	fullURL := fmt.Sprintf("%s://%s", protocol, urlDomain)
+	_, err := url.Parse(fullURL)
+	if err != nil {
+		return "", fmt.Errorf("invalid domain: %s", err.Error())
+	}
 
-	return url, nil
+	return fullURL, nil
 }
 
 func (p *provider) GetJsonDoc(url string) error {
@@ -78,7 +99,7 @@ func (p *provider) GetJsonDoc(url string) error {
 }
 
 func (p *provider) GetString(uri string) (string, error) {
-	url, err := getUrlFromUri(uri, p.protocol)
+	url, err := GetUrlFromUri(uri, p.protocol)
 	if err != nil {
 		return "", err
 	}

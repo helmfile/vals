@@ -827,21 +827,21 @@ Examples:
 
 ### HTTP JSON
 
-This provider retrieves values stored in JSON hosted by an HTTP frontend.  
+This provider retrieves values stored in JSON hosted by a HTTP frontend.
 
 This provider is built on top of [jsonquery](https://pkg.go.dev/github.com/antchfx/jsonquery@v1.3.3) and [xpath](https://pkg.go.dev/github.com/antchfx/xpath@v1.2.3) packages.  
 
 Given the diverse array of JSON structures that can be encountered, utilizing jsonquery with XPath presents a more effective approach for handling this variability in data structures.
 
-This provider requires an xpath to be provided in singleparam mode (as last argument).  
+This provider requires an xpath to be provided.
 
-Do not include the protocol scheme i.e. http/https. Provider defaults to scheme https
+Do not include the protocol scheme i.e. http/https. Provider defaults to scheme https (http is available, see below)
 
 Examples:
 
 #### Fetch string value
 
-`ref+httpjson://<domain>/<path>?[insecure=false&floatAsInt=false]mode=singleparam#/<xpath>`  
+`ref+httpjson://<domain>/<path>?[insecure=false&floatAsInt=false]#/<xpath>`
 
 Let's say you want to fetch the below JSON object from https://api.github.com/users/helmfile/repos:
 ```json
@@ -855,17 +855,19 @@ Let's say you want to fetch the below JSON object from https://api.github.com/us
 ]
 ``` 
 ```
-# To get name="chartify" using https protocol you would use: 
-ref+httpjson://api.github.com/users/helmfile/repos?mode=singleparam#///*[1]/name
-# To get name="go-yaml" using https protocol you would use:  
-ref+httpjson://api.github.com/users/helmfile/repos?mode=singleparam#///*[2]/name  
-# To get name="go-yaml" using http protocol you would use:  
-ref+httpjson://api.github.com/users/helmfile/repos?insecure=true&mode=singleparam#///*[2]/name  
+# To get name="chartify" using https protocol you would use:
+ref+httpjson://api.github.com/users/helmfile/repos#///*[1]/name
+
+# To get name="go-yaml" using https protocol you would use:
+ref+httpjson://api.github.com/users/helmfile/repos#///*[2]/name
+
+# To get name="go-yaml" using http protocol you would use:
+ref+httpjson://api.github.com/users/helmfile/repos?insecure=true#///*[2]/
 ```
 
 #### Fetch integer value
 
-`ref+httpjson://<domain>/<path>?[insecure=false&floatAsInt=false]mode=singleparam#/<xpath>`  
+`ref+httpjson://<domain>/<path>?[insecure=false&floatAsInt=false]#/<xpath>`
 
 Let's say you want to fetch the below JSON object from https://api.github.com/users/helmfile/repos:
 ```json
@@ -877,11 +879,11 @@ Let's say you want to fetch the below JSON object from https://api.github.com/us
 ``` 
 ```
 # Running the following will return: 2.51296379e+08
-ref+httpjson://api.github.com/users/helmfile/repos?mode=singleparam#///*[1]/id
-# Running the following will return: 251296379
-ref+httpjson://api.github.com/users/helmfile/repos?floatAsInt=true&mode=singleparam#///*[1]/id
-```
+ref+httpjson://api.github.com/users/helmfile/repos#///*[1]/id
 
+# Running the following will return: 251296379
+ref+httpjson://api.github.com/users/helmfile/repos?floatAsInt=true#///*[1]/id
+```
 
 
 ## Advanced Usages
