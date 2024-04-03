@@ -2,6 +2,7 @@ package vals
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -11,6 +12,8 @@ import (
 	config2 "github.com/helmfile/vals/pkg/config"
 	"github.com/helmfile/vals/pkg/providers/httpjson"
 )
+
+const HttpJsonPrefix = "httpjson://"
 
 var server *httptest.Server
 
@@ -97,7 +100,6 @@ func createProvider(providerPath string, inlineValue string, floatAsInt string) 
 	return config2.Map(config)
 }
 
-// nolint
 func Test_HttpJson(t *testing.T) {
 	if os.Getenv("SKIP_TESTS") != "" {
 		t.Skip("Skipping tests")
@@ -111,9 +113,10 @@ func Test_HttpJson(t *testing.T) {
 
 	// Get the server URL without the protocol
 	serverURLWithoutProtocol := strings.TrimPrefix(server.URL, "http://")
+	prefixAndPath := fmt.Sprintf("httpjson://%v", serverURLWithoutProtocol)
 
 	t.Run("Get name from first array item", func(t *testing.T) {
-		config := createProvider("httpjson://"+serverURLWithoutProtocol+"?insecure=true#", "//*[1]/name", "false")
+		config := createProvider(prefixAndPath+"?insecure=true#", "//*[1]/name", "false")
 		vals, err := Load(config)
 		if err != nil {
 			t.Fatalf("%v", err)
@@ -126,7 +129,7 @@ func Test_HttpJson(t *testing.T) {
 	})
 
 	t.Run("Get name from second array item", func(t *testing.T) {
-		config := createProvider("httpjson://"+serverURLWithoutProtocol+"?insecure=true#", "//*[2]/name", "false")
+		config := createProvider(prefixAndPath+"?insecure=true#", "//*[2]/name", "false")
 		vals, err := Load(config)
 		if err != nil {
 			t.Fatalf("%v", err)
@@ -151,7 +154,7 @@ func Test_HttpJson(t *testing.T) {
 	})
 
 	t.Run("Error running json.Query", func(t *testing.T) {
-		uri := "httpjson://" + serverURLWithoutProtocol + "?insecure=true#"
+		uri := prefixAndPath + "?insecure=true#"
 		config := createProvider(uri, "/boom", "false")
 		_, err := Load(config)
 		if err != nil {
@@ -164,7 +167,7 @@ func Test_HttpJson(t *testing.T) {
 	})
 
 	t.Run("Query list for comma separated string", func(t *testing.T) {
-		uri := "httpjson://" + serverURLWithoutProtocol + "?insecure=true&mode=singleparam#"
+		uri := prefixAndPath + "?insecure=true&mode=singleparam#"
 		config := createProvider(uri, "/boom", "false")
 		_, err := Load(config)
 		if err != nil {
@@ -177,7 +180,7 @@ func Test_HttpJson(t *testing.T) {
 	})
 
 	t.Run("Get Avatar URL with child nodes causing error", func(t *testing.T) {
-		config := createProvider("httpjson://"+serverURLWithoutProtocol+"?insecure=true&mode=singleparam#", "//owner", "false")
+		config := createProvider(prefixAndPath+"?insecure=true&mode=singleparam#", "//owner", "false")
 		_, err := Load(config)
 		if err != nil {
 			expected := "location //owner has child nodes at " + server.URL + ", please use a more granular query"
@@ -189,7 +192,7 @@ func Test_HttpJson(t *testing.T) {
 	})
 
 	t.Run("Test floatAsInt Success", func(t *testing.T) {
-		config := createProvider("httpjson://"+serverURLWithoutProtocol+"?insecure=true&floatAsInt=true#", "//*[1]/id", "true")
+		config := createProvider(prefixAndPath+"?insecure=true&floatAsInt=true#", "//*[1]/id", "true")
 		vals, err := Load(config)
 		if err != nil {
 			t.Fatalf("%v", err)
@@ -202,7 +205,7 @@ func Test_HttpJson(t *testing.T) {
 	})
 
 	t.Run("Test floatAsInt failure", func(t *testing.T) {
-		config := createProvider("httpjson://"+serverURLWithoutProtocol+"?insecure=true#", "//*[1]/name", "false")
+		config := createProvider(prefixAndPath+"?insecure=true#", "//*[1]/name", "false")
 		_, err := Load(config)
 		if err != nil {
 			expected := "unable to convert possible float to int for value: chartify"
@@ -214,7 +217,7 @@ func Test_HttpJson(t *testing.T) {
 	})
 
 	t.Run("Test list returned as string", func(t *testing.T) {
-		config := createProvider("httpjson://"+serverURLWithoutProtocol+"?insecure=true&mode=singleparam#", "//*[1]/DBNodes", "false")
+		config := createProvider(prefixAndPath+"?insecure=true&mode=singleparam#", "//*[1]/DBNodes", "false")
 		vals, err := Load(config)
 		if err != nil {
 			t.Fatalf("%v", err)
