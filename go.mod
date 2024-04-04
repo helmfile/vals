@@ -30,6 +30,8 @@ require (
 )
 
 require (
+	github.com/antchfx/jsonquery v1.3.3 // indirect
+	github.com/antchfx/xpath v1.2.3 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/go-openapi/analysis v0.23.0 // indirect
 	github.com/go-openapi/errors v0.22.0 // indirect

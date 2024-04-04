@@ -35,6 +35,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/gkms"
 	"github.com/helmfile/vals/pkg/providers/googlesheets"
 	"github.com/helmfile/vals/pkg/providers/hcpvaultsecrets"
+	"github.com/helmfile/vals/pkg/providers/httpjson"
 	"github.com/helmfile/vals/pkg/providers/k8s"
 	"github.com/helmfile/vals/pkg/providers/onepasswordconnect"
 	"github.com/helmfile/vals/pkg/providers/pulumi"
@@ -96,6 +97,7 @@ const (
 	ProviderK8s                = "k8s"
 	ProviderConjur             = "conjur"
 	ProviderHCPVaultSecrets    = "hcpvaultsecrets"
+	ProviderHttpJsonManager    = "httpjson"
 	ProviderBitwarden          = "bw"
 )
 
@@ -264,6 +266,9 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 		case ProviderHCPVaultSecrets:
 			p := hcpvaultsecrets.New(r.logger, conf)
 			return p, nil
+		case ProviderHttpJsonManager:
+			p := httpjson.New(r.logger, conf)
+			return p, nil
 		case ProviderBitwarden:
 			p := bitwarden.New(r.logger, conf)
 			return p, nil
@@ -375,6 +380,19 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 					if !ok {
 						return "", fmt.Errorf("error reading map from cache: unsupported value type %T", cachedMap)
 					}
+				} else if uri.Scheme == "httpjson" {
+					// Due to the unpredictability in the structure of the JSON object,
+					// an alternative parsing method is used here.
+					// The standard approach couldn't be applied because the JSON object
+					// may vary in its key-value pairs and nesting depth, making it difficult
+					// to reliably parse using conventional methods.
+					// This alternative approach allows for flexible handling of the JSON
+					// object, accommodating different configurations and variations.
+					value, err := p.GetString(key)
+					if err != nil {
+						return "", err
+					}
+					return value, nil
 				} else {
 					obj, err = p.GetStringMap(path)
 					if err != nil {
