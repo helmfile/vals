@@ -92,6 +92,7 @@ func (p *provider) GetJsonDoc(url string) error {
 		if err != nil {
 			return fmt.Errorf("error fetching json document at %v: %v", url, err)
 		}
+		p.log.Debugf("httpjson: successfully retrieved JSON data from: %s", url)
 		p.docs[url] = doc
 	}
 
