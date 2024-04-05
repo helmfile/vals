@@ -12,7 +12,9 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets v1.1.0
 	github.com/DopplerHQ/cli v0.5.11-0.20230908185655-7aef4713e1a4
 	github.com/a8m/envsubst v1.4.2
-	github.com/aws/aws-sdk-go v1.51.14
+	github.com/antchfx/jsonquery v1.3.3
+	github.com/antchfx/xpath v1.2.3
+	github.com/aws/aws-sdk-go v1.51.15
 	github.com/cyberark/conjur-api-go v0.11.1
 	github.com/fujiwara/tfstate-lookup v1.2.0
 	github.com/getsops/sops/v3 v3.8.1
@@ -30,8 +32,6 @@ require (
 )
 
 require (
-	github.com/antchfx/jsonquery v1.3.3 // indirect
-	github.com/antchfx/xpath v1.2.3 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/go-openapi/analysis v0.23.0 // indirect
 	github.com/go-openapi/errors v0.22.0 // indirect
