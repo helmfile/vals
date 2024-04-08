@@ -13,7 +13,7 @@ require (
 	github.com/DopplerHQ/cli v0.5.11-0.20230908185655-7aef4713e1a4
 	github.com/a8m/envsubst v1.4.2
 	github.com/antchfx/jsonquery v1.3.3
-	github.com/antchfx/xpath v1.2.3
+	github.com/antchfx/xpath v1.3.0
 	github.com/aws/aws-sdk-go v1.51.16
 	github.com/cyberark/conjur-api-go v0.11.1
 	github.com/fujiwara/tfstate-lookup v1.2.0
