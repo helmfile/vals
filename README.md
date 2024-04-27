@@ -717,14 +717,16 @@ Obtain value in state pulled from Pulumi Cloud REST API:
 * `RESOURCE_LOGICAL_NAME` is the [logical name](https://www.pulumi.com/docs/concepts/resources/names/#logicalname) of the resource in the Pulumi program.
 * `ATTRIBUTE_TYPE` is either `outputs` or `inputs`.
 * `ATTRIBUTE_KEY_PATH` is a [GJSON](https://github.com/tidwall/gjson/blob/master/SYNTAX.md) expression that selects the desired attribute from the resource's inputs or outputs per the chosen `ATTRIBUTE_TYPE` value. You must encode any characters that would otherwise not comply with URI syntax, for example `#` becomes `%23`.
-* `project` is the Pulumi project name.
-* `stack` is the Pulumi stack name.
+* `project` is the Pulumi project name. May also be provided via the `PULUMI_PROJECT` environment variable.
+* `stack` is the Pulumi stack name. May also be provided via the `PULUMI_STACK` environment variable.
 
 Environment variables:
 
 - `PULUMI_API_ENDPOINT_URL` is the Pulumi API endpoint URL. Defaults to `https://api.pulumi.com`. You may also provide this as the `pulumi_api_endpoint_url` query parameter.
 - `PULUMI_ACCESS_TOKEN` is the Pulumi access token to use for authentication.
 - `PULUMI_ORGANIZATION` is the Pulumi organization to use for authentication. You may also provide this as an `organization` query parameter.
+- `PULUMI_PROJECT` is the Pulumi project. You may also provide this as a `project` query parameter.
+- `PULUMI_STACK` is the Pulumi stack. You may also provide this as a `stack` query parameter.
 
 Examples:
 
