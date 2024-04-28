@@ -88,8 +88,17 @@ func New(l *log.Logger, cfg api.StaticConfig, backend string) *provider {
 		p.organization = os.Getenv("PULUMI_ORGANIZATION")
 	}
 
-	p.project = cfg.String("project")
-	p.stack = cfg.String("stack")
+	if cfg.Exists("project") {
+		p.project = cfg.String("project")
+	} else {
+		p.project = os.Getenv("PULUMI_PROJECT")
+	}
+
+	if cfg.Exists("stack") {
+		p.stack = cfg.String("stack")
+	} else {
+		p.stack = os.Getenv("PULUMI_STACK")
+	}
 
 	p.log.Debugf("pulumi: backend=%q, api_endpoint=%q, organization=%q, project=%q, stack=%q",
 		p.backend, p.pulumiAPIEndpointURL, p.organization, p.project, p.stack)
