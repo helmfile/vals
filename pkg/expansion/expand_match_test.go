@@ -104,13 +104,6 @@ func TestExpandRegexpMatchInString(t *testing.T) {
 			expected: "vault-srv-/foo/bar\n",
 		},
 		{
-			name:     "it should not match closing quotes when using query params",
-			regex:    DefaultRefRegexp,
-			only:     []string{"ref", "secretref"},
-			input:    "\"ref+awsssm://srv/foo/bar?mode=singleparam\"",
-			expected: "\"awsssm-srv-/foo/bar\"",
-		},
-		{
 			name:     "it should match greedily upto a space when using query params",
 			regex:    DefaultRefRegexp,
 			only:     []string{"ref", "secretref"},
@@ -123,6 +116,13 @@ func TestExpandRegexpMatchInString(t *testing.T) {
 			only:     []string{"ref", "secretref"},
 			input:    "ref+awsssm://srv/foo/bar?mode=singleparam some-string ref+awsssm://srv/foo/bar?mode=singleparam",
 			expected: "awsssm-srv-/foo/bar some-string awsssm-srv-/foo/bar",
+		},
+		{
+			name:     "it should handle quoted values in query",
+			regex:    DefaultRefRegexp,
+			only:     []string{"ref", "secretref"},
+			input:    "ref+tfstategs://foo/bar.tfstate/state[\"value\"].value",
+			expected: "tfstategs-foo-/bar.tfstate/state[\"value\"].value",
 		},
 	}
 
