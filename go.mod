@@ -6,7 +6,7 @@ toolchain go1.22.2
 
 require (
 	cloud.google.com/go/kms v1.15.9
-	cloud.google.com/go/secretmanager v1.12.0
+	cloud.google.com/go/secretmanager v1.13.0
 	cloud.google.com/go/storage v1.40.0
 	github.com/1Password/connect-sdk-go v1.5.3
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.11.1
