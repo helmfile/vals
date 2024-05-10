@@ -153,8 +153,8 @@ github.com/cpuguy83/go-md2man/v2 v2.0.2 h1:p1EgwI/C7NhT0JmVkwCD2ZBK8j4aeHQX2pMHH
 github.com/cpuguy83/go-md2man/v2 v2.0.2/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
 github.com/creack/pty v1.1.17 h1:QeVUsEDNrLBW4tMgZHvxy18sKtr6VI492kBhUfhDJNI=
 github.com/creack/pty v1.1.17/go.mod h1:MOBLtS5ELjhRRrroQr9kyvTxUAFNvYEK993ew/Vr4O4=
-github.com/cyberark/conjur-api-go v0.11.2 h1:DEVtQdJznUyYcit+HikU5AQ1Lrvt82PEplz+fT4jv1M=
-github.com/cyberark/conjur-api-go v0.11.2/go.mod h1:FnzNn6mPwTOyBueSDnu1J4K47J0sYHXTMehaqIV/GxY=
+github.com/cyberark/conjur-api-go v0.11.4 h1:s2bbeJhb+Szosqjr4DX3BaQiZEsKKAFhn35TRqZeLIY=
+github.com/cyberark/conjur-api-go v0.11.4/go.mod h1:WjXCREpdXyU69k5ZwYQMA3k+VkPwMznr22fKSMD5OUE=
 github.com/danieljoos/wincred v1.1.2 h1:QLdCxFs1/Yl4zduvBdcHB8goaYk9RARS2SgLLRuAyr0=
 github.com/danieljoos/wincred v1.1.2/go.mod h1:GijpziifJoIBfYh+S7BbkdUTU4LfM+QnGqR5Vl2tAx0=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
