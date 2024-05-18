@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/1password/onepassword-sdk-go"
+
 	"github.com/helmfile/vals/pkg/api"
 )
 
