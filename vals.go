@@ -37,6 +37,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/hcpvaultsecrets"
 	"github.com/helmfile/vals/pkg/providers/httpjson"
 	"github.com/helmfile/vals/pkg/providers/k8s"
+	"github.com/helmfile/vals/pkg/providers/onepassword"
 	"github.com/helmfile/vals/pkg/providers/onepasswordconnect"
 	"github.com/helmfile/vals/pkg/providers/pulumi"
 	"github.com/helmfile/vals/pkg/providers/s3"
@@ -90,6 +91,7 @@ const (
 	ProviderTFStateRemote      = "tfstateremote"
 	ProviderAzureKeyVault      = "azurekeyvault"
 	ProviderEnvSubst           = "envsubst"
+	ProviderOnePassword        = "op"
 	ProviderOnePasswordConnect = "onepasswordconnect"
 	ProviderDoppler            = "doppler"
 	ProviderPulumiStateAPI     = "pulumistateapi"
@@ -245,6 +247,9 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 			return p, nil
 		case ProviderEnvSubst:
 			p := envsubst.New(conf)
+			return p, nil
+		case ProviderOnePassword:
+			p := onepassword.New(conf)
 			return p, nil
 		case ProviderOnePasswordConnect:
 			p := onepasswordconnect.New(conf)

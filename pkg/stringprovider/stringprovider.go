@@ -17,6 +17,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/hcpvaultsecrets"
 	"github.com/helmfile/vals/pkg/providers/httpjson"
 	"github.com/helmfile/vals/pkg/providers/k8s"
+	"github.com/helmfile/vals/pkg/providers/onepassword"
 	"github.com/helmfile/vals/pkg/providers/onepasswordconnect"
 	"github.com/helmfile/vals/pkg/providers/pulumi"
 	"github.com/helmfile/vals/pkg/providers/s3"
@@ -60,6 +61,8 @@ func New(l *log.Logger, provider api.StaticConfig) (api.LazyLoadedStringProvider
 		return azurekeyvault.New(provider), nil
 	case "gitlab":
 		return gitlab.New(provider), nil
+	case "onepassword":
+		return onepassword.New(provider), nil
 	case "onepasswordconnect":
 		return onepasswordconnect.New(provider), nil
 	case "doppler":
