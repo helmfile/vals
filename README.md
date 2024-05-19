@@ -13,6 +13,7 @@ It supports various backends including:
 - [Google Sheets](#google-sheets)
 - [SOPS](https://github.com/getsops/sops)-encrypted files
 - Terraform State
+- 1Password
 - 1Password Connect
 - [Doppler](https://doppler.com/)
 - CredHub(Coming soon)
@@ -220,6 +221,7 @@ Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/
 - [Azure Key Vault](#azure-key-vault)
 - [EnvSubst](#envsubst)
 - [GitLab](#gitlab)
+- [1Password](#1password)
 - [1Password Connect](#1password-connect)
 - [Doppler](#doppler)
 - [Pulumi State](#pulumi-state)
@@ -663,6 +665,28 @@ Examples:
 
 - `ref+gitlab://gitlab.com/11111/password`
 - `ref+gitlab://my-gitlab.org/11111/password?ssl_verify=true&scheme=https`
+
+### 1Password
+
+For this provider to work a working [service account token](https://developer.1password.com/docs/service-accounts/get-started/) is required.
+The following env var has to be configured:
+- `OP_SERVICE_ACCOUNT_TOKEN`
+
+1Password is organized in vaults and items.
+An item can have multiple fields with or without a section. Labels can be set on fields and sections.
+Vaults, items, sections and labels can be accessed by ID or by label/name (and IDs and labels can be mixed and matched in one URL).
+
+If a section does not have a label the field is only accessible via the section ID. This does not hold true for some default fields which may have no section at all (e.g.username and password for a `Login` item).
+
+See [Secret reference syntax](https://developer.1password.com/docs/cli/secrets-reference-syntax/) for more information.
+
+*Caution: vals-expressions are parsed as URIs. For the 1Password provider the host component of the URI identifies the vault. Therefore vaults containing certain characters not allowed in the host component (e.g. whitespaces, see [RFC-3986](https://www.rfc-editor.org/rfc/rfc3986#section-3.2.2) for details) can only be accessed by ID.*
+
+Examples:
+
+- `ref+op://VAULT_NAME/ITEM_NAME/FIELD_NAME`
+- `ref+op://VAULT_ID/ITEM_NAME/FIELD_NAME`
+- `ref+op://VAULT_NAME/ITEM_NAME/[SECTION_NAME/]FIELD_NAME`
 
 ### 1Password Connect
 
