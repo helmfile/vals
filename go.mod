@@ -9,7 +9,7 @@ require (
 	cloud.google.com/go/secretmanager v1.13.1
 	cloud.google.com/go/storage v1.41.0
 	github.com/1Password/connect-sdk-go v1.5.3
-	github.com/1password/onepassword-sdk-go v0.1.0-beta.9
+	github.com/1password/onepassword-sdk-go v0.1.0-beta.10
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.11.1
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.5.2
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets v1.1.0
