@@ -30,7 +30,7 @@ require (
 	golang.org/x/oauth2 v0.21.0
 	google.golang.org/api v0.183.0
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/apimachinery v0.30.1
+	k8s.io/apimachinery v0.30.2
 	k8s.io/client-go v0.30.1
 )
 
