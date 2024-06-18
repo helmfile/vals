@@ -17,7 +17,7 @@ require (
 	github.com/a8m/envsubst v1.4.2
 	github.com/antchfx/jsonquery v1.3.4
 	github.com/antchfx/xpath v1.3.0
-	github.com/aws/aws-sdk-go v1.54.2
+	github.com/aws/aws-sdk-go v1.54.3
 	github.com/cyberark/conjur-api-go v0.12.0
 	github.com/fujiwara/tfstate-lookup v1.3.2
 	github.com/getsops/sops/v3 v3.8.1
