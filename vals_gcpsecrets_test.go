@@ -148,6 +148,23 @@ func TestValues_GCPSecretsManager(t *testing.T) {
 				},
 			},
 		},
+		{
+			"trim_nl string",
+			map[string]string{"valstestvar": "foo: bar\n"},
+			map[string]interface{}{
+				"provider": map[string]interface{}{
+					"name":    "gcpsecrets",
+					"version": "latest",
+					"type":    "string",
+					"path":    projectId,
+					"trim_nl": true,
+				},
+				"inline": map[string]interface{}{
+					"valstestvar": "valstestvar",
+				},
+			},
+			map[string]interface{}{"valstestvar": "foo: bar"},
+		},
 	}
 
 	for i := range tests {
