@@ -14,11 +14,12 @@ import (
 	"github.com/helmfile/vals/pkg/api"
 )
 
-// Format: ref+gcpsecrets://project/mykey[?version=VERSION][&fallback=value=valuewhenkeyisnotfound][&optional=true]#/yaml_or_json_key/in/secret
+// Format: ref+gcpsecrets://project/mykey[?version=VERSION][&fallback=valuewhenkeyisnotfound][&optional=true][&trim_nl=true]#/yaml_or_json_key/in/secret
 type provider struct {
 	version  string
 	optional bool
 	fallback *string
+	trim_nl  bool
 }
 
 func New(cfg api.StaticConfig) *provider {
@@ -26,6 +27,7 @@ func New(cfg api.StaticConfig) *provider {
 		version:  "latest",
 		optional: false,
 		fallback: nil,
+		trim_nl:  false,
 	}
 	if v := cfg.String("version"); v != "" {
 		p.version = v
@@ -35,6 +37,9 @@ func New(cfg api.StaticConfig) *provider {
 	}
 	if v := cfg.String("fallback_value"); cfg.Exists("fallback_value") {
 		p.fallback = &v
+	}
+	if v := cfg.String("trim_nl"); v != "" {
+		p.trim_nl, _ = strconv.ParseBool(v)
 	}
 	return p
 }
@@ -80,5 +85,10 @@ func (p *provider) getSecret(ctx context.Context, key string) ([]byte, error) {
 
 		return nil, fmt.Errorf("failed to get secret: %w", err)
 	}
-	return secret.GetPayload().GetData(), nil
+
+	buf := secret.GetPayload().GetData()
+	if p.trim_nl {
+		buf = []byte(strings.TrimSuffix(string(buf), "\n"))
+	}
+	return buf, nil
 }

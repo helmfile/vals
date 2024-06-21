@@ -395,6 +395,7 @@ Examples:
 
 - `ref+gcpsecrets://PROJECT/SECRET[?version=VERSION]`
 - `ref+gcpsecrets://PROJECT/SECRET[?version=VERSION]#/yaml_or_json_key/in/secret`
+- `ref+gcpsecrets://PROJECT/SECRET[?version=VERSION][&fallback=valuewhenkeyisnotfound][&optional=true][&trim_nl=true]#/yaml_or_json_key/in/secret`
 
 Examples:
 
