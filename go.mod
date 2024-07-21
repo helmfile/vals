@@ -18,7 +18,7 @@ require (
 	github.com/antchfx/jsonquery v1.3.5
 	github.com/antchfx/xpath v1.3.1
 	github.com/aws/aws-sdk-go v1.54.20
-	github.com/cyberark/conjur-api-go v0.12.0
+	github.com/cyberark/conjur-api-go v0.12.3
 	github.com/fujiwara/tfstate-lookup v1.3.2
 	github.com/getsops/sops/v3 v3.9.0
 	github.com/go-openapi/runtime v0.28.0
