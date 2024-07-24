@@ -28,15 +28,15 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/tidwall/gjson v1.17.1
 	golang.org/x/oauth2 v0.21.0
-	google.golang.org/api v0.188.0
+	google.golang.org/api v0.189.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.30.2
 	k8s.io/client-go v0.30.2
 )
 
 require (
-	cloud.google.com/go/auth v0.7.0 // indirect
-	cloud.google.com/go/auth/oauth2adapt v0.2.2 // indirect
+	cloud.google.com/go/auth v0.7.2 // indirect
+	cloud.google.com/go/auth/oauth2adapt v0.2.3 // indirect
 	cloud.google.com/go/longrunning v0.5.9 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/extism/go-sdk v1.2.0 // indirect
@@ -60,7 +60,7 @@ require (
 
 require (
 	cloud.google.com/go v0.115.0 // indirect
-	cloud.google.com/go/compute/metadata v0.4.0 // indirect
+	cloud.google.com/go/compute/metadata v0.5.0 // indirect
 	cloud.google.com/go/iam v1.1.10 // indirect
 	filippo.io/age v1.2.0 // indirect
 	github.com/AlecAivazis/survey/v2 v2.3.6 // indirect
@@ -193,9 +193,9 @@ require (
 	golang.org/x/term v0.22.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
-	google.golang.org/genproto v0.0.0-20240708141625-4ad9e859172b // indirect
+	google.golang.org/genproto v0.0.0-20240722135656-d784300faade // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240701130421-f6361c86f094 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240708141625-4ad9e859172b // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240722135656-d784300faade // indirect
 	google.golang.org/grpc v1.64.1 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/gookit/color.v1 v1.1.6 // indirect
