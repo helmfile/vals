@@ -26,7 +26,7 @@ require (
 	github.com/hashicorp/golang-lru v1.0.2
 	github.com/hashicorp/vault/api v1.14.0
 	github.com/stretchr/testify v1.9.0
-	github.com/tidwall/gjson v1.17.2
+	github.com/tidwall/gjson v1.17.3
 	golang.org/x/oauth2 v0.22.0
 	google.golang.org/api v0.191.0
 	gopkg.in/yaml.v3 v3.0.1
