@@ -5,7 +5,7 @@ go 1.22.0
 toolchain go1.22.2
 
 require (
-	cloud.google.com/go/kms v1.18.4
+	cloud.google.com/go/kms v1.18.5
 	cloud.google.com/go/secretmanager v1.13.6
 	cloud.google.com/go/storage v1.43.0
 	github.com/1Password/connect-sdk-go v1.5.3
