@@ -28,14 +28,14 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/tidwall/gjson v1.17.3
 	golang.org/x/oauth2 v0.22.0
-	google.golang.org/api v0.191.0
+	google.golang.org/api v0.192.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.30.3
 	k8s.io/client-go v0.30.3
 )
 
 require (
-	cloud.google.com/go/auth v0.8.0 // indirect
+	cloud.google.com/go/auth v0.8.1 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.3 // indirect
 	cloud.google.com/go/longrunning v0.5.11 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
