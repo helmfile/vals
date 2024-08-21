@@ -5,7 +5,7 @@ go 1.22.0
 toolchain go1.22.2
 
 require (
-	cloud.google.com/go/kms v1.18.5
+	cloud.google.com/go/kms v1.19.0
 	cloud.google.com/go/secretmanager v1.14.0
 	cloud.google.com/go/storage v1.43.0
 	github.com/1Password/connect-sdk-go v1.5.3
@@ -37,7 +37,7 @@ require (
 require (
 	cloud.google.com/go/auth v0.9.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.4 // indirect
-	cloud.google.com/go/longrunning v0.5.11 // indirect
+	cloud.google.com/go/longrunning v0.5.12 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/extism/go-sdk v1.3.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
