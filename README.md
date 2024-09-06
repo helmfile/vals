@@ -22,6 +22,7 @@ It supports various backends including:
 - Conjur
 - HCP Vault Secrets
 - Bitwarden
+- Bitwarden Secrets
 - HTTP JSON
 
 - Use `vals eval -f refs.yaml` to replace all the `ref`s in the file to actual values and secrets.
@@ -206,30 +207,53 @@ Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/
 
 ## Supported Backends
 
-- [Vault](#vault)
-- [AWS SSM Parameter Store](#aws-ssm-parameter-store)
-- [AWS Secrets Manager](#aws-secrets-manager)
-- [AWS S3](#aws-s3)
-- [GCP Secrets Manager](#gcp-secrets-manager)
-- [GCP KMS](#gcp-kms)
-- [Google Sheets](#google-sheets)
-- [Google GCS](#google-gcs)
-- [SOPS](#sops) powered by [sops](https://github.com/getsops/sops)
-- [Terraform (tfstate)](#terraform-tfstate) powered by [tfstate-lookup](https://github.com/fujiwara/tfstate-lookup)
-- [Echo](#echo)
-- [File](#file)
-- [Azure Key Vault](#azure-key-vault)
-- [EnvSubst](#envsubst)
-- [GitLab](#gitlab)
-- [1Password](#1password)
-- [1Password Connect](#1password-connect)
-- [Doppler](#doppler)
-- [Pulumi State](#pulumi-state)
-- [Kubernetes](#kubernetes)
-- [Conjur](#conjur)
-- [HCP Vault Secrets](#hcp-vault-secrets)
-- [HTTP JSON](#http-json)
-- [Bitwarden](#bitwarden)
+- [vals](#vals)
+  - [Usage](#usage)
+- [CLI](#cli)
+    - [Helm](#helm)
+    - [Go](#go)
+  - [Expression Syntax](#expression-syntax)
+  - [Supported Backends](#supported-backends)
+    - [Vault](#vault)
+    - [Authentication](#authentication)
+    - [AWS](#aws)
+      - [AWS SSM Parameter Store](#aws-ssm-parameter-store)
+      - [AWS Secrets Manager](#aws-secrets-manager)
+      - [AWS S3](#aws-s3)
+      - [AWS KMS](#aws-kms)
+      - [Google GCS](#google-gcs)
+    - [GCP Secrets Manager](#gcp-secrets-manager)
+    - [GCP KMS](#gcp-kms)
+    - [Google Sheets](#google-sheets)
+    - [Terraform (tfstate)](#terraform-tfstate)
+    - [Terraform in GCS bucket (tfstategs)](#terraform-in-gcs-bucket-tfstategs)
+    - [Terraform in S3 bucket (tfstates3)](#terraform-in-s3-bucket-tfstates3)
+    - [Terraform in AzureRM Blob storage (tfstateazurerm)](#terraform-in-azurerm-blob-storage-tfstateazurerm)
+    - [Terraform in Terraform Cloud / Terraform Enterprise (tfstateremote)](#terraform-in-terraform-cloud--terraform-enterprise-tfstateremote)
+    - [SOPS](#sops)
+    - [Echo](#echo)
+    - [File](#file)
+    - [Azure Key Vault](#azure-key-vault)
+      - [Authentication](#authentication-1)
+    - [EnvSubst](#envsubst)
+    - [GitLab Secrets](#gitlab-secrets)
+    - [1Password](#1password)
+    - [1Password Connect](#1password-connect)
+    - [Doppler](#doppler)
+    - [Pulumi State](#pulumi-state)
+    - [Kubernetes](#kubernetes)
+    - [Conjur](#conjur)
+    - [HCP Vault Secrets](#hcp-vault-secrets)
+    - [Bitwarden](#bitwarden)
+    - [Bitwarden Secrets](#bitwarden-secrets)
+    - [HTTP JSON](#http-json)
+      - [Fetch string value](#fetch-string-value)
+      - [Fetch integer value](#fetch-integer-value)
+  - [Advanced Usages](#advanced-usages)
+    - [Discriminating config and secrets](#discriminating-config-and-secrets)
+  - [Non-Goals](#non-goals)
+    - [Complex String-Interpolation / Template Functions](#complex-string-interpolation--template-functions)
+    - [Merge](#merge)
 
 Please see [pkg/providers](https://github.com/helmfile/vals/tree/master/pkg/providers) for the implementations of all the providers. The package names corresponds to the URI schemes.
 
@@ -831,9 +855,9 @@ Example:
 
 `ref+hcpvaultsecrets://APPLICATION_NAME/SECRET_NAME[?client_id=HCP_CLIENT_ID&client_secret=HCP_CLIENT_SECRET&organization_id=HCP_ORGANIZATION_ID&organization_name=HCP_ORGANIZATION_NAME&project_id=HCP_PROJECT_ID&project_name=HCP_PROJECT_NAME&version=2]`
 
-
 ### Bitwarden
-This provider retrieves the secrets stored in Bitwarden. It uses the [Bitwarden Vault-Management API](https://bitwarden.com/help/vault-management-api/) that is included in the [Bitwarden CLI](https://github.com/bitwarden/clients) by executing `bw serve`. 
+
+This provider retrieves the secrets stored in Bitwarden. It uses the [Bitwarden Vault-Management API](https://bitwarden.com/help/vault-management-api/) that is included in the [Bitwarden CLI](https://github.com/bitwarden/clients) by executing `bw serve`.
 
 Environment variables:
 
@@ -852,11 +876,41 @@ Examples:
 - `ref+bw://4d084b01-87e7-4411-8de9-2476ab9f3f48/{username,password,uri,notes,item}` gets username, password, uri, notes or the whole item of the given item id
 - `ref+bw://4d084b01-87e7-4411-8de9-2476ab9f3f48/notes#/key1` gets the *key1* from the yaml stored as note in the item
 
+### Bitwarden Secrets
+
+This provider retrieves the secrets stored in Bitwarden SECRETS MANAGER (not BitWarden Password Manager like [Bitwarden](#bitwarden)).
+
+It authenticates using an Access Token from a "Machine account", which can be created by opening the Bitwarden Web Vault, switching to Bitwarden `Secrets Manager`, then **Machine accounts**. Create a new machine account, grant at least "Can read" permission to a Project, and generate an Access Token.
+
+This provider also needs the `Organization ID` which is a UUID that you can find in the URL like: https://vault.bitwarden.com/#/sm/00000000-0000-0000-0000-000000000000, where 00000000-0000-0000-0000-000000000000 is the Organization ID.
+
+It is based on the [Bitwarden SDK in Go](https://github.com/bitwarden/sdk/tree/main/languages/go) lib.
+
+Environment variables:
+
+- `BWS_API_URL`: The Bitwarden API service endpoint, defaults to `https://api.bitwarden.com`
+- `BWS_IDENTITY_URL`: The Bitwarden Identity service endpoint, defaults to `https://identity.bitwarden.com`
+- `BWS_ACCESS_TOKEN`: The Bitwarden Access Token for the Machine Account
+- `BWS_ORGANIZATION_ID`: The Bitwarden Organization ID
+
+Parameters:
+
+Parameters are optional and can be passed as query parameters in the URI, taking precedence over environment variables.
+
+- `api_url`: The Bitwarden API service endpoint, defaults to `https://api.bitwarden.com`
+- `identity_url`: The Bitwarden Identity service endpoint, defaults to `https://identity.bitwarden.com`
+- `access_token`: The Bitwarden Access Token for the Machine Account
+- `organization_id`: The Bitwarden Organization ID
+
+Example:
+
+`ref+bws://PROJECT_NAME/SECRET_NAME[?api_url=BWS_API_URL&identity_url=BWS_IDENTITY_URL&access_token=BWS_ACCESS_TOKEN&organization_id=BWS_ORGANIZATION_ID]`
+
 ### HTTP JSON
 
 This provider retrieves values stored in JSON hosted by a HTTP frontend.
 
-This provider is built on top of [jsonquery](https://pkg.go.dev/github.com/antchfx/jsonquery@v1.3.3) and [xpath](https://pkg.go.dev/github.com/antchfx/xpath@v1.2.3) packages.  
+This provider is built on top of [jsonquery](https://pkg.go.dev/github.com/antchfx/jsonquery@v1.3.3) and [xpath](https://pkg.go.dev/github.com/antchfx/xpath@v1.2.3) packages.
 
 Given the diverse array of JSON structures that can be encountered, utilizing jsonquery with XPath presents a more effective approach for handling this variability in data structures.
 
@@ -880,7 +934,7 @@ Let's say you want to fetch the below JSON object from https://api.github.com/us
         "name": "go-yaml"
     }
 ]
-``` 
+```
 ```
 # To get name="chartify" using https protocol you would use:
 ref+httpjson://api.github.com/users/helmfile/repos#///*[1]/name
@@ -903,7 +957,7 @@ Let's say you want to fetch the below JSON object from https://api.github.com/us
         "id": 251296379
     }
 ]
-``` 
+```
 ```
 # Running the following will return: 2.51296379e+08
 ref+httpjson://api.github.com/users/helmfile/repos#///*[1]/id

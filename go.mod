@@ -39,6 +39,7 @@ require (
 	cloud.google.com/go/auth/oauth2adapt v0.2.4 // indirect
 	cloud.google.com/go/longrunning v0.6.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
+	github.com/bitwarden/sdk-go v1.0.0 // indirect
 	github.com/extism/go-sdk v1.3.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.2 // indirect
@@ -49,6 +50,7 @@ require (
 	github.com/go-openapi/strfmt v0.23.0 // indirect
 	github.com/go-openapi/validate v0.24.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
+	github.com/gofrs/uuid v4.4.0+incompatible // indirect
 	github.com/google/go-jsonnet v0.20.0 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect

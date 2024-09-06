@@ -17,13 +17,17 @@ jobs:
       with:
         go-version-file: 'go.mod'
         cache: true
-    - name: build 
+    - name: Install musl-gcc
+      run: |
+        sudo apt-get update
+        sudo apt-get install musl-tools -y
+    - name: build
       run: make build
 
   unit-test:
     runs-on: ubuntu-latest
     env:
-      SKIP_TESTS: true 
+      SKIP_TESTS: true
     steps:
     - name: Create k8s Kind Cluster
       uses: helm/kind-action@v1.10.0
@@ -40,5 +44,9 @@ jobs:
       with:
         go-version-file: 'go.mod'
         cache: true
+    - name: Install musl-gcc
+      run: |
+        sudo apt-get update
+        sudo apt-get install musl-tools -y
     - name: test
       run: make test
