@@ -24,6 +24,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/awssecrets"
 	"github.com/helmfile/vals/pkg/providers/azurekeyvault"
 	"github.com/helmfile/vals/pkg/providers/bitwarden"
+	"github.com/helmfile/vals/pkg/providers/bitwardensecrets"
 	"github.com/helmfile/vals/pkg/providers/conjur"
 	"github.com/helmfile/vals/pkg/providers/doppler"
 	"github.com/helmfile/vals/pkg/providers/echo"
@@ -101,6 +102,7 @@ const (
 	ProviderHCPVaultSecrets    = "hcpvaultsecrets"
 	ProviderHttpJsonManager    = "httpjson"
 	ProviderBitwarden          = "bw"
+	ProviderBitwardenSecrets   = "bws"
 )
 
 var (
@@ -276,6 +278,9 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 			return p, nil
 		case ProviderBitwarden:
 			p := bitwarden.New(r.logger, conf)
+			return p, nil
+		case ProviderBitwardenSecrets:
+			p := bitwardensecrets.New(r.logger, conf)
 			return p, nil
 		}
 		return nil, fmt.Errorf("no provider registered for scheme %q", scheme)
