@@ -3,10 +3,9 @@ builds:
   - id: vals
     main: ./cmd/vals
     env:
-      - CGO_ENABLED=1
-      - CC=musl-gcc
+      - CGO_ENABLED=0
     ldflags:
-      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -linkmode external -extldflags "-static -Wl,-unresolved-symbols=ignore-all"
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}}
     goos:
       - darwin
       - linux

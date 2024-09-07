@@ -20,11 +20,6 @@ jobs:
         with:
           go-version-file: 'go.mod'
       -
-        name: Install musl-gcc
-        run: |
-          sudo apt-get update
-          sudo apt-get install musl-tools -y
-      -
         name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
