@@ -8,7 +8,6 @@ import (
 	"github.com/helmfile/vals/pkg/providers/awskms"
 	"github.com/helmfile/vals/pkg/providers/awssecrets"
 	"github.com/helmfile/vals/pkg/providers/azurekeyvault"
-	"github.com/helmfile/vals/pkg/providers/bitwardensecrets"
 	"github.com/helmfile/vals/pkg/providers/conjur"
 	"github.com/helmfile/vals/pkg/providers/doppler"
 	"github.com/helmfile/vals/pkg/providers/gcpsecrets"
@@ -80,8 +79,6 @@ func New(l *log.Logger, provider api.StaticConfig) (api.LazyLoadedStringProvider
 		return hcpvaultsecrets.New(l, provider), nil
 	case "httpjson":
 		return httpjson.New(l, provider), nil
-	case "bws":
-		return bitwardensecrets.New(l, provider), nil
 	}
 
 	return nil, fmt.Errorf("failed initializing string provider from config: %v", provider)
