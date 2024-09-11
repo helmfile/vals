@@ -24,7 +24,7 @@ require (
 	github.com/go-openapi/runtime v0.28.0
 	github.com/google/go-cmp v0.6.0
 	github.com/hashicorp/golang-lru v1.0.2
-	github.com/hashicorp/vault/api v1.14.0
+	github.com/hashicorp/vault/api v1.15.0
 	github.com/stretchr/testify v1.9.0
 	github.com/tidwall/gjson v1.17.3
 	golang.org/x/oauth2 v0.23.0
@@ -39,6 +39,7 @@ require (
 	cloud.google.com/go/auth/oauth2adapt v0.2.4 // indirect
 	cloud.google.com/go/longrunning v0.6.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
+	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/extism/go-sdk v1.3.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.2 // indirect
@@ -104,7 +105,6 @@ require (
 	github.com/aws/smithy-go v1.20.2 // indirect
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
-	github.com/cenkalti/backoff/v3 v3.2.2 // indirect
 	github.com/cloudflare/circl v1.3.9 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
 	github.com/danieljoos/wincred v1.1.2 // indirect
