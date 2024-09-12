@@ -9,7 +9,11 @@ on:
 jobs:
 
   build-test:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
     - name: Set up Go
@@ -17,19 +21,34 @@ jobs:
       with:
         go-version-file: 'go.mod'
         cache: true
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
     - name: build 
       run: make build
 
   unit-test:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
     env:
       SKIP_TESTS: true 
     steps:
     - name: Create k8s Kind Cluster
+      if: ${{ matrix.os == 'ubuntu-latest' }}  # Only runs on Ubuntu
       uses: helm/kind-action@v1.10.0
       with:
         cluster_name: cluster
     - name: Set k8s provider
+      if: ${{ matrix.os == 'ubuntu-latest' }}  # Only runs on Ubuntu
       run: |
         kubectl create namespace test-namespace
         kubectl create secret generic mysecret -n test-namespace --from-literal=key=p4ssw0rd
@@ -40,5 +59,14 @@ jobs:
       with:
         go-version-file: 'go.mod'
         cache: true
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
     - name: test
       run: make test
