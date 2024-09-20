@@ -5,7 +5,7 @@ go 1.22.0
 toolchain go1.22.2
 
 require (
-	cloud.google.com/go/kms v1.19.1
+	cloud.google.com/go/kms v1.20.0
 	cloud.google.com/go/secretmanager v1.14.1
 	cloud.google.com/go/storage v1.43.0
 	github.com/1Password/connect-sdk-go v1.5.3
@@ -37,7 +37,7 @@ require (
 require (
 	cloud.google.com/go/auth v0.9.3 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.4 // indirect
-	cloud.google.com/go/longrunning v0.6.0 // indirect
+	cloud.google.com/go/longrunning v0.6.1 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/extism/go-sdk v1.3.1 // indirect
@@ -64,7 +64,7 @@ require (
 require (
 	cloud.google.com/go v0.115.1 // indirect
 	cloud.google.com/go/compute/metadata v0.5.0 // indirect
-	cloud.google.com/go/iam v1.2.0 // indirect
+	cloud.google.com/go/iam v1.2.1 // indirect
 	filippo.io/age v1.2.0 // indirect
 	github.com/AlecAivazis/survey/v2 v2.3.6 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.10.0 // indirect
@@ -198,7 +198,7 @@ require (
 	google.golang.org/genproto v0.0.0-20240903143218-8af14fe29dc1 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240903143218-8af14fe29dc1 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240903143218-8af14fe29dc1 // indirect
-	google.golang.org/grpc v1.66.1 // indirect
+	google.golang.org/grpc v1.66.2 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/gookit/color.v1 v1.1.6 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
