@@ -118,13 +118,13 @@ kind: Secret
 }
 
 func TestEvalNodesWithDictionaries(t *testing.T) {
-  var yamlDocs = `- entry: first
+	var yamlDocs = `- entry: first
   username: ref+echo://secrets.enc.yaml
 - entry: second
   username: ref+echo://secrets.enc.yaml
 `
 
-  var expected = `- entry: first
+	var expected = `- entry: first
   username: secrets.enc.yaml
 - entry: second
   username: secrets.enc.yaml
