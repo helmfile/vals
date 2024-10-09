@@ -467,6 +467,7 @@ func (r *Runtime) Get(code string) (string, error) {
 
 	return ret, nil
 }
+
 func cloneMap(m map[string]interface{}) map[string]interface{} {
 	bs, err := yaml.Marshal(m)
 	if err != nil {
@@ -615,15 +616,28 @@ func EvalNodes(nodes []yaml.Node, c Options) ([]yaml.Node, error) {
 	var res []yaml.Node
 	for _, node := range nodes {
 		node := node
-		var nodeValue map[string]interface{}
+		var nodeValue interface{}
 		err := node.Decode(&nodeValue)
 		if err != nil {
 			return nil, err
 		}
-		evalResult, err := Eval(nodeValue, c)
-		if err != nil {
-			return nil, err
+
+		var evalResult interface{}
+		switch v := nodeValue.(type) {
+		case map[string]interface{}:
+			evalResult, err = Eval(v, c)
+			if err != nil {
+				return nil, err
+			}
+		case []interface{}:
+			evalResult, err = evalArray(v, c)
+			if err != nil {
+				return nil, err
+			}
+		default:
+			return nil, fmt.Errorf("unexpected type: %T", v)
 		}
+
 		err = node.Encode(evalResult)
 		if err != nil {
 			return nil, err
@@ -633,6 +647,29 @@ func EvalNodes(nodes []yaml.Node, c Options) ([]yaml.Node, error) {
 			Kind:    yaml.DocumentNode,
 			Content: []*yaml.Node{&node},
 		})
+	}
+	return res, nil
+}
+
+func evalArray(arr []interface{}, c Options) ([]interface{}, error) {
+	var res []interface{}
+	for _, item := range arr {
+		switch v := item.(type) {
+		case map[string]interface{}:
+			evalResult, err := Eval(v, c)
+			if err != nil {
+				return nil, err
+			}
+			res = append(res, evalResult)
+		case []interface{}:
+			evalResult, err := evalArray(v, c)
+			if err != nil {
+				return nil, err
+			}
+			res = append(res, evalResult)
+		default:
+			res = append(res, v)
+		}
 	}
 	return res, nil
 }
