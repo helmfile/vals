@@ -2,6 +2,7 @@ package vault
 
 import (
 	"errors"
+	"net/http"
 	"path"
 	"strings"
 
@@ -30,7 +31,7 @@ func kvPreflightVersionRequest(client *api.Client, path string) (string, int, er
 	if err != nil {
 		// If we get a 404 we are using an older version of vault, default to
 		// version 1
-		if resp != nil && resp.StatusCode == 404 {
+		if resp != nil && resp.StatusCode == http.StatusNotFound {
 			return "", 1, nil
 		}
 
