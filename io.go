@@ -87,7 +87,7 @@ func Output(output io.Writer, format string, nodes []yaml.Node) error {
 			if err != nil {
 				return err
 			}
-			fmt.Fprintln(output, string(bs))
+			_, _ = fmt.Fprintln(output, string(bs))
 		} else {
 			encoder := yaml.NewEncoder(output)
 			encoder.SetIndent(2)
@@ -97,7 +97,7 @@ func Output(output io.Writer, format string, nodes []yaml.Node) error {
 			}
 		}
 		if i != len(nodes)-1 {
-			fmt.Fprintln(output, "---")
+			_, _ = fmt.Fprintln(output, "---")
 		}
 	}
 	return nil

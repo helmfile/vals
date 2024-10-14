@@ -227,7 +227,7 @@ the vals-eval outputs onto the disk, for security reasons.`)
 			if *export {
 				l = "export " + l
 			}
-			fmt.Fprintln(os.Stdout, l)
+			_, _ = fmt.Fprintln(os.Stdout, l)
 		}
 	case CmdKsDecode:
 		evalCmd := flag.NewFlagSet(CmdKsDecode, flag.ExitOnError)
@@ -269,9 +269,15 @@ func KsDecode(node yaml.Node) (*yaml.Node, error) {
 
 	var res yaml.Node = node
 
-	var kk yaml.Node
-	var vv yaml.Node
-	var ii int
+	// record the original data node
+	var datakk yaml.Node
+	var datavv yaml.Node
+	var dataii int
+
+	// record the original stringData node
+	var stringDatakk yaml.Node
+	var stringDatavv yaml.Node
+	var stringDataii int
 
 	isSecret := false
 	mappings := node.Content[0].Content
@@ -285,16 +291,32 @@ func KsDecode(node yaml.Node) (*yaml.Node, error) {
 		}
 
 		if k.Value == "data" {
-			ii = i
-			kk = *k
-			vv = *v
+			dataii = i
+			datakk = *k
+			datavv = *v
+		}
+		if k.Value == "stringData" {
+			stringDataii = i
+			stringDatakk = *k
+			stringDatavv = *v
 		}
 	}
 
-	if isSecret && !kk.IsZero() {
-		kk.Value = "stringData"
+	// if not a secret, just return the node
+	if !isSecret {
+		return &res, nil
+	}
 
-		v := vv
+	// if data node not exists, just return the node
+	if datakk.IsZero() {
+		return &res, nil
+	}
+
+	// stringData node not exists
+	if stringDatakk.IsZero() {
+		datakk.Value = "stringData"
+
+		v := datavv
 		nestedMappings := v.Content
 		v.Content = make([]*yaml.Node, len(v.Content))
 		for i := 0; i < len(nestedMappings); i += 2 {
@@ -309,9 +331,34 @@ func KsDecode(node yaml.Node) (*yaml.Node, error) {
 			v.Content[i+1] = nestedMappings[i+1]
 		}
 
-		res.Content[0].Content[ii] = &kk
-		res.Content[0].Content[ii+1] = &v
+		res.Content[0].Content[dataii] = &datakk
+		res.Content[0].Content[dataii+1] = &v
+		return &res, nil
 	}
+
+	// stringData and data node exist in the mean time
+	dv := datavv
+	sv := stringDatavv
+	dNestedMappings := dv.Content
+	for i := 0; i < len(dNestedMappings); i += 2 {
+		b64 := dNestedMappings[i+1].Value
+		decoded, err := base64.StdEncoding.DecodeString(b64)
+		if err != nil {
+			return nil, err
+		}
+		// replace the value of the nested mapping
+		dNestedMappings[i+1].Value = string(decoded)
+
+		sv.Content = append(sv.Content, dNestedMappings[i])
+		sv.Content = append(sv.Content, dNestedMappings[i+1])
+	}
+
+	// replace the stringData node
+	res.Content[0].Content[stringDataii] = &stringDatakk
+	res.Content[0].Content[stringDataii+1] = &sv
+
+	// remove the data node
+	res.Content[0].Content = append(res.Content[0].Content[:dataii], res.Content[0].Content[dataii+2:]...)
 
 	return &res, nil
 }
