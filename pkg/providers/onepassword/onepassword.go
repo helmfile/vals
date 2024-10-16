@@ -26,18 +26,21 @@ func (p *provider) GetString(key string) (string, error) {
 	var err error
 
 	ctx := context.Background()
-	token := os.Getenv("OP_SERVICE_ACCOUNT_TOKEN")
 
-	client, err := onepassword.NewClient(
-		ctx,
-		onepassword.WithServiceAccountToken(token),
-		onepassword.WithIntegrationInfo("Vals op integration", "v1.0.0"),
-	)
-	if err != nil {
-		return "", fmt.Errorf("storage.NewClient: %v", err)
+	if p.client == nil {
+		token := os.Getenv("OP_SERVICE_ACCOUNT_TOKEN")
+
+		client, err := onepassword.NewClient(
+			ctx,
+			onepassword.WithServiceAccountToken(token),
+			onepassword.WithIntegrationInfo("Vals op integration", "v1.0.0"),
+		)
+		if err != nil {
+			return "", fmt.Errorf("storage.NewClient: %v", err)
+		}
+
+		p.client = client
 	}
-
-	p.client = client
 
 	prefixedKey := fmt.Sprintf("op://%s", key)
 	item, err := p.client.Secrets.Resolve(ctx, prefixedKey)

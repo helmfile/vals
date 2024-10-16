@@ -31,14 +31,16 @@ func (p *provider) GetString(key string) (string, error) {
 		return "", fmt.Errorf("invalid URI: %v", errors.New("vault or item missing"))
 	}
 
-	client, err := connect.NewClientFromEnvironment()
-	if err != nil {
-		return "", fmt.Errorf("storage.NewClient: %v", err)
+	if p.client == nil {
+		client, err := connect.NewClientFromEnvironment()
+		if err != nil {
+			return "", fmt.Errorf("storage.NewClient: %v", err)
+		}
+
+		p.client = client
 	}
 
-	p.client = client
-
-	item, err := client.GetItem(splits[1], splits[0])
+	item, err := p.client.GetItem(splits[1], splits[0])
 	if err != nil {
 		return "", fmt.Errorf("error retrieving item: %v", err)
 	}
