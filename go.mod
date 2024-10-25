@@ -1,8 +1,7 @@
 module github.com/helmfile/vals
 
 go 1.22.0
-
-toolchain go1.22.2
+toolchain go1.22.8
 
 require (
 	cloud.google.com/go/kms v1.20.1
@@ -18,7 +17,7 @@ require (
 	github.com/antchfx/jsonquery v1.3.6
 	github.com/antchfx/xpath v1.3.2
 	github.com/aws/aws-sdk-go v1.55.5
-	github.com/cyberark/conjur-api-go v0.12.4
+	github.com/cyberark/conjur-api-go v0.12.5
 	github.com/fujiwara/tfstate-lookup v1.4.2
 	github.com/getsops/sops/v3 v3.9.1
 	github.com/go-openapi/runtime v0.28.0
