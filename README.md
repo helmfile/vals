@@ -23,6 +23,7 @@ It supports various backends including:
 - HCP Vault Secrets
 - Bitwarden
 - HTTP JSON
+- Keychain
 
 - Use `vals eval -f refs.yaml` to replace all the `ref`s in the file to actual values and secrets.
 - Use `vals exec -f env.yaml -- <COMMAND>` to populate envvars and execute the command.
@@ -216,6 +217,7 @@ Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/
 - [Google GCS](#google-gcs)
 - [SOPS](#sops) powered by [sops](https://github.com/getsops/sops)
 - [Terraform (tfstate)](#terraform-tfstate) powered by [tfstate-lookup](https://github.com/fujiwara/tfstate-lookup)
+- [Keychain](#keychain)
 - [Echo](#echo)
 - [File](#file)
 - [Azure Key Vault](#azure-key-vault)
@@ -592,6 +594,18 @@ Examples:
 - `ref+sops://path/to/file#/foo/bar` reads `path/to/file` as a `yaml` file and returns the value at `foo.bar`.
 - `ref+sops://path/to/file?format=json#/foo/bar` reads `path/to/file` as a `json` file and returns the value at `foo.bar`.
 
+### Keychain
+
+Keychain provider is going to be available on macOS only. It reads a secret from the macOS Keychain.
+
+- `ref+keychain://KEY1/[#/path/to/the/value]`
+
+Examples:
+
+- `security add-generic-password -U -a ${USER} -s "secret-name" -D "vals-secret" -w '{"foo":{"bar":"baz"}}'` - will create a secret in the Keychain with the name `secret-name` and the value `{"foo":{"bar":"baz"}}`, `vals-secret` is required to be able to find the secret in the Keychain.
+- `echo 'foo: ref+keychain://secret-name' | vals eval -f -` - will read the secret from the Keychain with the name `secret-name` and replace the `foo` with the secret value.
+- `echo 'foo: ref+keychain://secret-name#/foo/bar' | vals eval -f -` - will read the secret from the Keychain with the name `secret-name` and replace the `foo` with the value at the path `$.foo.bar`.
+
 ### Echo
 
 Echo provider echoes the string for testing purpose. Please read [the original proposal](https://github.com/roboll/helmfile/pull/920#issuecomment-548213738) to get why we might need this.
@@ -602,7 +616,6 @@ Examples:
 
 - `ref+echo://foo/bar` generates `foo/bar`
 - `ref+echo://foo/bar/baz#/foo/bar` generates `baz`. This works by the host and the path part `foo/bar/baz` generating an object `{"foo":{"bar":"baz"}}` and the fragment part `#/foo/bar` results in digging the object to obtain the value at `$.foo.bar`.
-
 
 ### File
 

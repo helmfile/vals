@@ -37,6 +37,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/hcpvaultsecrets"
 	"github.com/helmfile/vals/pkg/providers/httpjson"
 	"github.com/helmfile/vals/pkg/providers/k8s"
+	"github.com/helmfile/vals/pkg/providers/keychain"
 	"github.com/helmfile/vals/pkg/providers/onepassword"
 	"github.com/helmfile/vals/pkg/providers/onepasswordconnect"
 	"github.com/helmfile/vals/pkg/providers/pulumi"
@@ -91,6 +92,7 @@ const (
 	ProviderTFStateRemote      = "tfstateremote"
 	ProviderAzureKeyVault      = "azurekeyvault"
 	ProviderEnvSubst           = "envsubst"
+	ProviderKeychain           = "keychain"
 	ProviderOnePassword        = "op"
 	ProviderOnePasswordConnect = "onepasswordconnect"
 	ProviderDoppler            = "doppler"
@@ -244,6 +246,9 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 			return p, nil
 		case ProviderKms:
 			p := awskms.New(conf)
+			return p, nil
+		case ProviderKeychain:
+			p := keychain.New(conf)
 			return p, nil
 		case ProviderEnvSubst:
 			p := envsubst.New(conf)
@@ -491,6 +496,7 @@ var KnownValuesTypes = []string{
 	ProviderTFState,
 	ProviderFile,
 	ProviderEcho,
+	ProviderKeychain,
 	ProviderEnvSubst,
 	ProviderPulumiStateAPI,
 }
