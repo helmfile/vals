@@ -23,7 +23,6 @@ require (
 	github.com/google/go-cmp v0.6.0
 	github.com/hashicorp/golang-lru v1.0.2
 	github.com/hashicorp/vault/api v1.15.0
-	github.com/keybase/go-keychain v0.0.0-20231219164618-57a3676c3af6
 	github.com/stretchr/testify v1.10.0
 	github.com/tidwall/gjson v1.18.0
 	golang.org/x/oauth2 v0.24.0
