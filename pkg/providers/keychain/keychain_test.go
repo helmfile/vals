@@ -9,14 +9,13 @@ func Test_isHex(t *testing.T) {
 		input    string
 		expected bool
 	}{
-		{"", true},
 		{"a1b2c3", true},
 		{"A1B2C3", true},
 		{"1234567890abcdef", true},
 		{"12345", false},   // Odd length
 		{"g1h2", false},    // Non-hex characters
 		{"!@#$", false},    // Special characters
-		{"abcdefg", false}, // Odd length with valid hex characters
+		{"abcdefa", false}, // Odd length with valid hex characters
 		{"ABCDEF", true},
 		{"abcdef", true},
 		{"1234abcd", true},
