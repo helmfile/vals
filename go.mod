@@ -1,6 +1,7 @@
 module github.com/helmfile/vals
 
-go 1.23
+go 1.23.1
+
 require (
 	cloud.google.com/go/kms v1.20.2
 	cloud.google.com/go/secretmanager v1.14.2
