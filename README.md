@@ -658,6 +658,8 @@ The order in which authentication methods are checked is:
 3. Username/Password
 4. Azure CLI or Managed identity (set environment `AZURE_USE_MSI=true` to enabled MSI)
 
+more see: https://github.com/helmfile/vals/issues/441
+
 ### EnvSubst
 
 Environment variables substitution.
