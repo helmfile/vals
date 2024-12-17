@@ -26,7 +26,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/tidwall/gjson v1.18.0
 	golang.org/x/oauth2 v0.24.0
-	google.golang.org/api v0.211.0
+	google.golang.org/api v0.212.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.32.0
 	k8s.io/client-go v0.32.0
@@ -35,7 +35,7 @@ require (
 require (
 	al.essio.dev/pkg/shellescape v1.5.1 // indirect
 	cel.dev/expr v0.16.1 // indirect
-	cloud.google.com/go/auth v0.12.1 // indirect
+	cloud.google.com/go/auth v0.13.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.6 // indirect
 	cloud.google.com/go/longrunning v0.6.2 // indirect
 	cloud.google.com/go/monitoring v1.21.2 // indirect
@@ -82,7 +82,7 @@ require (
 
 require (
 	cloud.google.com/go v0.116.0 // indirect
-	cloud.google.com/go/compute/metadata v0.5.2 // indirect
+	cloud.google.com/go/compute/metadata v0.6.0 // indirect
 	cloud.google.com/go/iam v1.2.2 // indirect
 	filippo.io/age v1.2.0 // indirect
 	github.com/AlecAivazis/survey/v2 v2.3.6 // indirect
