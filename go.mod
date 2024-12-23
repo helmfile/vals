@@ -5,7 +5,7 @@ go 1.23.1
 require (
 	cloud.google.com/go/kms v1.20.3
 	cloud.google.com/go/secretmanager v1.14.2
-	cloud.google.com/go/storage v1.48.0
+	cloud.google.com/go/storage v1.49.0
 	github.com/1Password/connect-sdk-go v1.5.3
 	github.com/1password/onepassword-sdk-go v0.1.5
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.16.0
@@ -39,7 +39,7 @@ require (
 	cloud.google.com/go/auth/oauth2adapt v0.2.6 // indirect
 	cloud.google.com/go/longrunning v0.6.2 // indirect
 	cloud.google.com/go/monitoring v1.21.2 // indirect
-	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.24.1 // indirect
+	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.25.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.48.1 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.48.1 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
@@ -48,7 +48,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cncf/xds/go v0.0.0-20240905190251-b4127c9b8d78 // indirect
 	github.com/dylibso/observe-sdk/go v0.0.0-20240819160327-2d926c5d788a // indirect
-	github.com/envoyproxy/go-control-plane v0.13.0 // indirect
+	github.com/envoyproxy/go-control-plane v0.13.1 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.1.0 // indirect
 	github.com/extism/go-sdk v1.6.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
