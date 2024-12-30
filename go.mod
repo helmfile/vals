@@ -16,7 +16,7 @@ require (
 	github.com/antchfx/jsonquery v1.3.6
 	github.com/antchfx/xpath v1.3.3
 	github.com/aws/aws-sdk-go v1.55.5
-	github.com/cyberark/conjur-api-go v0.12.9
+	github.com/cyberark/conjur-api-go v0.12.10
 	github.com/fujiwara/tfstate-lookup v1.4.2
 	github.com/getsops/sops/v3 v3.9.2
 	github.com/go-openapi/runtime v0.28.0
@@ -42,6 +42,7 @@ require (
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.25.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.48.1 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.48.1 // indirect
+	github.com/Masterminds/semver/v3 v3.3.1 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/census-instrumentation/opencensus-proto v0.4.1 // indirect
