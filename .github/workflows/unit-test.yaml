@@ -8,8 +8,6 @@ on:
 
 jobs:
   unit-test:
-    env:
-      SKIP_TESTS: true 
     runs-on: ubuntu-latest
     env:
       SKIP_TESTS: true 
