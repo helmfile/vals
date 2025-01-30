@@ -17,7 +17,7 @@ require (
 	github.com/antchfx/xpath v1.3.3
 	github.com/aws/aws-sdk-go v1.55.6
 	github.com/cyberark/conjur-api-go v0.12.10
-	github.com/fujiwara/tfstate-lookup v1.4.2
+	github.com/fujiwara/tfstate-lookup v1.4.3
 	github.com/getsops/sops/v3 v3.9.2
 	github.com/go-openapi/runtime v0.28.0
 	github.com/google/go-cmp v0.6.0
