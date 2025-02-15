@@ -20,6 +20,7 @@ type provider struct {
 	log            *log.Logger
 	KubeConfigPath string
 	KubeContext    string
+	InCluster      bool
 }
 
 func New(l *log.Logger, cfg api.StaticConfig) (*provider, error) {
@@ -28,16 +29,20 @@ func New(l *log.Logger, cfg api.StaticConfig) (*provider, error) {
 	}
 	var err error
 
-	p.KubeConfigPath, err = getKubeConfigPath(cfg)
-	if err != nil {
-		p.log.Debugf("vals-k8s: Unable to get a valid kubeConfig path: %s", err)
-		return nil, err
-	}
+	p.InCluster = cfg.Exists("inCluster")
 
-	p.KubeContext = getKubeContext(cfg)
+	if !p.InCluster {
+		p.KubeConfigPath, err = getKubeConfigPath(cfg)
+		if err != nil {
+			p.log.Debugf("vals-k8s: Unable to get a valid kubeConfig path: %s", err)
+			return nil, err
+		}
 
-	if p.KubeContext == "" {
-		p.log.Debugf("vals-k8s: kubeContext was not provided. Using current context.")
+		p.KubeContext = getKubeContext(cfg)
+
+		if p.KubeContext == "" {
+			p.log.Debugf("vals-k8s: kubeContext was not provided. Using current context.")
+		}
 	}
 
 	return p, nil
@@ -92,7 +97,7 @@ func (p *provider) GetString(path string) (string, error) {
 		return "", fmt.Errorf("Invalid apiVersion %s. Only apiVersion v1 is supported at this time.", apiVersion)
 	}
 
-	objectData, err := getObject(kind, namespace, name, p.KubeConfigPath, p.KubeContext, context.Background())
+	objectData, err := getObject(kind, namespace, name, p.KubeConfigPath, p.KubeContext, p.InCluster, context.Background())
 	if err != nil {
 		return "", fmt.Errorf("Unable to get %s %s/%s: %s", kind, namespace, name, err)
 	}
@@ -134,11 +139,18 @@ func buildConfigWithContextFromFlags(context string, kubeconfigPath string) (*re
 }
 
 // Fetch the object from the Kubernetes cluster
-func getObject(kind string, namespace string, name string, kubeConfigPath string, kubeContext string, ctx context.Context) (map[string]string, error) {
-	config, err := buildConfigWithContextFromFlags(kubeContext, kubeConfigPath)
+func getObject(kind string, namespace string, name string, kubeConfigPath string, kubeContext string, inCluster bool, ctx context.Context) (map[string]string, error) {
+	config := &rest.Config{}
+	var err error
+
+	if inCluster {
+		config, err = rest.InClusterConfig()
+	} else {
+		config, err = buildConfigWithContextFromFlags(kubeContext, kubeConfigPath)
+	}
 
 	if err != nil {
-		return nil, fmt.Errorf("Unable to build Kubeconfig from vals configuration: %s", err)
+		return nil, fmt.Errorf("Unable to build config from vals configuration: %s", err)
 	}
 
 	clientset, err := kubernetes.NewForConfig(config)
