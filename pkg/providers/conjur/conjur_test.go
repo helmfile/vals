@@ -12,10 +12,10 @@ import (
 
 func Test_New(t *testing.T) {
 	testsConfig := []struct {
-		name    string
 		options map[string]interface{}
 		envVars map[string]string
 		want    *provider
+		name    string
 	}{
 		{
 			name: "onlyConf",

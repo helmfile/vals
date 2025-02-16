@@ -20,9 +20,9 @@ type bwData struct {
 }
 
 type bwResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
 	Data    bwData `json:"data"`
+	Message string `json:"message"`
+	Success bool   `json:"success"`
 }
 
 type provider struct {

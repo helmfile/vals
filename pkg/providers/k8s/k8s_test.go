@@ -26,13 +26,13 @@ import (
 func Test_getObject(t *testing.T) {
 	homeDir, _ := os.UserHomeDir()
 	testcases := []struct {
+		want           map[string]string
 		namespace      string
 		kind           string
 		name           string
 		kubeConfigPath string
-		inCluster      bool
-		want           map[string]string
 		wantErr        string
+		inCluster      bool
 	}{
 		// (secret) valid kubeConfigPath is specified
 		{
@@ -140,13 +140,13 @@ func Test_getObject(t *testing.T) {
 
 func Test_getObject_InCluster(t *testing.T) {
 	testcases := []struct {
+		want           map[string]string
 		namespace      string
 		kind           string
 		name           string
 		kubeConfigPath string
-		inCluster      bool
-		want           map[string]string
 		wantErr        string
+		inCluster      bool
 	}{
 		// (secret) Running outside a cluster
 		{

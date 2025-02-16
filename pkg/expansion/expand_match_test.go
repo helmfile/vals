@@ -9,11 +9,11 @@ import (
 
 func TestExpandRegexpMatchInString(t *testing.T) {
 	testcases := []struct {
-		name     string
 		regex    *regexp.Regexp
-		only     []string
+		name     string
 		input    string
 		expected string
+		only     []string
 	}{
 		{
 			name:     "ref",
@@ -174,10 +174,10 @@ func TestExpandRegexpMatchInString(t *testing.T) {
 
 func TestExpandRegexpMatchInMap(t *testing.T) {
 	testcases := []struct {
-		name     string
 		regex    *regexp.Regexp
 		input    map[string]interface{}
 		expected map[string]interface{}
+		name     string
 	}{
 		{
 			name:     "string",

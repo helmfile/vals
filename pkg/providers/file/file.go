@@ -12,8 +12,8 @@ import (
 )
 
 type provider struct {
-	Encode     string
 	fileReader func(string) ([]byte, error)
+	Encode     string
 }
 
 func New(cfg api.StaticConfig) *provider {

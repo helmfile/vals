@@ -16,9 +16,9 @@ import (
 
 // Format: ref+gcpsecrets://project/mykey[?version=VERSION][&fallback=valuewhenkeyisnotfound][&optional=true][&trim_nl=true]#/yaml_or_json_key/in/secret
 type provider struct {
+	fallback *string
 	version  string
 	optional bool
-	fallback *string
 	trim_nl  bool
 }
 

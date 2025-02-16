@@ -18,15 +18,15 @@ type gitlabSecret struct {
 	VariableType     string `json:"variable_type"`
 	Key              string `json:"key"`
 	Value            string `json:"value"`
+	EnvironmentScope string `json:"environment_scope"`
 	Protected        bool   `json:"protected"`
 	Masked           bool   `json:"masked"`
-	EnvironmentScope string `json:"environment_scope"`
 }
 
 type provider struct {
 	Scheme     string
-	SSLVerify  bool
 	APIVersion string
+	SSLVerify  bool
 }
 
 func New(cfg api.StaticConfig) *provider {

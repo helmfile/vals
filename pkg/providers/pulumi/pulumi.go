@@ -47,11 +47,11 @@ type pulumiDeployment struct {
 
 type pulumiResource struct {
 	URN          string          `json:"urn"`
-	Custom       bool            `json:"custom"`
 	ID           string          `json:"id"`
 	ResourceType string          `json:"type"`
 	Inputs       json.RawMessage `json:"inputs"`
 	Outputs      json.RawMessage `json:"outputs"`
+	Custom       bool            `json:"custom"`
 }
 
 func (r *pulumiResource) getAttributeValue(resourceAttribute string, resourceAttributePath string) string {
