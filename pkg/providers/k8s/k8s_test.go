@@ -30,7 +30,7 @@ func Test_getObject(t *testing.T) {
 		kind           string
 		name           string
 		kubeConfigPath string
-		inCluster	   bool
+		inCluster      bool
 		want           map[string]string
 		wantErr        string
 	}{
@@ -50,7 +50,7 @@ func Test_getObject(t *testing.T) {
 			name:           "mysecret",
 			kubeConfigPath: "/tmp/does-not-exist",
 			want:           nil,
-			wantErr:        "Unable to build Kubeconfig from vals configuration: stat /tmp/does-not-exist: no such file or directory",
+			wantErr:        "Unable to build config from vals configuration: stat /tmp/does-not-exist: no such file or directory",
 		},
 		// (secret) namespace does not exist
 		{
@@ -86,7 +86,7 @@ func Test_getObject(t *testing.T) {
 			name:           "myconfigmap",
 			kubeConfigPath: "/tmp/does-not-exist",
 			want:           nil,
-			wantErr:        "Unable to build Kubeconfig from vals configuration: stat /tmp/does-not-exist: no such file or directory",
+			wantErr:        "Unable to build config from vals configuration: stat /tmp/does-not-exist: no such file or directory",
 		},
 		// (configmap) namespace does not exist
 		{
@@ -144,7 +144,7 @@ func Test_getObject_InCluster(t *testing.T) {
 		kind           string
 		name           string
 		kubeConfigPath string
-		inCluster	   bool
+		inCluster      bool
 		want           map[string]string
 		wantErr        string
 	}{

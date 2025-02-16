@@ -140,7 +140,7 @@ func buildConfigWithContextFromFlags(context string, kubeconfigPath string) (*re
 
 // Fetch the object from the Kubernetes cluster
 func getObject(kind string, namespace string, name string, kubeConfigPath string, kubeContext string, inCluster bool, ctx context.Context) (map[string]string, error) {
-	config := &rest.Config{}
+	var config *rest.Config
 	var err error
 
 	if inCluster {
