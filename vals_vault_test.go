@@ -266,8 +266,8 @@ func TestValues_Vault_Map(t *testing.T) {
 	}
 
 	type testcase struct {
-		name   string
 		config map[string]interface{}
+		name   string
 	}
 	testcases := []testcase{
 		{

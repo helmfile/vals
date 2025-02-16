@@ -26,12 +26,13 @@ import (
 func Test_getObject(t *testing.T) {
 	homeDir, _ := os.UserHomeDir()
 	testcases := []struct {
+		want           map[string]string
 		namespace      string
 		kind           string
 		name           string
 		kubeConfigPath string
-		want           map[string]string
 		wantErr        string
+		inCluster      bool
 	}{
 		// (secret) valid kubeConfigPath is specified
 		{
@@ -49,7 +50,7 @@ func Test_getObject(t *testing.T) {
 			name:           "mysecret",
 			kubeConfigPath: "/tmp/does-not-exist",
 			want:           nil,
-			wantErr:        "Unable to build Kubeconfig from vals configuration: stat /tmp/does-not-exist: no such file or directory",
+			wantErr:        "Unable to build config from vals configuration: stat /tmp/does-not-exist: no such file or directory",
 		},
 		// (secret) namespace does not exist
 		{
@@ -85,7 +86,7 @@ func Test_getObject(t *testing.T) {
 			name:           "myconfigmap",
 			kubeConfigPath: "/tmp/does-not-exist",
 			want:           nil,
-			wantErr:        "Unable to build Kubeconfig from vals configuration: stat /tmp/does-not-exist: no such file or directory",
+			wantErr:        "Unable to build config from vals configuration: stat /tmp/does-not-exist: no such file or directory",
 		},
 		// (configmap) namespace does not exist
 		{
@@ -119,7 +120,49 @@ func Test_getObject(t *testing.T) {
 	for i := range testcases {
 		tc := testcases[i]
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			got, err := getObject(tc.kind, tc.namespace, tc.name, tc.kubeConfigPath, "", context.Background())
+			got, err := getObject(tc.kind, tc.namespace, tc.name, tc.kubeConfigPath, "", false, context.Background())
+			if err != nil {
+				if err.Error() != tc.wantErr {
+					t.Fatalf("unexpected error: want %q, got %q", tc.wantErr, err.Error())
+				}
+			} else {
+				if tc.wantErr != "" {
+					t.Fatalf("expected error did not occur: want %q, got none", tc.wantErr)
+				}
+			}
+
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("unexpected result: -(want), +(got)\n%s", diff)
+			}
+		})
+	}
+}
+
+func Test_getObject_InCluster(t *testing.T) {
+	testcases := []struct {
+		want           map[string]string
+		namespace      string
+		kind           string
+		name           string
+		kubeConfigPath string
+		wantErr        string
+		inCluster      bool
+	}{
+		// (secret) Running outside a cluster
+		{
+			namespace:      "test-namespace",
+			kind:           "Secret",
+			name:           "mysecret",
+			kubeConfigPath: "",
+			inCluster:      true,
+			want:           nil,
+			wantErr:        "Unable to build config from vals configuration: unable to load in-cluster configuration, KUBERNETES_SERVICE_HOST and KUBERNETES_SERVICE_PORT must be defined",
+		},
+	}
+	for i := range testcases {
+		tc := testcases[i]
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			got, err := getObject(tc.kind, tc.namespace, tc.name, "", "", true, context.Background())
 			if err != nil {
 				if err.Error() != tc.wantErr {
 					t.Fatalf("unexpected error: want %q, got %q", tc.wantErr, err.Error())

@@ -15,9 +15,9 @@ import (
 
 type provider struct {
 	// Keeping track of httpjson services since we need a service per url
-	protocol   string
 	log        *log.Logger
 	docs       map[string]*jsonquery.Node
+	protocol   string
 	floatAsInt bool
 }
 

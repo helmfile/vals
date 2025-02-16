@@ -139,9 +139,9 @@ func Test_provider_GetStringMap(t *testing.T) {
 		key string
 	}
 	tests := []struct {
+		want    map[string]interface{}
 		name    string
 		args    args
-		want    map[string]interface{}
 		wantErr bool
 	}{
 		{

@@ -207,31 +207,53 @@ Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/
 
 ## Supported Backends
 
-- [Vault](#vault)
-- [AWS SSM Parameter Store](#aws-ssm-parameter-store)
-- [AWS Secrets Manager](#aws-secrets-manager)
-- [AWS S3](#aws-s3)
-- [GCP Secrets Manager](#gcp-secrets-manager)
-- [GCP KMS](#gcp-kms)
-- [Google Sheets](#google-sheets)
-- [Google GCS](#google-gcs)
-- [SOPS](#sops) powered by [sops](https://github.com/getsops/sops)
-- [Terraform (tfstate)](#terraform-tfstate) powered by [tfstate-lookup](https://github.com/fujiwara/tfstate-lookup)
-- [Keychain](#keychain)
-- [Echo](#echo)
-- [File](#file)
-- [Azure Key Vault](#azure-key-vault)
-- [EnvSubst](#envsubst)
-- [GitLab](#gitlab)
-- [1Password](#1password)
-- [1Password Connect](#1password-connect)
-- [Doppler](#doppler)
-- [Pulumi State](#pulumi-state)
-- [Kubernetes](#kubernetes)
-- [Conjur](#conjur)
-- [HCP Vault Secrets](#hcp-vault-secrets)
-- [HTTP JSON](#http-json)
-- [Bitwarden](#bitwarden)
+- [vals](#vals)
+  - [Usage](#usage)
+- [CLI](#cli)
+    - [Helm](#helm)
+    - [Go](#go)
+  - [Expression Syntax](#expression-syntax)
+  - [Supported Backends](#supported-backends)
+    - [Vault](#vault)
+    - [Authentication](#authentication)
+    - [AWS](#aws)
+      - [AWS SSM Parameter Store](#aws-ssm-parameter-store)
+      - [AWS Secrets Manager](#aws-secrets-manager)
+      - [AWS S3](#aws-s3)
+      - [AWS KMS](#aws-kms)
+      - [Google GCS](#google-gcs)
+    - [GCP Secrets Manager](#gcp-secrets-manager)
+    - [GCP KMS](#gcp-kms)
+    - [Google Sheets](#google-sheets)
+    - [Terraform (tfstate)](#terraform-tfstate)
+    - [Terraform in GCS bucket (tfstategs)](#terraform-in-gcs-bucket-tfstategs)
+    - [Terraform in S3 bucket (tfstates3)](#terraform-in-s3-bucket-tfstates3)
+    - [Terraform in AzureRM Blob storage (tfstateazurerm)](#terraform-in-azurerm-blob-storage-tfstateazurerm)
+    - [Terraform in Terraform Cloud / Terraform Enterprise (tfstateremote)](#terraform-in-terraform-cloud--terraform-enterprise-tfstateremote)
+    - [SOPS](#sops)
+    - [Keychain](#keychain)
+    - [Echo](#echo)
+    - [File](#file)
+    - [Azure Key Vault](#azure-key-vault)
+      - [Authentication](#authentication-1)
+    - [EnvSubst](#envsubst)
+    - [GitLab Secrets](#gitlab-secrets)
+    - [1Password](#1password)
+    - [1Password Connect](#1password-connect)
+    - [Doppler](#doppler)
+    - [Pulumi State](#pulumi-state)
+    - [Kubernetes](#kubernetes)
+    - [Conjur](#conjur)
+    - [HCP Vault Secrets](#hcp-vault-secrets)
+    - [Bitwarden](#bitwarden)
+    - [HTTP JSON](#http-json)
+      - [Fetch string value](#fetch-string-value)
+      - [Fetch integer value](#fetch-integer-value)
+  - [Advanced Usages](#advanced-usages)
+    - [Discriminating config and secrets](#discriminating-config-and-secrets)
+  - [Non-Goals](#non-goals)
+    - [Complex String-Interpolation / Template Functions](#complex-string-interpolation--template-functions)
+    - [Merge](#merge)
 
 Please see [pkg/providers](https://github.com/helmfile/vals/tree/master/pkg/providers) for the implementations of all the providers. The package names corresponds to the URI schemes.
 
@@ -779,11 +801,12 @@ Examples:
 
 Fetch value from Kubernetes:
 
-- `ref+k8s://API_VERSION/KIND/NAMESPACE/NAME/KEY[?kubeConfigPath=<path_to_kubeconfig>&kubeContext=<kubernetes context name>]`
+- `ref+k8s://API_VERSION/KIND/NAMESPACE/NAME/KEY[?kubeConfigPath=<path_to_kubeconfig>&kubeContext=<kubernetes context name>&inCluster]`
 
-Authentication to the Kubernetes cluster is done by referencing the local kubeconfig file.
+Authentication to the Kubernetes cluster is done by referencing the local kubeconfig file or in-cluster config.
 The path to the kubeconfig can be specified as a URI parameter, read from the `KUBECONFIG` environment variable or the provider will attempt to read `$HOME/.kube/config`.
 The Kubernetes context can be specified as a URI parameteter.
+If `?inCluster` is passed in the URI, ensure the pod running the `vals`command has the appropriate RBAC permissions to access the ConfigMap/Secret.
 
 Environment variables:
 
@@ -794,6 +817,7 @@ Examples:
 - `ref+k8s://v1/Secret/mynamespace/mysecret/foo`
 - `ref+k8s://v1/ConfigMap/mynamespace/myconfigmap/foo`
 - `ref+k8s://v1/Secret/mynamespace/mysecret/bar?kubeConfigPath=/home/user/kubeconfig`
+- `ref+k8s://v1/Secret/mynamespace/mysecret/foo?inCluster`
 - `secretref+k8s://v1/Secret/mynamespace/mysecret/baz`
 - `secretref+k8s://v1/Secret/mynamespace/mysecret/baz?kubeContext=minikube`
 
@@ -849,7 +873,7 @@ Example:
 
 
 ### Bitwarden
-This provider retrieves the secrets stored in Bitwarden. It uses the [Bitwarden Vault-Management API](https://bitwarden.com/help/vault-management-api/) that is included in the [Bitwarden CLI](https://github.com/bitwarden/clients) by executing `bw serve`. 
+This provider retrieves the secrets stored in Bitwarden. It uses the [Bitwarden Vault-Management API](https://bitwarden.com/help/vault-management-api/) that is included in the [Bitwarden CLI](https://github.com/bitwarden/clients) by executing `bw serve`.
 
 Environment variables:
 
@@ -872,7 +896,7 @@ Examples:
 
 This provider retrieves values stored in JSON hosted by a HTTP frontend.
 
-This provider is built on top of [jsonquery](https://pkg.go.dev/github.com/antchfx/jsonquery@v1.3.3) and [xpath](https://pkg.go.dev/github.com/antchfx/xpath@v1.2.3) packages.  
+This provider is built on top of [jsonquery](https://pkg.go.dev/github.com/antchfx/jsonquery@v1.3.3) and [xpath](https://pkg.go.dev/github.com/antchfx/xpath@v1.2.3) packages.
 
 Given the diverse array of JSON structures that can be encountered, utilizing jsonquery with XPath presents a more effective approach for handling this variability in data structures.
 
@@ -896,7 +920,7 @@ Let's say you want to fetch the below JSON object from https://api.github.com/us
         "name": "go-yaml"
     }
 ]
-``` 
+```
 ```
 # To get name="chartify" using https protocol you would use:
 ref+httpjson://api.github.com/users/helmfile/repos#///*[1]/name
@@ -919,7 +943,7 @@ Let's say you want to fetch the below JSON object from https://api.github.com/us
         "id": 251296379
     }
 ]
-``` 
+```
 ```
 # Running the following will return: 2.51296379e+08
 ref+httpjson://api.github.com/users/helmfile/repos#///*[1]/id

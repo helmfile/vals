@@ -19,10 +19,9 @@ import (
 
 type mockedS3 struct {
 	s3iface.S3API
-
-	Bucket, Key string
-	Output      *s3.GetObjectOutput
 	Error       awserr.Error
+	Output      *s3.GetObjectOutput
+	Bucket, Key string
 }
 
 func Output(b string) *s3.GetObjectOutput {
@@ -47,11 +46,10 @@ func (m mockedS3) GetObject(in *s3.GetObjectInput) (*s3.GetObjectOutput, error) 
 
 func TestGetString(t *testing.T) {
 	cases := []struct {
+		s3      mockedS3
 		key     string
 		want    string
 		wantErr string
-
-		s3 mockedS3
 	}{
 		{
 			key:     "foo/missing",
@@ -100,11 +98,10 @@ func TestGetString(t *testing.T) {
 
 func TestGetStringMap(t *testing.T) {
 	cases := []struct {
-		key     string
+		s3      mockedS3
 		want    map[string]interface{}
+		key     string
 		wantErr string
-
-		s3 mockedS3
 	}{
 		{
 			key:     "foo/missing",

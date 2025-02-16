@@ -118,12 +118,9 @@ type Runtime struct {
 	providers map[string]api.Provider
 	docCache  *lru.Cache // secret documents are cached to improve performance
 	strCache  *lru.Cache // secrets are cached to improve performance
-
-	Options Options
-
-	logger *log.Logger
-
-	m sync.Mutex
+	logger    *log.Logger
+	Options   Options
+	m         sync.Mutex
 }
 
 // New returns an instance of Runtime
@@ -555,8 +552,8 @@ var Env = applyEnvWithQuote(false)
 var QuotedEnv = applyEnvWithQuote(true)
 
 type ExecConfig struct {
-	InheritEnv bool
-	Options    Options
+	Stdout io.Writer
+	Stderr io.Writer
 	// StreamYAML reads the specific YAML file or all the YAML files
 	// stored within the specific directory, evaluate each YAML file,
 	// joining all the YAML files with "---" lines, and stream the
@@ -565,8 +562,8 @@ type ExecConfig struct {
 	// Kubernetes manifests to kubectl-apply, without writing
 	// the vals-eval outputs onto the disk, for security reasons.
 	StreamYAML string
-
-	Stdout, Stderr io.Writer
+	Options    Options
+	InheritEnv bool
 }
 
 func Exec(template map[string]interface{}, args []string, config ...ExecConfig) error {
@@ -621,7 +618,6 @@ func Exec(template map[string]interface{}, args []string, config ...ExecConfig) 
 func EvalNodes(nodes []yaml.Node, c Options) ([]yaml.Node, error) {
 	var res []yaml.Node
 	for _, node := range nodes {
-		node := node
 		var nodeValue interface{}
 		err := node.Decode(&nodeValue)
 		if err != nil {
