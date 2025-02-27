@@ -1,6 +1,7 @@
 module github.com/helmfile/vals
 
 go 1.23.1
+toolchain go1.24.0
 
 require (
 	cloud.google.com/go/kms v1.20.5
@@ -12,7 +13,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.8.2
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets v1.3.1
 	github.com/DopplerHQ/cli v0.5.11-0.20230908185655-7aef4713e1a4
-	github.com/a8m/envsubst v1.4.2
+	github.com/a8m/envsubst v1.4.3
 	github.com/antchfx/jsonquery v1.3.6
 	github.com/antchfx/xpath v1.3.3
 	github.com/aws/aws-sdk-go v1.55.6
