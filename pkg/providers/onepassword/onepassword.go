@@ -43,7 +43,7 @@ func (p *provider) GetString(key string) (string, error) {
 	}
 
 	prefixedKey := fmt.Sprintf("op://%s", key)
-	item, err := p.client.Secrets.Resolve(ctx, prefixedKey)
+	item, err := p.client.Secrets().Resolve(ctx, prefixedKey)
 	if err != nil {
 		return "", fmt.Errorf("error retrieving item: %v", err)
 	}
