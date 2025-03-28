@@ -184,7 +184,8 @@ func (p *provider) ensureClient() (*vault.Client, error) {
 			cli.SetNamespace(p.Namespace)
 		}
 
-		if p.AuthMethod == "token" {
+		switch p.AuthMethod {
+		case "token":
 			if p.TokenEnv != "" {
 				token := os.Getenv(p.TokenEnv)
 				if token == "" {
@@ -219,7 +220,7 @@ func (p *provider) ensureClient() (*vault.Client, error) {
 					}
 				}
 			}
-		} else if p.AuthMethod == "approle" {
+		case "approle":
 			data := map[string]interface{}{
 				"role_id":   p.RoleId,
 				"secret_id": p.SecretId,
@@ -242,7 +243,7 @@ func (p *provider) ensureClient() (*vault.Client, error) {
 			}
 
 			cli.SetToken(resp.Auth.ClientToken)
-		} else if p.AuthMethod == "kubernetes" {
+		case "kubernetes":
 			fd, err := os.Open(kubernetesJwtTokenPath)
 			defer func() {
 				_ = fd.Close()

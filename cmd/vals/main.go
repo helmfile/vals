@@ -267,7 +267,7 @@ func KsDecode(node yaml.Node) (*yaml.Node, error) {
 		return nil, fmt.Errorf("unexpected kind of node: expected %d, got %d", yaml.DocumentNode, node.Kind)
 	}
 
-	var res yaml.Node = node
+	var res = node
 
 	// record the original data node
 	var datakk yaml.Node
@@ -368,7 +368,7 @@ func KsEncode(node yaml.Node) (*yaml.Node, error) {
 		return nil, fmt.Errorf("unexpected kind of node: expected %d, got %d", yaml.DocumentNode, node.Kind)
 	}
 
-	var res yaml.Node = node
+	var res = node
 
 	var kk yaml.Node
 	var vv yaml.Node

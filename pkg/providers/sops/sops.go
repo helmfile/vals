@@ -66,15 +66,16 @@ func (p *provider) format(defaultFormat string) string {
 }
 
 func (p *provider) decrypt(keyOrData, format string) ([]byte, error) {
-	if p.KeyType == "base64" {
+	switch p.KeyType {
+	case "base64":
 		blob, err := base64.URLEncoding.DecodeString(keyOrData)
 		if err != nil {
 			return nil, err
 		}
 		return decrypt.Data(blob, format)
-	} else if p.KeyType == "filepath" {
+	case "filepath":
 		return decrypt.File(keyOrData, format)
-	} else {
+	default:
 		return nil, fmt.Errorf("unsupported key type %q. It must be one \"base64\" or \"filepath\"", p.KeyType)
 	}
 }
