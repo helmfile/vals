@@ -149,3 +149,38 @@ func TestEvalNodesWithDictionaries(t *testing.T) {
 
 	require.Equal(t, expected, buf.String())
 }
+
+func TestEvalNodesWithTime(t *testing.T) {
+	var yamlDocs = `
+date: 2025-01-01
+datetime: 2025-01-01T12:34:56Z
+datetime_millis: 2025-01-01T12:34:56.789Z
+datetime_offset: 2025-01-01T12:34:56+01:00
+`
+
+	var expected = `
+date: 2025-01-01
+datetime: 2025-01-01T12:34:56Z
+datetime_millis: 2025-01-01T12:34:56.789Z
+datetime_offset: 2025-01-01T12:34:56+01:00
+`
+
+	tmpFile, err := os.CreateTemp("", "secrets.yaml")
+	defer os.Remove(tmpFile.Name())
+	require.NoError(t, err)
+
+	_, err = tmpFile.WriteString(yamlDocs)
+	require.NoError(t, err)
+
+	input, err := Inputs(tmpFile.Name())
+	require.NoError(t, err)
+
+	nodes, err := EvalNodes(input, Options{})
+	require.NoError(t, err)
+	buf := new(strings.Builder)
+
+	err = Output(buf, "", nodes)
+	require.NoError(t, err)
+
+	require.Equal(t, expected, buf.String())
+}
