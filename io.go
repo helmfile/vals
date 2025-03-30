@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"gopkg.in/yaml.v3"
 )
@@ -87,7 +88,7 @@ func replaceTimestamp(n *yaml.Node) {
 		return
 	}
 	for _, innerNode := range n.Content {
-		if innerNode.Tag == "!!map" {
+		if slices.Contains([]string{"!!map", "!!seq"}, innerNode.Tag) {
 			replaceTimestamp(innerNode)
 		}
 		if innerNode.Tag == "!!timestamp" {
