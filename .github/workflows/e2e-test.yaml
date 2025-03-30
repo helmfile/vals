@@ -28,4 +28,4 @@ jobs:
         go-version-file: 'go.mod'
         cache: true
     - name: test
-      run: kubectl cluster-info 
+      run: make test
