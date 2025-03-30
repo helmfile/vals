@@ -153,12 +153,16 @@ func TestEvalNodesWithDictionaries(t *testing.T) {
 func TestEvalNodesWithTime(t *testing.T) {
 	var yamlDocs = `
 date: 2025-01-01
+datet_in_list: 
+  - from: 2025-01-01
 datetime: 2025-01-01T12:34:56Z
 datetime_millis: 2025-01-01T12:34:56.789Z
 datetime_offset: 2025-01-01T12:34:56+01:00
 `
 
 	var expected = `date: "2025-01-01"
+datet_in_list:
+  - from: "2025-01-01"
 datetime: "2025-01-01T12:34:56Z"
 datetime_millis: "2025-01-01T12:34:56.789Z"
 datetime_offset: "2025-01-01T12:34:56+01:00"
