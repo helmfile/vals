@@ -70,10 +70,30 @@ func nodesFromReader(reader io.Reader) ([]yaml.Node, error) {
 			break
 		}
 		if len(node.Content[0].Content) > 0 {
+			replaceTimestamp(&node)
 			nodes = append(nodes, node)
 		}
 	}
 	return nodes, nil
+}
+
+// A custom unmarshal is needed because go-yaml parse "YYYY-MM-DD" as a full
+// timestamp, writing YYYY-MM-DD HH:MM:SS +0000 UTC when encoding, so we are
+// going to treat timestamps as strings.
+// See: https://github.com/go-yaml/yaml/issues/770
+
+func replaceTimestamp(n *yaml.Node) {
+	if len(n.Content) == 0 {
+		return
+	}
+	for _, innerNode := range n.Content {
+		if innerNode.Tag == "!!map" {
+			replaceTimestamp(innerNode)
+		}
+		if innerNode.Tag == "!!timestamp" {
+			innerNode.Tag = "!!str"
+		}
+	}
 }
 
 func Output(output io.Writer, format string, nodes []yaml.Node) error {
