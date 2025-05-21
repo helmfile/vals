@@ -355,8 +355,8 @@ github.com/hashicorp/golang-lru v1.0.2 h1:dV3g9Z/unq5DpblPpw+Oqcv4dU/1omnb4Ok8iP
 github.com/hashicorp/golang-lru v1.0.2/go.mod h1:iADmTwqILo4mZ8BN3D2Q6+9jd8WM5uGBxy+E8yxSoD4=
 github.com/hashicorp/hcl v1.0.0 h1:0Anlzjpi4vEasTeNFn2mLJgTSwt0+6sfsiTG8qcWGx4=
 github.com/hashicorp/hcl v1.0.0/go.mod h1:E5yfLk+7swimpb2L/Alb/PJmXilQ/rhwaUYs4T20WEQ=
-github.com/hashicorp/hcp-sdk-go v0.142.0 h1:fODrRtwKeBfcJlsw54ieO7o4PdraHjPMp90sotQQdLM=
-github.com/hashicorp/hcp-sdk-go v0.142.0/go.mod h1:ZxsZZjErm3E2sj2OjDeVsGJAkWtcRLUS+FrNLGPsUyw=
+github.com/hashicorp/hcp-sdk-go v0.143.0 h1:8THPdOlWlRAceHhnOy7jg2MOXzXdy7ZH+mTkHBow6s8=
+github.com/hashicorp/hcp-sdk-go v0.143.0/go.mod h1:ZxsZZjErm3E2sj2OjDeVsGJAkWtcRLUS+FrNLGPsUyw=
 github.com/hashicorp/jsonapi v1.3.1 h1:GtPvnmcWgYwCuDGvYT5VZBHcUyFdq9lSyCzDjn1DdPo=
 github.com/hashicorp/jsonapi v1.3.1/go.mod h1:kWfdn49yCjQvbpnvY1dxxAuAFzISwrrMDQOcu6NsFoM=
 github.com/hashicorp/vault/api v1.16.0 h1:nbEYGJiAPGzT9U4oWgaaB0g+Rj8E59QuHKyA5LhwQN4=
