@@ -64,26 +64,30 @@ func GetXpathFromUri(uri string) (xpathExpression string, err error) {
 
 func GetUrlFromUri(uri string, protocol string) (string, error) {
 	// Remove httpjson:// prefix
-	trimmedStr := strings.TrimPrefix(uri, "httpjson://")
-	// Attempt to split uri on argument
-	uriParts := strings.Split(trimmedStr, "?")
-	urlDomain := ""
-	if len(uriParts) == 1 {
-		// Attempt to split uri on parameter
-		urlDomain = strings.Split(trimmedStr, "#")[0]
-	} else {
-		urlDomain = uriParts[0]
-	}
-	if urlDomain == "" {
-		return "", fmt.Errorf("no domain found in uri: %s", uri)
-	}
-	fullURL := fmt.Sprintf("%s://%s", protocol, urlDomain)
-	_, err := url.Parse(fullURL)
-	if err != nil {
-		return "", fmt.Errorf("invalid domain: %s", err.Error())
+	trimmedUrl := strings.TrimPrefix(uri, "httpjson://")
+	// Remove xpath suffix
+	trimmedUrl = strings.Split(trimmedUrl, "#/")[0]
+
+	fullURL := fmt.Sprintf("%s://%s", protocol, trimmedUrl)
+
+	parsedUrl, parseErr := url.Parse(fullURL)
+	if parseErr != nil {
+		return "", fmt.Errorf("invalid URL: %s, error: %s", fullURL, parseErr.Error())
 	}
 
-	return fullURL, nil
+	if parsedUrl.Host == "" {
+		return "", fmt.Errorf("no domain found in uri: %s", uri)
+	}
+
+	query := parsedUrl.Query()
+
+	for _, key := range []string{"insecure", "floatAsInt"} {
+		query.Del(key)
+	}
+
+	parsedUrl.RawQuery = query.Encode()
+
+	return parsedUrl.String(), nil
 }
 
 func (p *provider) GetJsonDoc(url string) error {
@@ -116,7 +120,11 @@ func (p *provider) GetString(uri string) (string, error) {
 	returnValue := ""
 	var values []string
 	node, err := jsonquery.Query(p.docs[url], xpathQuery)
-	if err != nil || node == nil {
+	if err != nil {
+		return "", fmt.Errorf("error querying the xpath expression %s, error: %s", xpathQuery, err)
+	}
+
+	if node == nil {
 		return "", fmt.Errorf("unable to query doc for value with xpath query using %v", uri)
 	}
 
