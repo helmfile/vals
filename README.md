@@ -22,6 +22,7 @@ It supports various backends including:
 - Conjur
 - HCP Vault Secrets
 - Bitwarden
+- [Yandex Cloud Lockbox](https://yandex.cloud/en/docs/lockbox/)
 - HTTP JSON
 - Keychain
 
@@ -246,6 +247,8 @@ Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/
     - [Conjur](#conjur)
     - [HCP Vault Secrets](#hcp-vault-secrets)
     - [Bitwarden](#bitwarden)
+    - [Yandex Cloud Lockbox](#yandex-cloud-lockbox)
+      - [Authentication](#authentication-2)
     - [HTTP JSON](#http-json)
       - [Fetch string value](#fetch-string-value)
       - [Fetch integer value](#fetch-integer-value)
@@ -897,6 +900,23 @@ Examples:
 - `ref+bw://4d084b01-87e7-4411-8de9-2476ab9f3f48/password` gets the password of the item id
 - `ref+bw://4d084b01-87e7-4411-8de9-2476ab9f3f48/{username,password,uri,notes,item}` gets username, password, uri, notes or the whole item of the given item id
 - `ref+bw://4d084b01-87e7-4411-8de9-2476ab9f3f48/notes#/key1` gets the *key1* from the yaml stored as note in the item
+
+### Yandex Cloud Lockbox
+
+Retrieve secrets from [Yandex Cloud Lockbox](https://yandex.cloud/en/docs/lockbox/). Path is used to specify secret ID. Optionally a specific secret version can be retrieved (using current version by default). If fragment is specified, retrieves a specific key from the secret.
+
+- `ref+yclockbox://SECRET_ID[?version_id=VERSION][#KEY]`
+
+Examples:
+
+- `ref+yclockbox://e6qeoqvd88dcpf044n5i` - get whole secret `e6qeoqvd88dcpf044n5i` from the current version
+- `ref+yclockbox://e6qeoqvd88dcpf044n5i?version_id=e6qn22seoaprg9cbe1dj` - get whole secret `e6qeoqvd88dcpf044n5i` from the `e6qn22seoaprg9cbe1dj` version
+- `ref+yclockbox://e6qeoqvd88dcpf044n5i?version_id=e6qn22seoaprg9cbe1dj#oauth_secret` - get secret entry from the `oauth_secret` key of `e6qn22seoaprg9cbe1dj` version of `e6qeoqvd88dcpf044n5i` secret
+- `ref+yclockbox://e6qeoqvd88dcpf044n5i#oauth_secret` - get secret entry from the `oauth_secret` key of current version of `e6qeoqvd88dcpf044n5i` secret
+
+#### Authentication
+
+Vals aquires Yandex Cloud IAM token from the `YC_TOKEN` environment variable. The easiest way to get it is to run `yc iam create-token`. See [Yandex Cloud Lockbox docs](https://yandex.cloud/en/docs/lockbox/api-ref/authentication) for more details on authentication
 
 ### HTTP JSON
 
