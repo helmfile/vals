@@ -46,6 +46,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/ssm"
 	"github.com/helmfile/vals/pkg/providers/tfstate"
 	"github.com/helmfile/vals/pkg/providers/vault"
+	"github.com/helmfile/vals/pkg/providers/yclockbox"
 	"github.com/helmfile/vals/pkg/stringmapprovider"
 	"github.com/helmfile/vals/pkg/stringprovider"
 )
@@ -103,6 +104,7 @@ const (
 	ProviderHCPVaultSecrets    = "hcpvaultsecrets"
 	ProviderHttpJsonManager    = "httpjson"
 	ProviderBitwarden          = "bw"
+	ProviderLockbox            = "yclockbox"
 )
 
 var (
@@ -278,6 +280,9 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 			return p, nil
 		case ProviderBitwarden:
 			p := bitwarden.New(r.logger, conf)
+			return p, nil
+		case ProviderLockbox:
+			p := yclockbox.New(r.logger, conf)
 			return p, nil
 		}
 		return nil, fmt.Errorf("no provider registered for scheme %q", scheme)
