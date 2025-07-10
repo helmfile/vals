@@ -77,21 +77,44 @@ func (p *provider) getClientForKeyVault(vaultBaseURL string) (*azsecrets.Client,
 
 func getTokenCredential() (azcore.TokenCredential, error) {
 	authEnvVar := os.Getenv("AZKV_AUTH")
-	cred, err := switch authEnvVar {
+	var chain []azcore.TokenCredential
+
+	switch authEnvVar {
 	case "", "default":
-		return azidentity.NewDefaultAzureCredential(nil)x
+		cred, err := azidentity.NewDefaultAzureCredential(nil)
+		if err != nil {
+			return nil, err
+		}
+		chain = {cred}
 	case "workload":
-		return azidentity.NewWorkloadIdentityCredential(nil)
+		cred, err := azidentity.NewWorkloadIdentityCredential(nil)
+		if err != nil {
+			return nil, err
+		}
+		chain = {cred}
 	case "managed":
-		return azidentity.NewManagedIdentityCredential(nil)
+		cred, err := azidentity.NewManagedIdentityCredential(nil)
+		if err != nil {
+			return nil, err
+		}
+		chain = {cred}
 	case "cli":
-		return azidentity.NewAzureCLICredential(nil)
+		cred, err := azidentity.NewAzureCLICredential(nil)
+		if err != nil {
+			return nil, err
+		}
+		chain = {cred}
 	case "devcli":
-		return azidentity.NewAzureDeveloperCLICredential(nil)
+		cred, err := azidentity.NewAzureDeveloperCLICredential(nil)
+		if err != nil {
+			return nil, err
+		}
+		chain = {cred}
 	default:
 		panic("Environment variable 'AZKV_AUTH' is set to an unsupported value!")
 	}
 
+	cred, err := azidentity.NewChainedTokenCredential(chain, nil)
 	if err != nil {
 		return nil, err
 	}
