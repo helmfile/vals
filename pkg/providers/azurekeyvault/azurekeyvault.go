@@ -85,31 +85,31 @@ func getTokenCredential() (azcore.TokenCredential, error) {
 		if err != nil {
 			return nil, err
 		}
-		chain = {cred}
+		chain = append(cred)
 	case "workload":
 		cred, err := azidentity.NewWorkloadIdentityCredential(nil)
 		if err != nil {
 			return nil, err
 		}
-		chain = {cred}
+		chain = append(cred)
 	case "managed":
 		cred, err := azidentity.NewManagedIdentityCredential(nil)
 		if err != nil {
 			return nil, err
 		}
-		chain = {cred}
+		chain = append(cred)
 	case "cli":
 		cred, err := azidentity.NewAzureCLICredential(nil)
 		if err != nil {
 			return nil, err
 		}
-		chain = {cred}
+		chain = append(cred)
 	case "devcli":
 		cred, err := azidentity.NewAzureDeveloperCLICredential(nil)
 		if err != nil {
 			return nil, err
 		}
-		chain = {cred}
+		chain = append(cred)
 	default:
 		panic("Environment variable 'AZKV_AUTH' is set to an unsupported value!")
 	}
