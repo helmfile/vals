@@ -668,19 +668,25 @@ Examples:
 
 #### Authentication
 
-Vals aquires Azure credentials though Azure CLI or from environment variables. The easiest way is to run `az login`. Vals can then aquire the current credentials from `az` without further set up.
+Vals acquires Azure credentials via the [azidentity Go module](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity).
 
-Other authentication methods require information to be passed in environment variables. See [Azure SDK docs](https://docs.microsoft.com/en-us/azure/developer/go/azure-sdk-authorization#use-environment-based-authentication) and [auth.go](https://godoc.org/github.com/Azure/go-autorest/autorest/azure/auth#NewAuthorizerFromEnvironment) for the full list of supported environment variables.
+By default, the following authentication types will be tried and the first one that works will be used:
 
-For example, if using client credentials the required env vars are `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_TENANT_ID` and possibly `AZURE_ENVIRONMENT` in case of accessing an Azure GovCloud.
+1. [Environment Variables](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity#EnvironmentCredential)
+1. [Workload Identity](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity#WorkloadIdentityCredential)
+1. [Managed Identity](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity#ManagedIdentityCredential)
+1. [Azure CLI](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity#AzureCLICredential)
+1. [Azure Developer CLI](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity#AzureDeveloperCLICredential)
 
-The order in which authentication methods are checked is:
-1. Client credentials
-2. Client certificate
-3. Username/Password
-4. Azure CLI or Managed identity (set environment `AZURE_USE_MSI=true` to enabled MSI)
+In practice, the simplest way to authenticate is to log into the Azure CLI using an account that has access to read secrets from the Key Vault in question.
 
-more see: https://github.com/helmfile/vals/issues/441
+In case you are running in an environment that has multiple authentication types configured at once (and you need to use one that is lower on the list above), you can choose a specific one to use by setting the environment variable `AZKV_AUTH` to to one of the following values.
+
+- Default Behavior: `default` (or unset)
+- Workload Identity: `workload`
+- Managed Identity: `managed`
+- Azure CLI: `cli`
+- Azure Developer CLI: `devcli`
 
 ### EnvSubst
 
