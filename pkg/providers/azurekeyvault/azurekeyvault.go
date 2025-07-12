@@ -3,6 +3,7 @@ package azurekeyvault
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
@@ -75,7 +76,45 @@ func (p *provider) getClientForKeyVault(vaultBaseURL string) (*azsecrets.Client,
 }
 
 func getTokenCredential() (azcore.TokenCredential, error) {
-	cred, err := azidentity.NewDefaultAzureCredential(nil)
+	authEnvVar := os.Getenv("AZKV_AUTH")
+	var chain []azcore.TokenCredential
+
+	switch authEnvVar {
+	case "", "default":
+		cred, err := azidentity.NewDefaultAzureCredential(nil)
+		if err != nil {
+			return nil, err
+		}
+		chain = append(chain, cred)
+	case "workload":
+		cred, err := azidentity.NewWorkloadIdentityCredential(nil)
+		if err != nil {
+			return nil, err
+		}
+		chain = append(chain, cred)
+	case "managed":
+		cred, err := azidentity.NewManagedIdentityCredential(nil)
+		if err != nil {
+			return nil, err
+		}
+		chain = append(chain, cred)
+	case "cli":
+		cred, err := azidentity.NewAzureCLICredential(nil)
+		if err != nil {
+			return nil, err
+		}
+		chain = append(chain, cred)
+	case "devcli":
+		cred, err := azidentity.NewAzureDeveloperCLICredential(nil)
+		if err != nil {
+			return nil, err
+		}
+		chain = append(chain, cred)
+	default:
+		panic("Environment variable 'AZKV_AUTH' is set to an unsupported value!")
+	}
+
+	cred, err := azidentity.NewChainedTokenCredential(chain, nil)
 	if err != nil {
 		return nil, err
 	}
