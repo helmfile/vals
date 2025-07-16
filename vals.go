@@ -38,6 +38,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/httpjson"
 	"github.com/helmfile/vals/pkg/providers/k8s"
 	"github.com/helmfile/vals/pkg/providers/keychain"
+	"github.com/helmfile/vals/pkg/providers/oci"
 	"github.com/helmfile/vals/pkg/providers/onepassword"
 	"github.com/helmfile/vals/pkg/providers/onepasswordconnect"
 	"github.com/helmfile/vals/pkg/providers/pulumi"
@@ -94,6 +95,7 @@ const (
 	ProviderAzureKeyVault      = "azurekeyvault"
 	ProviderEnvSubst           = "envsubst"
 	ProviderKeychain           = "keychain"
+	ProviderOCI                = "oci"
 	ProviderOnePassword        = "op"
 	ProviderOnePasswordConnect = "onepasswordconnect"
 	ProviderDoppler            = "doppler"
@@ -210,6 +212,9 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 			// 1. Get secret for key foo/bar, parse it as yaml
 			// 2. Then extracts the value for key baz) from the result from step 1.
 			p := awssecrets.New(r.logger, conf)
+			return p, nil
+		case ProviderOCI:
+			p := oci.New(r.logger, conf)
 			return p, nil
 		case ProviderSOPS:
 			p := sops.New(r.logger, conf)
