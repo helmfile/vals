@@ -25,8 +25,9 @@ require (
 	github.com/hashicorp/vault/api v1.20.0
 	github.com/stretchr/testify v1.10.0
 	github.com/tidwall/gjson v1.18.0
-	golang.org/x/oauth2 v0.30.0
+	github.com/yandex-cloud/go-genproto v0.12.0
 	github.com/yandex-cloud/go-sdk v0.11.0
+	golang.org/x/oauth2 v0.30.0
 	google.golang.org/api v0.215.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.33.3
@@ -74,7 +75,6 @@ require (
 	github.com/tetratelabs/wazero v1.9.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
-	github.com/yandex-cloud/go-genproto v0.12.0 // indirect
 	go.mongodb.org/mongo-driver v1.14.0 // indirect
 	go.opentelemetry.io/contrib/detectors/gcp v1.29.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.29.0 // indirect

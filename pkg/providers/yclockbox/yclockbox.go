@@ -3,6 +3,7 @@ package yclockbox
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/lockbox/v1"
@@ -56,6 +57,9 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 }
 
 func (p *provider) GetString(key string) (string, error) {
+	if p == nil {
+		return "", fmt.Errorf("yclockbox: provider is nil")
+	}
 	secret, err := p.GetStringMap(key)
 
 	if err != nil {
@@ -73,7 +77,10 @@ func (p *provider) GetString(key string) (string, error) {
 	return string(res), nil
 }
 
-func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
+func (p *provider) GetStringMap(key string) (map[string]any, error) {
+	if p == nil {
+		return nil, fmt.Errorf("yclockbox: provider is nil")
+	}
 	secret, err := p.client.Get(
 		context.Background(),
 		&lockbox.GetPayloadRequest{
