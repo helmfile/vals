@@ -25,6 +25,8 @@ require (
 	github.com/hashicorp/vault/api v1.20.0
 	github.com/stretchr/testify v1.10.0
 	github.com/tidwall/gjson v1.18.0
+	github.com/yandex-cloud/go-genproto v0.12.0
+	github.com/yandex-cloud/go-sdk v0.11.0
 	golang.org/x/oauth2 v0.30.0
 	google.golang.org/api v0.246.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -53,6 +55,7 @@ require (
 	github.com/envoyproxy/protoc-gen-validate v1.2.1 // indirect
 	github.com/extism/go-sdk v1.7.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
+	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.5 // indirect
 	github.com/go-openapi/analysis v0.23.0 // indirect
 	github.com/go-openapi/errors v0.22.1 // indirect
