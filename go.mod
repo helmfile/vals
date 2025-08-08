@@ -25,7 +25,7 @@ require (
 	github.com/hashicorp/vault/api v1.20.0
 	github.com/stretchr/testify v1.10.0
 	github.com/tidwall/gjson v1.18.0
-	github.com/yandex-cloud/go-genproto v0.14.0
+	github.com/yandex-cloud/go-genproto v0.17.0
 	github.com/yandex-cloud/go-sdk v0.15.0
 	golang.org/x/oauth2 v0.30.0
 	google.golang.org/api v0.246.0
