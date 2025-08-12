@@ -21,7 +21,7 @@ jobs:
         kubectl create namespace test-namespace
         kubectl create secret generic mysecret -n test-namespace --from-literal=key=p4ssw0rd
         kubectl create configmap myconfigmap -n test-namespace --from-literal=key=configValue
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
