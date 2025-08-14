@@ -39,6 +39,15 @@ After making changes, ALWAYS run through these validation scenarios:
 4. **EnvSubst Provider Test**: `export VAR1=hello-world && echo 'test: ref+envsubst://$VAR1' | ./bin/vals eval -f -` -- should output: `test: hello-world`
 5. **Get Command Test**: `./bin/vals get 'ref+echo://hello-vals'` -- should output: `hello-vals`
 6. **Help Command Test**: `./bin/vals --help` -- should show all available commands
+7. **Complex YAML Test**: `echo 'config: {database_url: ref+echo://postgres://localhost:5432/mydb, api_key: ref+echo://secret123}' | ./bin/vals eval -f -` -- should resolve both refs
+8. **JSON Output Test**: `echo '{"app": {"name": "ref+echo://myapp"}}' | ./bin/vals eval -f - -o json` -- should output valid JSON
+9. **Env Command Test**: `echo 'VAR1: ref+echo://hello' | ./bin/vals env -f -` -- should output: `VAR1=hello`
+10. **Exec Command Test**: `./bin/vals exec -f <(echo 'TEST_VAR: ref+echo://test-value') -- env | grep TEST_VAR` -- should show: `TEST_VAR=test-value`
+
+### Error Handling Validation
+Test error scenarios to ensure proper error handling:
+- **Invalid Provider**: `echo 'test: ref+invalid://test' | ./bin/vals eval -f -` -- should show: `no provider registered for scheme "invalid"`
+- **Missing File**: `echo 'test: ref+file://missing.json' | ./bin/vals eval -f -` -- should show: `no such file or directory`
 
 ### CLI Commands
 The `vals` CLI supports these commands:
@@ -97,13 +106,27 @@ Most providers require authentication:
 - Vault: Set VAULT_ADDR, VAULT_TOKEN
 - Use `ref+echo://` and `ref+file://` for testing without external dependencies
 
+### Provider Testing Without External Dependencies
+These providers work without external services and are perfect for testing:
+- `ref+echo://value` -- Returns the literal value
+- `ref+file://./path/to/file.json#/path/to/key` -- Reads from local JSON/YAML files  
+- `ref+envsubst://$VARIABLE_NAME` -- Substitutes environment variables
+- Test files available: `myjson.json` contains `{"baz": {"mykey": "myvalue"}}`, `myyaml.yaml` contains equivalent YAML
+
 ### Development Workflow
 1. Make code changes in relevant packages
 2. Run `make build` to ensure compilation
 3. Test with validation scenarios to ensure basic functionality
 4. Run provider-specific tests if modifying provider code
-5. Run linting before committing
+5. Run linting before committing: `export PATH=$PATH:$(go env GOPATH)/bin && golangci-lint run -v`
 6. Always test end-to-end scenarios with actual CLI usage
+
+### Common Development Patterns
+- **Adding a new provider**: Look at `pkg/providers/echo/` for the simplest example
+- **Modifying core functionality**: Tests are in `vals_test.go`, core logic in `vals.go`
+- **CLI changes**: Main entry point is `cmd/vals/main.go`
+- **Testing changes**: Use echo and file providers for quick validation, then test with real providers
+- **Debugging**: Add logging via `pkg/log` package, use `vals get` for single value testing
 
 ### Debugging
 - Use `ref+echo://` provider for simple testing
