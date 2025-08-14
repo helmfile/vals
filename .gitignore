@@ -1,4 +1,6 @@
 .idea
 *~
-bin/vals
+bin/
+cover.out
+vals
 .vscode
