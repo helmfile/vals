@@ -15,7 +15,6 @@ require (
 	github.com/a8m/envsubst v1.4.3
 	github.com/antchfx/jsonquery v1.3.6
 	github.com/antchfx/xpath v1.3.4
-	github.com/aws/aws-sdk-go v1.55.8
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.38.0
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.63.0
 	github.com/cyberark/conjur-api-go v0.13.3
@@ -175,7 +174,6 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/itchyny/gojq v0.12.16 // indirect
 	github.com/itchyny/timefmt-go v0.1.6 // indirect
-	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
