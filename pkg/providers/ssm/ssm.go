@@ -1,14 +1,15 @@
 package ssm
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/ssm"
-	"github.com/aws/aws-sdk-go/service/ssm/ssmiface"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ssm"
+	"github.com/aws/aws-sdk-go-v2/service/ssm/types"
 	"gopkg.in/yaml.v3"
 
 	"github.com/helmfile/vals/pkg/api"
@@ -18,7 +19,7 @@ import (
 
 type provider struct {
 	// Keeping track of SSM services since we need a SSM service per region
-	ssmClient ssmiface.SSMAPI
+	ssmClient *ssm.Client
 	log       *log.Logger
 
 	// AWS SSM Parameter store global configuration
@@ -55,11 +56,11 @@ func (p *provider) GetString(key string) (string, error) {
 
 	ssmClient := p.getSSMClient()
 
-	in := ssm.GetParameterInput{
+	in := &ssm.GetParameterInput{
 		Name:           aws.String(key),
 		WithDecryption: aws.Bool(true),
 	}
-	out, err := ssmClient.GetParameter(&in)
+	out, err := ssmClient.GetParameter(context.TODO(), in)
 	if err != nil {
 		return "", fmt.Errorf("get parameter: %v", err)
 	}
@@ -94,22 +95,23 @@ func (p *provider) GetStringVersion(key string) (string, error) {
 	}
 
 	var result string
-	if err := ssmClient.GetParameterHistoryPages(getParameterHistoryInput, func(o *ssm.GetParameterHistoryOutput, lastPage bool) bool {
-		for _, history := range o.Parameters {
-			thisVersion := int64(0)
+	paginator := ssm.NewGetParameterHistoryPaginator(ssmClient, getParameterHistoryInput)
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(context.TODO())
+		if err != nil {
+			return "", errors.New(err.Error())
+		}
+		
+		for _, history := range page.Parameters {
+			thisVersion := history.Version
 
-			if history.Version != nil {
-				thisVersion = *history.Version
-			}
 			if thisVersion == version {
 				result = *history.Value
-				return false
+				return result, nil
 			}
 		}
-		return true
-	}); err != nil {
-		return "", errors.New(err.Error())
 	}
+	
 	if result != "" {
 		p.log.Debugf("SSM: successfully retrieved key=%s", key)
 		return result, nil
@@ -142,28 +144,30 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 
 	res := map[string]interface{}{}
 
-	in := ssm.GetParametersByPathInput{
+	in := &ssm.GetParametersByPathInput{
 		Path:           aws.String(key),
 		Recursive:      aws.Bool(p.Recursive),
 		WithDecryption: aws.Bool(true),
 	}
 
-	var out ssm.GetParametersByPathOutput
-	if err := ssmClient.GetParametersByPathPages(&in, func(o *ssm.GetParametersByPathOutput, lastPage bool) bool {
-		if o != nil && len(o.Parameters) > 0 {
-			out.Parameters = append(out.Parameters, o.Parameters...)
-			return true
+	var allParameters []types.Parameter
+	paginator := ssm.NewGetParametersByPathPaginator(ssmClient, in)
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(context.TODO())
+		if err != nil {
+			return nil, fmt.Errorf("ssm: get parameters by path: %v", err)
 		}
-		return false
-	}); err != nil {
-		return nil, fmt.Errorf("ssm: get parameters by path: %v", err)
+		
+		if page != nil && len(page.Parameters) > 0 {
+			allParameters = append(allParameters, page.Parameters...)
+		}
 	}
 
-	if len(out.Parameters) == 0 {
+	if len(allParameters) == 0 {
 		return nil, errors.New("ssm: out.Parameters is empty")
 	}
 
-	for _, param := range out.Parameters {
+	for _, param := range allParameters {
 		name := *param.Name
 		name = strings.TrimPrefix(name, key)
 
@@ -206,13 +210,13 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 	return res, nil
 }
 
-func (p *provider) getSSMClient() ssmiface.SSMAPI {
+func (p *provider) getSSMClient() *ssm.Client {
 	if p.ssmClient != nil {
 		return p.ssmClient
 	}
 
-	sess := awsclicompat.NewSession(p.Region, p.Profile, p.RoleARN)
+	cfg := awsclicompat.NewSession(p.Region, p.Profile, p.RoleARN)
 
-	p.ssmClient = ssm.New(sess)
+	p.ssmClient = ssm.NewFromConfig(cfg)
 	return p.ssmClient
 }

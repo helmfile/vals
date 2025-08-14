@@ -1,11 +1,13 @@
 package awsclicompat
 
 import (
+	"context"
 	"os"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
-	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
 )
 
 // NewSession enhances newSession by adding support for assuming a role
@@ -19,18 +21,20 @@ import (
 // If we need to use separate regions and profiles for each session,
 // we might need to enhance this function further.
 // That's another story though...
-func NewSession(region string, profile string, roleARN string) *session.Session {
-	sess := newSesssion(region, profile)
+func NewSession(region string, profile string, roleARN string) aws.Config {
+	cfg := newConfig(region, profile)
 
 	if roleARN != "" {
-		assumeRoleSess := newSesssion(region, profile)
-		sess.Config.Credentials = stscreds.NewCredentials(assumeRoleSess, roleARN)
+		// Create an STS client using the base config
+		stsClient := sts.NewFromConfig(cfg)
+		// Create credentials that assume the role
+		cfg.Credentials = stscreds.NewAssumeRoleProvider(stsClient, roleARN)
 	}
 
-	return sess
+	return cfg
 }
 
-// newSession creates a new AWS session for the given AWS region and AWS PROFILE.
+// newConfig creates a new AWS config for the given AWS region and AWS PROFILE.
 //
 // The following credential sources are supported:
 //
@@ -41,11 +45,20 @@ func NewSession(region string, profile string, roleARN string) *session.Session 
 //
 // The fourth option of using FORCE_AWS_PROFILE=true and AWS_PROFILE=yourprofile is equivalent to `aws --profile ${AWS_PROFILE}`.
 // See https://github.com/helmfile/vals/issues/19#issuecomment-600437486 for more details and why and when this is needed.
-func newSesssion(region string, profile string) *session.Session {
-	cfg := aws.NewConfig()
+func newConfig(region string, profile string) aws.Config {
+	configOptions := []func(*config.LoadOptions) error{}
 
 	if region != "" {
-		cfg = cfg.WithRegion(region)
+		configOptions = append(configOptions, config.WithRegion(region))
+	}
+
+	if profile != "" {
+		configOptions = append(configOptions, config.WithSharedConfigProfile(profile))
+	} else if os.Getenv("FORCE_AWS_PROFILE") == "true" {
+		awsProfile := os.Getenv("AWS_PROFILE")
+		if awsProfile != "" {
+			configOptions = append(configOptions, config.WithSharedConfigProfile(awsProfile))
+		}
 	}
 
 	// AWS_ENDPOINT_URL
@@ -60,24 +73,21 @@ func newSesssion(region string, profile string) *session.Session {
 	// https://github.com/aws/aws-sdk-go/issues/4942
 	endpointUrl := os.Getenv("AWS_ENDPOINT_URL")
 	if endpointUrl != "" {
-		cfg = cfg.WithEndpoint(endpointUrl)
+		configOptions = append(configOptions, config.WithCustomCABundle(nil))
+		customResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
+			return aws.Endpoint{
+				URL: endpointUrl,
+			}, nil
+		})
+		configOptions = append(configOptions, config.WithEndpointResolverWithOptions(customResolver))
 	}
 
-	opts := session.Options{
-		AssumeRoleTokenProvider: stscreds.StdinTokenProvider,
-		SharedConfigState:       session.SharedConfigEnable,
-		Config:                  *cfg,
+	cfg, err := config.LoadDefaultConfig(context.TODO(), configOptions...)
+	if err != nil {
+		// In v1, session.Must was used which panics on error
+		// We maintain similar behavior here
+		panic(err)
 	}
 
-	if profile != "" {
-		opts.Profile = profile
-	} else if os.Getenv("FORCE_AWS_PROFILE") == "true" {
-		opts.Profile = os.Getenv("AWS_PROFILE")
-	}
-
-	opts.Config.CredentialsChainVerboseErrors = aws.Bool(true)
-
-	sess := session.Must(session.NewSessionWithOptions(opts))
-
-	return sess
+	return cfg
 }
