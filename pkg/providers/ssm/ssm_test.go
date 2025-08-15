@@ -1,7 +1,7 @@
 package ssm
 
 // Note: This test file uses AWS SDK v1 mocks and needs to be updated for v2.
-// For now, these tests are commented out since the main functionality has been 
+// For now, these tests are commented out since the main functionality has been
 // migrated to v2 and integration tests provide coverage.
 
 /*

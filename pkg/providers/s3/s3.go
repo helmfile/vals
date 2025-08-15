@@ -63,7 +63,10 @@ func (p *provider) GetString(key string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("getting s3 object: %w", err)
 	}
-	defer out.Body.Close()
+
+	defer func() {
+		_ = out.Body.Close()
+	}()
 
 	p.log.Debugf("s3: successfully retrieved object for key=%s", key)
 

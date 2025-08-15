@@ -101,7 +101,7 @@ func (p *provider) GetStringVersion(key string) (string, error) {
 		if err != nil {
 			return "", errors.New(err.Error())
 		}
-		
+
 		for _, history := range page.Parameters {
 			thisVersion := history.Version
 
@@ -111,7 +111,7 @@ func (p *provider) GetStringVersion(key string) (string, error) {
 			}
 		}
 	}
-	
+
 	if result != "" {
 		p.log.Debugf("SSM: successfully retrieved key=%s", key)
 		return result, nil
@@ -157,7 +157,7 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 		if err != nil {
 			return nil, fmt.Errorf("ssm: get parameters by path: %v", err)
 		}
-		
+
 		if page != nil && len(page.Parameters) > 0 {
 			allParameters = append(allParameters, page.Parameters...)
 		}
