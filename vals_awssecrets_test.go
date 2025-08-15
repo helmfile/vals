@@ -1,12 +1,13 @@
 package vals
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/secretsmanager"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 
 	"github.com/helmfile/vals/pkg/awsclicompat"
 	config2 "github.com/helmfile/vals/pkg/config"
@@ -17,9 +18,10 @@ func TestValues_AWSSecrets_String(t *testing.T) {
 	if os.Getenv("SKIP_TESTS") != "" {
 		t.Skip("Skipping tests")
 	}
-	client := secretsmanager.New(awsclicompat.NewSession("ap-northeast-1", "", ""))
+	cfg := awsclicompat.NewSession("ap-northeast-1", "", "")
+	client := secretsmanager.NewFromConfig(cfg)
 
-	sec, err := client.CreateSecret(&secretsmanager.CreateSecretInput{
+	sec, err := client.CreateSecret(context.TODO(), &secretsmanager.CreateSecretInput{
 		Name:         aws.String("/mykv/foo/mykey"),
 		SecretString: aws.String("myvalue"),
 	})
@@ -28,7 +30,7 @@ func TestValues_AWSSecrets_String(t *testing.T) {
 	}
 
 	defer func() {
-		if _, err := client.DeleteSecret(&secretsmanager.DeleteSecretInput{
+		if _, err := client.DeleteSecret(context.TODO(), &secretsmanager.DeleteSecretInput{
 			SecretId: sec.ARN,
 		}); err != nil {
 			t.Fatalf("Error deleting secret: %v", err)
