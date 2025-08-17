@@ -2,6 +2,7 @@ package awsclicompat
 
 import (
 	"context"
+	"net/url"
 	"os"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -74,12 +75,14 @@ func newConfig(region string, profile string) aws.Config {
 	endpointUrl := os.Getenv("AWS_ENDPOINT_URL")
 	if endpointUrl != "" {
 		configOptions = append(configOptions, config.WithCustomCABundle(nil))
-		customResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-			return aws.Endpoint{
-				URL: endpointUrl,
-			}, nil
+		configOptions = append(configOptions, func(o *config.LoadOptions) error {
+			u, err := url.Parse(endpointUrl)
+			if err != nil {
+				return err
+			}
+			o.BaseEndpoint = u.String()
+			return nil
 		})
-		configOptions = append(configOptions, config.WithEndpointResolverWithOptions(customResolver))
 	}
 
 	cfg, err := config.LoadDefaultConfig(context.TODO(), configOptions...)
