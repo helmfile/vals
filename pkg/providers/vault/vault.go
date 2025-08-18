@@ -28,16 +28,19 @@ type provider struct {
 	client *vault.Client
 	log    *log.Logger
 
-	Address    string
-	Namespace  string
-	Proto      string
-	Host       string
-	TokenEnv   string
-	TokenFile  string
-	AuthMethod string
-	RoleId     string
-	SecretId   string
-	Version    string
+	Address      string
+	Namespace    string
+	Proto        string
+	Host         string
+	TokenEnv     string
+	TokenFile    string
+	AuthMethod   string
+	RoleId       string
+	SecretId     string
+	Username     string
+	PasswordEnv  string
+	PasswordFile string
+	Version      string
 }
 
 func New(l *log.Logger, cfg api.StaticConfig) *provider {
@@ -66,6 +69,8 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 			p.AuthMethod = "approle"
 		} else if os.Getenv("VAULT_AUTH_METHOD") == "kubernetes" {
 			p.AuthMethod = "kubernetes"
+		} else if os.Getenv("VAULT_AUTH_METHOD") == "userpass" {
+			p.AuthMethod = "userpass"
 		} else {
 			p.AuthMethod = "token"
 		}
@@ -85,6 +90,18 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 		} else {
 			p.SecretId = ""
 		}
+	}
+	p.Username = cfg.String("username")
+	if p.Username == "" {
+		p.Username = os.Getenv("VAULT_USERNAME")
+	}
+	p.PasswordEnv = cfg.String("password_env")
+	if p.PasswordEnv == "" {
+		p.PasswordEnv = os.Getenv("VAULT_PASSWORD_ENV")
+	}
+	p.PasswordFile = cfg.String("password_file")
+	if p.PasswordFile == "" {
+		p.PasswordFile = os.Getenv("VAULT_PASSWORD_FILE")
 	}
 	p.Version = cfg.String("version")
 
@@ -195,7 +212,7 @@ func (p *provider) ensureClient() (*vault.Client, error) {
 			}
 
 			if p.TokenFile != "" {
-				token, err := p.readTokenFile(p.TokenFile)
+				token, err := p.readFile(p.TokenFile)
 				if err != nil {
 					return nil, err
 				}
@@ -214,7 +231,7 @@ func (p *provider) ensureClient() (*vault.Client, error) {
 					}
 				}
 				if tokenFile != "" {
-					token, _ := p.readTokenFile(tokenFile)
+					token, _ := p.readFile(tokenFile)
 					if token != "" {
 						cli.SetToken(token)
 					}
@@ -277,13 +294,53 @@ func (p *provider) ensureClient() (*vault.Client, error) {
 			}
 
 			cli.SetToken(resp.Auth.ClientToken)
+		case "userpass":
+			var password = ""
+
+			if p.PasswordEnv != "" {
+				password = os.Getenv(p.PasswordEnv)
+				if password == "" {
+					return nil, fmt.Errorf("password_env configured to read vault password from envvar %q, but it isn't set", p.PasswordEnv)
+				}
+			} else if p.PasswordFile != "" {
+				password, err = p.readFile(p.PasswordFile)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			if password == "" {
+				return nil, fmt.Errorf("password missing for userpass authentication")
+			}
+
+			data := map[string]interface{}{
+				"password": password,
+			}
+
+			mount_point, ok := os.LookupEnv("VAULT_LOGIN_MOUNT_POINT")
+			if !ok {
+				mount_point = "userpass"
+			}
+
+			auth_path := filepath.Join("auth", mount_point, "login", p.Username)
+
+			resp, err := cli.Logical().Write(auth_path, data)
+			if err != nil {
+				return nil, err
+			}
+
+			if resp.Auth == nil {
+				return nil, fmt.Errorf("no auth info returned")
+			}
+
+			cli.SetToken(resp.Auth.ClientToken)
 		}
 		p.client = cli
 	}
 	return p.client, nil
 }
 
-func (p *provider) readTokenFile(path string) (string, error) {
+func (p *provider) readFile(path string) (string, error) {
 	buff, err := os.ReadFile(path)
 	if err != nil {
 		return "", err

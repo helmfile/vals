@@ -319,6 +319,7 @@ Please see [pkg/providers](https://github.com/helmfile/vals/tree/master/pkg/prov
 - `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT&token_file=PATH/TO/FILE&token_env=VAULT_TOKEN&namespace=VAULT_NAMESPACE]#/fieldkey`
 - `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT&auth_method=approle&role_id=ce5e571a-f7d4-4c73-93dd-fd6922119839&secret_id=5c9194b9-585e-4539-a865-f45604bd6f56]#/fieldkey`
 - `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT&auth_method=kubernetes&role_id=K8S-ROLE`
+- `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT&auth_method=userpass&username=some-user&password_file=PATH/TO/FILE&password_env=VAULT_PASSWORD]#/fieldkey`
 
 * `address` defaults to the value of the `VAULT_ADDR` envvar.
 * `namespace` defaults to the value of the `VAULT_NAMESPACE` envvar.
@@ -334,6 +335,7 @@ The `auth_method` or `VAULT_AUTH_METHOD` envar configures how `vals` authenticat
 * [approle](https://www.vaultproject.io/docs/auth/approle#via-the-api): it requires you pass on a `role_id` together with a `secret_id`.
 * [token](https://www.vaultproject.io/docs/auth/token): you just need creating and passing on a `VAULT_TOKEN`. If `VAULT_TOKEN` isn't set, token can be retrieved from `VAULT_TOKEN_FILE` env or `~/.vault-token` file.
 * [kubernetes](https://www.vaultproject.io/docs/auth/kubernetes): if you're running inside a Kubernetes cluster, you can use this option. It requires you [configure](https://www.vaultproject.io/docs/auth/kubernetes#configuration) a policy, a Kubernetes role, a service account and a JWT token. The login path can also be set using the environment variable `VAULT_KUBERNETES_MOUNT_POINT` (default is `/kubernetes`). You must also set `role_id` or `VAULT_ROLE_ID` envar to the Kubernetes role.
+* [userpass](https://developer.hashicorp.com/vault/docs/auth/userpass): you need to provide a username, e.g. via `VAULT_USERNAME`, and a password retrieved from the file `VAULT_PASSWORD_FILE` or from the env variable referred to in `VAULT_PASSWORD_ENV`. `VAULT_PASSWORD_ENV` takes precedence over `VAULT_PASSWORD_FILE`.
 
 Examples:
 
@@ -341,6 +343,8 @@ Examples:
 - `ref+vault://mykv/foo?token_env=VAULT_TOKEN_VAULT1&namespace=ns1&address=https://vault1.example.com:8200#/bar` reads the value for the field `bar` from namespace `ns1` in the kv `foo` on Vault listening on `https://vault1.example.com` with the Vault token read from **the envvar `VAULT_TOKEN_VAULT1`**
 - `ref+vault://mykv/foo?token_file=~/.vault_token_vault1&address=https://vault1.example.com:8200#/bar` reads the value for the field `bar` in the kv `foo` on Vault listening on `https://vault1.example.com` with the Vault token read from **the file `~/.vault_token_vault1`**
 - `ref+vault://mykv/foo?role_id=my-kube-role#/bar` using the Kubernetes role to log in to Vault
+- `ref+vault://mykv/foo?auth_method=userpass&username=some-user&password_env=VAULT_PASSWORD#/bar` using `userpass` authentication with password read from env `VAULT_PASSWORD`
+- `ref+vault://mykv/foo?auth_method=userpass&username=some-user&password_file=PATH/TO/FILE#/bar` using `userpass` authentication with password read from file `VAULT_PASSWORD_FILE`
 
 ### AWS
 
