@@ -37,6 +37,7 @@ type provider struct {
 	AuthMethod string
 	RoleId     string
 	SecretId   string
+	Username   string
 	Version    string
 }
 
@@ -66,6 +67,8 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 			p.AuthMethod = "approle"
 		} else if os.Getenv("VAULT_AUTH_METHOD") == "kubernetes" {
 			p.AuthMethod = "kubernetes"
+		} else if os.Getenv("VAULT_AUTH_METHOD") == "userpass" {
+			p.AuthMethod = "userpass"
 		} else {
 			p.AuthMethod = "token"
 		}
@@ -84,6 +87,12 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 			p.SecretId = os.Getenv("VAULT_SECRET_ID")
 		} else {
 			p.SecretId = ""
+		}
+	}
+	p.Username = cfg.String("username")
+	if p.Username == "" {
+		if os.Getenv("VAULT_USERNAME") != "" {
+			p.Username = os.Getenv("VAULT_USERNAME")
 		}
 	}
 	p.Version = cfg.String("version")
@@ -266,6 +275,33 @@ func (p *provider) ensureClient() (*vault.Client, error) {
 			}
 
 			auth_path := filepath.Join("auth", mount_point, "login")
+
+			resp, err := cli.Logical().Write(auth_path, data)
+			if err != nil {
+				return nil, err
+			}
+
+			if resp.Auth == nil {
+				return nil, fmt.Errorf("no auth info returned")
+			}
+
+			cli.SetToken(resp.Auth.ClientToken)
+		case "userpass":
+			password := os.Getenv("VAULT_PASSWORD")
+			if password == "" {
+				return nil, fmt.Errorf("password configured to read vault password from envvar VAULT_PASSWORD, but it isn't set")
+			}
+
+			data := map[string]interface{}{
+				"password": password,
+			}
+
+			mount_point, ok := os.LookupEnv("VAULT_LOGIN_MOUNT_POINT")
+			if !ok {
+				mount_point = "/userpass"
+			}
+
+			auth_path := filepath.Join("auth", mount_point, "login", p.Username)
 
 			resp, err := cli.Logical().Write(auth_path, data)
 			if err != nil {
