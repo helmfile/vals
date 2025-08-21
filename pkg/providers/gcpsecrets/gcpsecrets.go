@@ -70,7 +70,11 @@ func (p *provider) getSecret(ctx context.Context, key string) ([]byte, error) {
 		fmt.Fprintf(os.Stderr, "failed to connect: %s", err)
 		return nil, err
 	}
-	project, name, _ := strings.Cut(key, "/")
+	project, name, ok := strings.Cut(key, "/")
+	if !ok {
+		name = project
+		project = os.Getenv("GCP_PROJECT")
+	}
 	secret, err := c.AccessSecretVersion(ctx, &smpb.AccessSecretVersionRequest{
 		Name: fmt.Sprintf("projects/%s/secrets/%s/versions/%s", project, name, p.version),
 	})

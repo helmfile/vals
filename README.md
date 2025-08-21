@@ -435,6 +435,11 @@ Examples:
 > In some cases like you need to use an alternative credentials or project,
 > you'll likely need to set `GOOGLE_APPLICATION_CREDENTIALS` and/or `GCP_PROJECT` envvars.
 
+If `GCP_PROJECT` environment variable is set, the project name can be omitted from the URI, like:
+
+- `ref+gcpsecrets://mysecret`
+- `ref+gcpsecrets://mysecret?version=3`
+
 ### GCP KMS
 
 - `ref+gkms://BASE64CIPHERTEXT?project=myproject&location=global&keyring=mykeyring&crypto_key=mykey`
