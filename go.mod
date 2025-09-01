@@ -23,7 +23,7 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/hashicorp/golang-lru v1.0.2
 	github.com/hashicorp/vault/api v1.20.0
-	github.com/stretchr/testify v1.11.0
+	github.com/stretchr/testify v1.11.1
 	github.com/tidwall/gjson v1.18.0
 	github.com/yandex-cloud/go-genproto v0.19.0
 	github.com/yandex-cloud/go-sdk v0.15.0
