@@ -1,13 +1,13 @@
 package s3
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3iface"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"gopkg.in/yaml.v3"
 
 	"github.com/helmfile/vals/pkg/api"
@@ -17,7 +17,7 @@ import (
 
 type provider struct {
 	// Keeping track of s3 services since we need a s3 service per region
-	s3Client s3iface.S3API
+	s3Client *s3.Client
 	log      *log.Logger
 
 	// AWS s3 Parameter store global configuration
@@ -43,14 +43,14 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 	return p
 }
 
-// Get gets an AWS s3 Parameter Store value
+// Get gets an AWS s3 object value
 func (p *provider) GetString(key string) (string, error) {
 	split := strings.SplitN(key, "/", 2)
 	bucket, objKey := split[0], split[1]
 
 	s3Client := p.getS3Client()
 
-	in := s3.GetObjectInput{
+	in := &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(objKey),
 	}
@@ -59,7 +59,8 @@ func (p *provider) GetString(key string) (string, error) {
 		in.VersionId = aws.String(p.Version)
 	}
 
-	out, err := s3Client.GetObject(&in)
+	ctx := context.Background()
+	out, err := s3Client.GetObject(ctx, in)
 	if err != nil {
 		return "", fmt.Errorf("getting s3 object: %w", err)
 	}
@@ -89,13 +90,13 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 	return m, nil
 }
 
-func (p *provider) getS3Client() s3iface.S3API {
+func (p *provider) getS3Client() *s3.Client {
 	if p.s3Client != nil {
 		return p.s3Client
 	}
 
-	sess := awsclicompat.NewSession(p.Region, p.Profile, p.RoleARN)
+	cfg := awsclicompat.NewSession(p.Region, p.Profile, p.RoleARN)
 
-	p.s3Client = s3.New(sess)
+	p.s3Client = s3.NewFromConfig(cfg)
 	return p.s3Client
 }
