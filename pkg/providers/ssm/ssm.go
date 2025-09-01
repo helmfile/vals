@@ -98,13 +98,13 @@ func (p *provider) GetStringVersion(key string) (string, error) {
 	var result string
 	ctx := context.Background()
 	paginator := ssm.NewGetParameterHistoryPaginator(ssmClient, getParameterHistoryInput)
-	
+
 	for paginator.HasMorePages() {
 		output, err := paginator.NextPage(ctx)
 		if err != nil {
 			return "", fmt.Errorf("get parameter history: %v", err)
 		}
-		
+
 		for _, history := range output.Parameters {
 			thisVersion := history.Version
 			if thisVersion == version {
@@ -118,7 +118,7 @@ func (p *provider) GetStringVersion(key string) (string, error) {
 			break
 		}
 	}
-	
+
 	if result != "" {
 		p.log.Debugf("SSM: successfully retrieved key=%s", key)
 		return result, nil
@@ -160,7 +160,7 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 	var parameters []types.Parameter
 	ctx := context.Background()
 	paginator := ssm.NewGetParametersByPathPaginator(ssmClient, in)
-	
+
 	for paginator.HasMorePages() {
 		output, err := paginator.NextPage(ctx)
 		if err != nil {

@@ -73,12 +73,15 @@ func newConfig(ctx context.Context, region string, profile string) (aws.Config, 
 	//
 	// https://github.com/aws/aws-sdk-go/issues/4942
 	if endpointUrl := os.Getenv("AWS_ENDPOINT_URL"); endpointUrl != "" {
+		// nolint:staticcheck // This deprecated API is needed for AWS_ENDPOINT_URL support
 		customResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
+			// nolint:staticcheck // This deprecated API is needed for AWS_ENDPOINT_URL support
 			return aws.Endpoint{
 				URL:           endpointUrl,
 				SigningRegion: region,
 			}, nil
 		})
+		// nolint:staticcheck // This deprecated API is needed for AWS_ENDPOINT_URL support
 		opts = append(opts, config.WithEndpointResolverWithOptions(customResolver))
 	}
 
