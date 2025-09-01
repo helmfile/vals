@@ -54,9 +54,10 @@ func newConfig(ctx context.Context, region string, profile string) (aws.Config, 
 	}
 
 	// Handle profile selection
-	if profile != "" {
+	switch {
+	case profile != "":
 		opts = append(opts, config.WithSharedConfigProfile(profile))
-	} else if os.Getenv("FORCE_AWS_PROFILE") == "true" {
+	case os.Getenv("FORCE_AWS_PROFILE") == "true":
 		if awsProfile := os.Getenv("AWS_PROFILE"); awsProfile != "" {
 			opts = append(opts, config.WithSharedConfigProfile(awsProfile))
 		}
