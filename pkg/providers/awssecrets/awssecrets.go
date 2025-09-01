@@ -1,12 +1,13 @@
 package awssecrets
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/secretsmanager"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"gopkg.in/yaml.v3"
 
 	"github.com/helmfile/vals/pkg/api"
@@ -16,7 +17,7 @@ import (
 
 type provider struct {
 	// Keeping track of secretsmanager services since we need a service per region
-	client *secretsmanager.SecretsManager
+	client *secretsmanager.Client
 	log    *log.Logger
 
 	// AWS SecretsManager global configuration
@@ -38,7 +39,7 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 	return p
 }
 
-// Get gets an AWS SSM Parameter Store value
+// Get gets an AWS Secrets Manager value
 func (p *provider) GetString(key string) (string, error) {
 	cli := p.getClient()
 
@@ -47,14 +48,15 @@ func (p *provider) GetString(key string) (string, error) {
 	}
 
 	if p.VersionStage != "" {
-		in = in.SetVersionStage(p.VersionStage)
+		in.VersionStage = aws.String(p.VersionStage)
 	}
 
 	if p.VersionId != "" {
-		in = in.SetVersionId(p.VersionId)
+		in.VersionId = aws.String(p.VersionId)
 	}
 
-	out, err := cli.GetSecretValue(in)
+	ctx := context.Background()
+	out, err := cli.GetSecretValue(ctx, in)
 	if err != nil {
 		return "", fmt.Errorf("get parameter: %v", err)
 	}
@@ -133,13 +135,13 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 	return res, nil
 }
 
-func (p *provider) getClient() *secretsmanager.SecretsManager {
+func (p *provider) getClient() *secretsmanager.Client {
 	if p.client != nil {
 		return p.client
 	}
 
-	sess := awsclicompat.NewSession(p.Region, p.Profile, p.RoleARN)
+	cfg := awsclicompat.NewSession(p.Region, p.Profile, p.RoleARN)
 
-	p.client = secretsmanager.New(sess)
+	p.client = secretsmanager.NewFromConfig(cfg)
 	return p.client
 }
