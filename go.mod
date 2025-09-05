@@ -28,7 +28,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/tidwall/gjson v1.18.0
 	github.com/yandex-cloud/go-genproto v0.20.0
-	github.com/yandex-cloud/go-sdk v0.15.0
+	github.com/yandex-cloud/go-sdk v0.16.0
 	golang.org/x/oauth2 v0.30.0
 	google.golang.org/api v0.248.0
 	gopkg.in/yaml.v3 v3.0.1
