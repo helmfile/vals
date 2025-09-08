@@ -231,6 +231,7 @@ Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/
     - [Terraform in S3 bucket (tfstates3)](#terraform-in-s3-bucket-tfstates3)
     - [Terraform in AzureRM Blob storage (tfstateazurerm)](#terraform-in-azurerm-blob-storage-tfstateazurerm)
     - [Terraform in Terraform Cloud / Terraform Enterprise (tfstateremote)](#terraform-in-terraform-cloud--terraform-enterprise-tfstateremote)
+    - [Terraform in GitLab (tfstategitlab)](#terraform-in-gitlab-tfstategitlab)
     - [SOPS](#sops)
     - [Keychain](#keychain)
     - [Echo](#echo)
@@ -606,6 +607,37 @@ which is equivalent to the following input for `vals`:
 ```
 $ echo 'foo: ref+tfstateremote://app.terraform.io/myorg/myworkspace/output.virtual_network.name' | vals eval -f -
 ```
+
+### Terraform in GitLab (tfstategitlab)
+
+- `ref+tfstategitlab://gitlab.com/api/v4/projects/{project_id}/terraform/state/{state_name}/RESOURCE_NAME`
+
+Examples:
+
+- `ref+tfstategitlab://gitlab.com/api/v4/projects/123/terraform/state/default/aws_vpc.main.id`
+- `ref+tfstategitlab://my-gitlab.example.com/api/v4/projects/456/terraform/state/production/output.database_url`
+
+It allows to use Terraform state stored in GitLab using the GitLab Terraform state API. You can try to read the state with command (with exported variable `GITLAB_TOKEN` or `TFE_TOKEN`):
+
+```
+$ tfstate-lookup -s https://gitlab.com/api/v4/projects/123/terraform/state/default aws_vpc.main.id
+```
+
+which is equivalent to the following input for `vals`:
+
+```
+$ echo 'foo: ref+tfstategitlab://gitlab.com/api/v4/projects/123/terraform/state/default/aws_vpc.main.id' | vals eval -f -
+```
+
+#### Authentication
+
+The provider supports several authentication methods:
+
+- **GitLab Private Token**: Set `GITLAB_TOKEN` environment variable with your GitLab personal access token
+- **TFE Token**: Set `TFE_TOKEN` environment variable (for compatibility with Terraform Enterprise workflows)
+- **Basic Authentication**: Set both `TFE_USER` and `TFE_TOKEN` environment variables for HTTP basic authentication
+
+The GitLab project must have the Terraform state feature enabled and the token must have sufficient permissions to read the Terraform state.
 
 ### SOPS
 
