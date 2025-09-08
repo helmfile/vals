@@ -302,6 +302,38 @@ Both provider have support for specifying AWS region and profile via envvars or 
 - AWS profile can be specified via an option `profile=AWS_PROFILE_NAME` or envvar `AWS_PROFILE`
 - AWS region can be specified via an option `region=AWS_REGION_NAME` or envvar `AWS_DEFAULT_REGION`
 
+#### AWS SDK Logging Configuration
+
+You can control AWS SDK request logging verbosity using the `AWS_SDK_GO_LOG_LEVEL` environment variable. This applies to all AWS providers (SSM, Secrets Manager, S3, KMS).
+
+**Supported values** (case-insensitive, comma-separated):
+- `off` - Disable all AWS SDK logging
+- `retries` - Log retry attempts
+- `request` - Log requests (without body)
+- `request_with_body` - Log requests with body content
+- `response` - Log responses (without body)  
+- `response_with_body` - Log responses with body content
+- `signing` - Log request signing information
+
+**Examples:**
+```bash
+# Disable all AWS SDK logging
+export AWS_SDK_GO_LOG_LEVEL=off
+
+# Log only retries
+export AWS_SDK_GO_LOG_LEVEL=retries
+
+# Log requests and responses (without bodies)
+export AWS_SDK_GO_LOG_LEVEL=request,response
+
+# Log everything
+export AWS_SDK_GO_LOG_LEVEL=retries,request,response,signing
+
+# Default behavior (when not set): retries,request
+```
+
+When `AWS_SDK_GO_LOG_LEVEL` is not set, vals defaults to logging retries and requests for backward compatibility.
+
 #### AWS SSM Parameter Store
 
 - `ref+awsssm://PATH/TO/PARAM[?region=REGION&role_arn=ASSUMED_ROLE_ARN]`
