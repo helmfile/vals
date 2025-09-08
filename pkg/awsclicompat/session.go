@@ -3,12 +3,66 @@ package awsclicompat
 import (
 	"context"
 	"os"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 )
+
+// parseAWSLogLevel parses the AWS_SDK_GO_LOG_LEVEL environment variable
+// and returns the corresponding aws.ClientLogMode.
+// Supported values (case-insensitive, comma-separated):
+// - "off" or empty: No logging
+// - "retries": Log retries only
+// - "request": Log requests only
+// - "request_with_body": Log requests with body
+// - "response": Log responses only
+// - "response_with_body": Log responses with body
+// - "signing": Log signing
+// Default (when not set): "retries,request" for backward compatibility
+func parseAWSLogLevel() aws.ClientLogMode {
+	logLevel := strings.TrimSpace(os.Getenv("AWS_SDK_GO_LOG_LEVEL"))
+
+	// Default to retries and request logging for backward compatibility
+	if logLevel == "" {
+		return aws.LogRetries | aws.LogRequest
+	}
+
+	// Handle "off" explicitly
+	if strings.ToLower(logLevel) == "off" {
+		return 0 // LogOff equivalent
+	}
+
+	var mode aws.ClientLogMode
+	levels := strings.Split(logLevel, ",")
+
+	for _, level := range levels {
+		level = strings.ToLower(strings.TrimSpace(level))
+		switch level {
+		case "retries":
+			mode |= aws.LogRetries
+		case "request":
+			mode |= aws.LogRequest
+		case "request_with_body":
+			mode |= aws.LogRequestWithBody
+		case "response":
+			mode |= aws.LogResponse
+		case "response_with_body":
+			mode |= aws.LogResponseWithBody
+		case "signing":
+			mode |= aws.LogSigning
+		}
+	}
+
+	// If no valid log levels were specified, default to retries and request
+	if mode == 0 && strings.ToLower(logLevel) != "off" {
+		return aws.LogRetries | aws.LogRequest
+	}
+
+	return mode
+}
 
 // NewConfig enhances newConfig by adding support for assuming a role
 // not specified in the AWS profile.
@@ -86,8 +140,8 @@ func newConfig(ctx context.Context, region string, profile string) (aws.Config, 
 		opts = append(opts, config.WithEndpointResolverWithOptions(customResolver))
 	}
 
-	// Enable verbose credential errors (equivalent to old CredentialsChainVerboseErrors)
-	opts = append(opts, config.WithClientLogMode(aws.LogRetries|aws.LogRequest))
+	// Configure client log mode based on AWS_SDK_GO_LOG_LEVEL environment variable
+	opts = append(opts, config.WithClientLogMode(parseAWSLogLevel()))
 
 	cfg, err := config.LoadDefaultConfig(ctx, opts...)
 	if err != nil {
