@@ -492,8 +492,8 @@ github.com/xeipuuv/gojsonschema v1.2.0 h1:LhYJRs+L4fBtjZUfuSZIKGeVu0QRy8e5Xi7D17
 github.com/xeipuuv/gojsonschema v1.2.0/go.mod h1:anYRn/JVcOK2ZgGU+IjEV4nwlhoK5sQluxsYJ78Id3Y=
 github.com/yandex-cloud/go-genproto v0.24.0 h1:xTkWdUJKHamKk2IyM7LJ197E1mxlIhZi+6qwwtfCbAs=
 github.com/yandex-cloud/go-genproto v0.24.0/go.mod h1:0LDD/IZLIUIV4iPH+YcF+jysO3jkSvADFGm4dCAuwQo=
-github.com/yandex-cloud/go-sdk v0.18.0 h1:xMfnYgpVsbPFQRQBv92wAg8FKdfW1ArtGJ+pTl/cgvk=
-github.com/yandex-cloud/go-sdk v0.18.0/go.mod h1:MYr57iTbMZg5tbQtF1i6A85FAs2kgkVoICHK1aU8V38=
+github.com/yandex-cloud/go-sdk v0.19.0 h1:YX7DYusKcV1IlPOt8M4XCVfR91QBnX2eavPCeboWgZs=
+github.com/yandex-cloud/go-sdk v0.19.0/go.mod h1:MYr57iTbMZg5tbQtF1i6A85FAs2kgkVoICHK1aU8V38=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/zalando/go-keyring v0.2.6 h1:r7Yc3+H+Ux0+M72zacZoItR3UDxeWfKTcabvkI8ua9s=
