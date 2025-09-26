@@ -32,12 +32,57 @@ It supports various backends including:
 
 ToC:
 
+- [Installation](#installation)
 - [Usage](#usage)
   - [CLI](#cli)
   - [Helm](#helm)
   - [Go](#go)
 - [Expression Syntax](#expression-syntax)
 - [Supported Backends](#supported-backends)
+
+## Installation
+
+[![Packaging status](https://repology.org/badge/vertical-allrepos/vals.svg)](https://repology.org/project/vals/versions)
+
+### Download binary (Linux, macOS, Windows)
+
+[Download](https://github.com/helmfile/vals/releases) the latest executable for your platform and put it into a directory included in `PATH`.
+
+### homebrew (macOS, Linux)
+
+```sh
+brew install vals
+```
+
+### Arch Linux
+
+```sh
+sudo pacman -S vals
+```
+
+### Alpine Linux Edge
+
+```sh
+apk add vals
+```
+
+### MacPorts (macOS)
+
+```sh
+sudo port install vals
+```
+
+### Nix / NixOS
+
+```sh
+nix profile install nixpkgs#vals
+```
+
+### Scoop (Windows)
+
+```sh
+scoop install vals
+```
 
 ## Usage
 
@@ -209,6 +254,14 @@ Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/
 ## Supported Backends
 
 - [vals](#vals)
+  - [Installation](#installation)
+    - [Download binary (Linux, macOS, Windows)](#download-binary-linux-macos-windows)
+    - [homebrew (macOS, Linux)](#homebrew-macos-linux)
+    - [Arch Linux](#arch-linux)
+    - [Alpine Linux Edge](#alpine-linux-edge)
+    - [MacPorts (macOS)](#macports-macos)
+    - [Nix / NixOS](#nix--nixos)
+    - [Scoop (Windows)](#scoop-windows)
   - [Usage](#usage)
 - [CLI](#cli)
     - [Helm](#helm)
@@ -218,6 +271,7 @@ Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/
     - [Vault](#vault)
     - [Authentication](#authentication)
     - [AWS](#aws)
+      - [AWS SDK Logging Configuration](#aws-sdk-logging-configuration)
       - [AWS SSM Parameter Store](#aws-ssm-parameter-store)
       - [AWS Secrets Manager](#aws-secrets-manager)
       - [AWS S3](#aws-s3)
