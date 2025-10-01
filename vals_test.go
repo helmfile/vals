@@ -198,9 +198,9 @@ func TestNestedExpressions(t *testing.T) {
 	}()
 
 	tests := []struct {
-		name     string
 		input    map[string]interface{}
 		expected map[string]interface{}
+		name     string
 	}{
 		{
 			name: "echo with envsubst nested",
@@ -288,9 +288,9 @@ func TestNestedExpressionsWithGet(t *testing.T) {
 func TestNestedExpressionsBackwardCompatibility(t *testing.T) {
 	// Ensure that existing non-nested expressions still work
 	tests := []struct {
-		name     string
 		input    map[string]interface{}
 		expected map[string]interface{}
+		name     string
 	}{
 		{
 			name: "simple echo",
