@@ -12,7 +12,7 @@ type ExpandRegexMatch struct {
 	Only   []string
 }
 
-var DefaultRefRegexp = regexp.MustCompile(`((secret)?ref)\+([^:]*:\/\/[^ \n",]+)\+?`)
+var DefaultRefRegexp = regexp.MustCompile(`((secret)?ref)\+([^:]*:\/\/[^ \n",]*[^ \n",+])\+?`)
 
 func (e *ExpandRegexMatch) InString(s string) (string, error) {
 	// Keep expanding until no more expressions are found (for nested expressions)
