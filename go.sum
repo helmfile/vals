@@ -509,8 +509,8 @@ github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 h1:EzJWgHo
 github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415/go.mod h1:GwrjFmJcFw6At/Gs6z4yjiIwzuJ1/+UwLxMQDVQXShQ=
 github.com/xeipuuv/gojsonschema v1.2.0 h1:LhYJRs+L4fBtjZUfuSZIKGeVu0QRy8e5Xi7D17UxZ74=
 github.com/xeipuuv/gojsonschema v1.2.0/go.mod h1:anYRn/JVcOK2ZgGU+IjEV4nwlhoK5sQluxsYJ78Id3Y=
-github.com/yandex-cloud/go-genproto v0.26.0 h1:fyTrei3V8Z9ss+RTTaHrJ9Mt96Db+8Y4dOUCtNxlXq4=
-github.com/yandex-cloud/go-genproto v0.26.0/go.mod h1:0LDD/IZLIUIV4iPH+YcF+jysO3jkSvADFGm4dCAuwQo=
+github.com/yandex-cloud/go-genproto v0.27.0 h1:D/07HvoGjFcPI5xbacgcr8IBBp4tXCnjLJFK01lUf3I=
+github.com/yandex-cloud/go-genproto v0.27.0/go.mod h1:0LDD/IZLIUIV4iPH+YcF+jysO3jkSvADFGm4dCAuwQo=
 github.com/yandex-cloud/go-sdk v0.21.0 h1:zbrzsjtJH8QHKq7wGEt8LmE6P52q04UQp4/xxanqZRY=
 github.com/yandex-cloud/go-sdk v0.21.0/go.mod h1:t9/CqFrEtsKZKu9EZAJseFxnC0wx9jQMGQpy6yk7qYM=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
