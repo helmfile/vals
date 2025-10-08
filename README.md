@@ -24,6 +24,7 @@ It supports various backends including:
 - Bitwarden
 - HTTP JSON
 - Keychain
+- Scaleway
 
 - Use `vals eval -f refs.yaml` to replace all the `ref`s in the file to actual values and secrets.
 - Use `vals exec -f env.yaml -- <COMMAND>` to populate envvars and execute the command.
@@ -952,6 +953,13 @@ ref+httpjson://api.github.com/users/helmfile/repos#///*[1]/id
 ref+httpjson://api.github.com/users/helmfile/repos?floatAsInt=true#///*[1]/id
 ```
 
+### Scaleway
+This provider allows retrieval of secrets from [Scaleway Secret Manager](https://www.scaleway.com/en/docs/secret-manager/) using the [Scaleway Go SDK](https://github.com/scaleway/scaleway-sdk-go). For authentication, it uses the environment variables `SCW_PROJECT_ID` (defaults to `SCW_DEFAULT_PROJECT_ID` if unset), `SCW_REGION` (defaults to `SCW_DEFAULT_REGION` if unset), `SCW_ACCESS_KEY`, and `SCW_SECRET_KEY`. You can reference secrets in your config using the `ref+scw://` URI scheme.
+
+Examples:
+
+- `ref+scw:///path/to/secret` retrieves the value of an Opaque secret at the specified path.
+- `ref+scw:///path/to/secret#key` retrieves the value for a specific key in a JSON secret at the specified path.
 
 ## Advanced Usages
 

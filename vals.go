@@ -42,6 +42,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/onepasswordconnect"
 	"github.com/helmfile/vals/pkg/providers/pulumi"
 	"github.com/helmfile/vals/pkg/providers/s3"
+	"github.com/helmfile/vals/pkg/providers/scaleway"
 	"github.com/helmfile/vals/pkg/providers/sops"
 	"github.com/helmfile/vals/pkg/providers/ssm"
 	"github.com/helmfile/vals/pkg/providers/tfstate"
@@ -103,6 +104,7 @@ const (
 	ProviderHCPVaultSecrets    = "hcpvaultsecrets"
 	ProviderHttpJsonManager    = "httpjson"
 	ProviderBitwarden          = "bw"
+	ProviderScaleway           = "scw"
 )
 
 var (
@@ -278,6 +280,9 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 			return p, nil
 		case ProviderBitwarden:
 			p := bitwarden.New(r.logger, conf)
+			return p, nil
+		case ProviderScaleway:
+			p := scaleway.New(r.logger, conf)
 			return p, nil
 		}
 		return nil, fmt.Errorf("no provider registered for scheme %q", scheme)
