@@ -42,6 +42,22 @@ func TestValues_GCPSecretsManager(t *testing.T) {
 			"latest string",
 		},
 		{
+			map[string]string{"valstestvar": "foo: bar"},
+			map[string]interface{}{
+				"provider": map[string]interface{}{
+					"name":    "gcpsecrets",
+					"version": "latest",
+					"type":    "string",
+					"path":    "",
+				},
+				"inline": map[string]interface{}{
+					"valstestvar": "valstestvar",
+				},
+			},
+			map[string]interface{}{"valstestvar": "foo: bar"},
+			"latest string",
+		},
+		{
 			map[string]string{},
 			map[string]interface{}{
 				"provider": map[string]interface{}{

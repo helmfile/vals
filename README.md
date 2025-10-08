@@ -22,6 +22,7 @@ It supports various backends including:
 - Conjur
 - HCP Vault Secrets
 - Bitwarden
+- [Yandex Cloud Lockbox](https://yandex.cloud/en/docs/lockbox/)
 - HTTP JSON
 - Keychain
 - Scaleway
@@ -32,12 +33,57 @@ It supports various backends including:
 
 ToC:
 
+- [Installation](#installation)
 - [Usage](#usage)
   - [CLI](#cli)
   - [Helm](#helm)
   - [Go](#go)
 - [Expression Syntax](#expression-syntax)
 - [Supported Backends](#supported-backends)
+
+## Installation
+
+[![Packaging status](https://repology.org/badge/vertical-allrepos/vals.svg)](https://repology.org/project/vals/versions)
+
+### Download binary (Linux, macOS, Windows)
+
+[Download](https://github.com/helmfile/vals/releases) the latest executable for your platform and put it into a directory included in `PATH`.
+
+### homebrew (macOS, Linux)
+
+```sh
+brew install vals
+```
+
+### Arch Linux
+
+```sh
+sudo pacman -S vals
+```
+
+### Alpine Linux Edge
+
+```sh
+apk add vals
+```
+
+### MacPorts (macOS)
+
+```sh
+sudo port install vals
+```
+
+### Nix / NixOS
+
+```sh
+nix profile install nixpkgs#vals
+```
+
+### Scoop (Windows)
+
+```sh
+scoop install vals
+```
 
 ## Usage
 
@@ -209,6 +255,14 @@ Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/
 ## Supported Backends
 
 - [vals](#vals)
+  - [Installation](#installation)
+    - [Download binary (Linux, macOS, Windows)](#download-binary-linux-macos-windows)
+    - [homebrew (macOS, Linux)](#homebrew-macos-linux)
+    - [Arch Linux](#arch-linux)
+    - [Alpine Linux Edge](#alpine-linux-edge)
+    - [MacPorts (macOS)](#macports-macos)
+    - [Nix / NixOS](#nix--nixos)
+    - [Scoop (Windows)](#scoop-windows)
   - [Usage](#usage)
 - [CLI](#cli)
     - [Helm](#helm)
@@ -218,6 +272,7 @@ Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/
     - [Vault](#vault)
     - [Authentication](#authentication)
     - [AWS](#aws)
+      - [AWS SDK Logging Configuration](#aws-sdk-logging-configuration)
       - [AWS SSM Parameter Store](#aws-ssm-parameter-store)
       - [AWS Secrets Manager](#aws-secrets-manager)
       - [AWS S3](#aws-s3)
@@ -247,6 +302,8 @@ Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/
     - [Conjur](#conjur)
     - [HCP Vault Secrets](#hcp-vault-secrets)
     - [Bitwarden](#bitwarden)
+    - [Yandex Cloud Lockbox](#yandex-cloud-lockbox)
+      - [Authentication](#authentication-2)
     - [HTTP JSON](#http-json)
       - [Fetch string value](#fetch-string-value)
       - [Fetch integer value](#fetch-integer-value)
@@ -299,6 +356,38 @@ Both provider have support for specifying AWS region and profile via envvars or 
 
 - AWS profile can be specified via an option `profile=AWS_PROFILE_NAME` or envvar `AWS_PROFILE`
 - AWS region can be specified via an option `region=AWS_REGION_NAME` or envvar `AWS_DEFAULT_REGION`
+
+#### AWS SDK Logging Configuration
+
+You can control AWS SDK request logging verbosity using the `AWS_SDK_GO_LOG_LEVEL` environment variable. This applies to all AWS providers (SSM, Secrets Manager, S3, KMS).
+
+**Supported values** (case-insensitive, comma-separated):
+- `off` - Disable all AWS SDK logging
+- `retries` - Log retry attempts
+- `request` - Log requests (without body)
+- `request_with_body` - Log requests with body content
+- `response` - Log responses (without body)  
+- `response_with_body` - Log responses with body content
+- `signing` - Log request signing information
+
+**Examples:**
+```bash
+# Disable all AWS SDK logging
+export AWS_SDK_GO_LOG_LEVEL=off
+
+# Log only retries
+export AWS_SDK_GO_LOG_LEVEL=retries
+
+# Log requests and responses (without bodies)
+export AWS_SDK_GO_LOG_LEVEL=request,response
+
+# Log everything
+export AWS_SDK_GO_LOG_LEVEL=retries,request,response,signing
+
+# Default behavior (when not set): retries,request
+```
+
+When `AWS_SDK_GO_LOG_LEVEL` is not set, vals defaults to logging retries and requests for backward compatibility.
 
 #### AWS SSM Parameter Store
 
@@ -432,6 +521,11 @@ Examples:
 >
 > In some cases like you need to use an alternative credentials or project,
 > you'll likely need to set `GOOGLE_APPLICATION_CREDENTIALS` and/or `GCP_PROJECT` envvars.
+
+If `GCP_PROJECT` environment variable is set, the project name can be omitted from the URI, like:
+
+- `ref+gcpsecrets://mysecret`
+- `ref+gcpsecrets://mysecret?version=3`
 
 ### GCP KMS
 
@@ -669,19 +763,25 @@ Examples:
 
 #### Authentication
 
-Vals aquires Azure credentials though Azure CLI or from environment variables. The easiest way is to run `az login`. Vals can then aquire the current credentials from `az` without further set up.
+Vals acquires Azure credentials via the [azidentity Go module](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity).
 
-Other authentication methods require information to be passed in environment variables. See [Azure SDK docs](https://docs.microsoft.com/en-us/azure/developer/go/azure-sdk-authorization#use-environment-based-authentication) and [auth.go](https://godoc.org/github.com/Azure/go-autorest/autorest/azure/auth#NewAuthorizerFromEnvironment) for the full list of supported environment variables.
+By default, the following authentication types will be tried and the first one that works will be used:
 
-For example, if using client credentials the required env vars are `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_TENANT_ID` and possibly `AZURE_ENVIRONMENT` in case of accessing an Azure GovCloud.
+1. [Environment Variables](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity#EnvironmentCredential)
+1. [Workload Identity](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity#WorkloadIdentityCredential)
+1. [Managed Identity](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity#ManagedIdentityCredential)
+1. [Azure CLI](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity#AzureCLICredential)
+1. [Azure Developer CLI](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity#AzureDeveloperCLICredential)
 
-The order in which authentication methods are checked is:
-1. Client credentials
-2. Client certificate
-3. Username/Password
-4. Azure CLI or Managed identity (set environment `AZURE_USE_MSI=true` to enabled MSI)
+In practice, the simplest way to authenticate is to log into the Azure CLI using an account that has access to read secrets from the Key Vault in question.
 
-more see: https://github.com/helmfile/vals/issues/441
+In case you are running in an environment that has multiple authentication types configured at once (and you need to use one that is lower on the list above), you can choose a specific one to use by setting the environment variable `AZKV_AUTH` to to one of the following values.
+
+- Default Behavior: `default` (or unset)
+- Workload Identity: `workload`
+- Managed Identity: `managed`
+- Azure CLI: `cli`
+- Azure Developer CLI: `devcli`
 
 ### EnvSubst
 
@@ -892,6 +992,23 @@ Examples:
 - `ref+bw://4d084b01-87e7-4411-8de9-2476ab9f3f48/password` gets the password of the item id
 - `ref+bw://4d084b01-87e7-4411-8de9-2476ab9f3f48/{username,password,uri,notes,item}` gets username, password, uri, notes or the whole item of the given item id
 - `ref+bw://4d084b01-87e7-4411-8de9-2476ab9f3f48/notes#/key1` gets the *key1* from the yaml stored as note in the item
+
+### Yandex Cloud Lockbox
+
+Retrieve secrets from [Yandex Cloud Lockbox](https://yandex.cloud/en/docs/lockbox/). Path is used to specify secret ID. Optionally a specific secret version can be retrieved (using current version by default). If fragment is specified, retrieves a specific key from the secret.
+
+- `ref+yclockbox://SECRET_ID[?version_id=VERSION][#KEY]`
+
+Examples:
+
+- `ref+yclockbox://e6qeoqvd88dcpf044n5i` - get whole secret `e6qeoqvd88dcpf044n5i` from the current version
+- `ref+yclockbox://e6qeoqvd88dcpf044n5i?version_id=e6qn22seoaprg9cbe1dj` - get whole secret `e6qeoqvd88dcpf044n5i` from the `e6qn22seoaprg9cbe1dj` version
+- `ref+yclockbox://e6qeoqvd88dcpf044n5i?version_id=e6qn22seoaprg9cbe1dj#oauth_secret` - get secret entry from the `oauth_secret` key of `e6qn22seoaprg9cbe1dj` version of `e6qeoqvd88dcpf044n5i` secret
+- `ref+yclockbox://e6qeoqvd88dcpf044n5i#oauth_secret` - get secret entry from the `oauth_secret` key of current version of `e6qeoqvd88dcpf044n5i` secret
+
+#### Authentication
+
+Vals aquires Yandex Cloud IAM token from the `YC_TOKEN` environment variable. The easiest way to get it is to run `yc iam create-token`. See [Yandex Cloud Lockbox docs](https://yandex.cloud/en/docs/lockbox/api-ref/authentication) for more details on authentication
 
 ### HTTP JSON
 

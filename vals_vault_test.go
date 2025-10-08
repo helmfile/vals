@@ -233,7 +233,7 @@ func TestValues_Vault_String(t *testing.T) {
 			}
 
 			{
-				expected := "myvalue"
+				expected := testValue
 				key := "foo"
 				actual := vals[key]
 				if actual != expected {
@@ -244,7 +244,7 @@ func TestValues_Vault_String(t *testing.T) {
 			{
 				switch bar := vals["bar"].(type) {
 				case map[string]interface{}:
-					expected := "myvalue"
+					expected := testValue
 					key := "baz"
 					actual := bar[key]
 					if actual != expected {
@@ -409,7 +409,7 @@ func TestValues_Vault_Map(t *testing.T) {
 					if !ok {
 						t.Fatalf("%q does not exist", key)
 					}
-					expected := "myvalue"
+					expected := testValue
 					if actual != expected {
 						t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
 					}
@@ -428,7 +428,7 @@ func TestValues_Vault_Map(t *testing.T) {
 						if !ok {
 							t.Fatalf("%q does not exist", key)
 						}
-						expected := "myvalue"
+						expected := testValue
 						if actual != expected {
 							t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
 						}
@@ -502,7 +502,7 @@ func TestValues_Vault_Map_Raw(t *testing.T) {
 					if !ok {
 						t.Fatalf("%q does not exist", key)
 					}
-					expected := "myvalue"
+					expected := testValue
 					if actual != expected {
 						t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
 					}
@@ -521,7 +521,7 @@ func TestValues_Vault_Map_Raw(t *testing.T) {
 						if !ok {
 							t.Fatalf("%q does not exist", key)
 						}
-						expected := "myvalue"
+						expected := testValue
 						if actual != expected {
 							t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
 						}
@@ -637,7 +637,7 @@ func TestValues_Vault_Map_YAML(t *testing.T) {
 						if !ok {
 							t.Fatalf("%q does not exist", key)
 						}
-						expected := "myvalue"
+						expected := testValue
 						if actual != expected {
 							t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
 						}
@@ -744,7 +744,7 @@ func TestValues_Vault_Map_YAML_Root(t *testing.T) {
 					if !ok {
 						t.Fatalf("%q does not exist", key)
 					}
-					expected := "myvalue"
+					expected := testValue
 					if actual != expected {
 						t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
 					}
@@ -851,7 +851,7 @@ func TestValues_Vault_Map_Raw_Root(t *testing.T) {
 				if !ok {
 					t.Fatalf("%q does not exist", key)
 				}
-				expected := "myvalue"
+				expected := testValue
 				if actual != expected {
 					t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
 				}

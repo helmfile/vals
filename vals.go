@@ -38,6 +38,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/httpjson"
 	"github.com/helmfile/vals/pkg/providers/k8s"
 	"github.com/helmfile/vals/pkg/providers/keychain"
+	"github.com/helmfile/vals/pkg/providers/oci"
 	"github.com/helmfile/vals/pkg/providers/onepassword"
 	"github.com/helmfile/vals/pkg/providers/onepasswordconnect"
 	"github.com/helmfile/vals/pkg/providers/pulumi"
@@ -47,6 +48,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/ssm"
 	"github.com/helmfile/vals/pkg/providers/tfstate"
 	"github.com/helmfile/vals/pkg/providers/vault"
+	"github.com/helmfile/vals/pkg/providers/yclockbox"
 	"github.com/helmfile/vals/pkg/stringmapprovider"
 	"github.com/helmfile/vals/pkg/stringprovider"
 )
@@ -94,6 +96,7 @@ const (
 	ProviderAzureKeyVault      = "azurekeyvault"
 	ProviderEnvSubst           = "envsubst"
 	ProviderKeychain           = "keychain"
+	ProviderOCI                = "oci"
 	ProviderOnePassword        = "op"
 	ProviderOnePasswordConnect = "onepasswordconnect"
 	ProviderDoppler            = "doppler"
@@ -104,6 +107,7 @@ const (
 	ProviderHCPVaultSecrets    = "hcpvaultsecrets"
 	ProviderHttpJsonManager    = "httpjson"
 	ProviderBitwarden          = "bw"
+	ProviderLockbox            = "yclockbox"
 	ProviderScaleway           = "scw"
 )
 
@@ -211,6 +215,9 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 			// 2. Then extracts the value for key baz) from the result from step 1.
 			p := awssecrets.New(r.logger, conf)
 			return p, nil
+		case ProviderOCI:
+			p := oci.New(r.logger, conf)
+			return p, nil
 		case ProviderSOPS:
 			p := sops.New(r.logger, conf)
 			return p, nil
@@ -280,6 +287,9 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 			return p, nil
 		case ProviderBitwarden:
 			p := bitwarden.New(r.logger, conf)
+			return p, nil
+		case ProviderLockbox:
+			p := yclockbox.New(r.logger, conf)
 			return p, nil
 		case ProviderScaleway:
 			p := scaleway.New(r.logger, conf)
