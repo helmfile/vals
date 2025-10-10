@@ -96,7 +96,7 @@ func (p *provider) GetString(key string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return string(b[:]), err
+	return string(b), err
 }
 
 func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
