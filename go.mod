@@ -28,7 +28,7 @@ require (
 	github.com/opencontainers/image-spec v1.1.1
 	github.com/stretchr/testify v1.11.1
 	github.com/tidwall/gjson v1.18.0
-	github.com/yandex-cloud/go-genproto v0.28.0
+	github.com/yandex-cloud/go-genproto v0.29.0
 	github.com/yandex-cloud/go-sdk v0.22.0
 	golang.org/x/oauth2 v0.31.0
 	google.golang.org/api v0.252.0
