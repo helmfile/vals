@@ -22,6 +22,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/onepasswordconnect"
 	"github.com/helmfile/vals/pkg/providers/pulumi"
 	"github.com/helmfile/vals/pkg/providers/s3"
+	"github.com/helmfile/vals/pkg/providers/scaleway"
 	"github.com/helmfile/vals/pkg/providers/sops"
 	"github.com/helmfile/vals/pkg/providers/ssm"
 	"github.com/helmfile/vals/pkg/providers/tfstate"
@@ -82,6 +83,8 @@ func New(l *log.Logger, provider api.StaticConfig) (api.LazyLoadedStringProvider
 		return hcpvaultsecrets.New(l, provider), nil
 	case "httpjson":
 		return httpjson.New(l, provider), nil
+	case "scaleway":
+		return scaleway.New(l, provider), nil
 	}
 
 	return nil, fmt.Errorf("failed initializing string provider from config: %v", provider)
