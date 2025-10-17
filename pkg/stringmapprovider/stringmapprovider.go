@@ -12,6 +12,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/gcpsecrets"
 	"github.com/helmfile/vals/pkg/providers/gkms"
 	"github.com/helmfile/vals/pkg/providers/httpjson"
+	"github.com/helmfile/vals/pkg/providers/infisical"
 	"github.com/helmfile/vals/pkg/providers/k8s"
 	"github.com/helmfile/vals/pkg/providers/onepasswordconnect"
 	"github.com/helmfile/vals/pkg/providers/scaleway"
@@ -52,6 +53,8 @@ func New(l *log.Logger, provider api.StaticConfig) (api.LazyLoadedStringMapProvi
 		return httpjson.New(l, provider), nil
 	case "scaleway":
 		return scaleway.New(l, provider), nil
+	case "infisical":
+		return infisical.New(l, provider), nil
 	}
 
 	return nil, fmt.Errorf("failed initializing string-map provider from config: %v", provider)

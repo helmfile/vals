@@ -26,6 +26,7 @@ It supports various backends including:
 - HTTP JSON
 - Keychain
 - Scaleway
+- Infisical
 
 - Use `vals eval -f refs.yaml` to replace all the `ref`s in the file to actual values and secrets.
 - Use `vals exec -f env.yaml -- <COMMAND>` to populate envvars and execute the command.
@@ -1081,6 +1082,50 @@ Examples:
 
 - `ref+scw:///path/to/secret` retrieves the value of an Opaque secret at the specified path.
 - `ref+scw:///path/to/secret#key` retrieves the value for a specific key in a JSON secret at the specified path.
+
+### Infisical
+
+This provider allows retrieval of secrets from [Infisical](https://infisical.com) (either the SaaS or a self-deployment) using the [Infisical Go SDK](https://github.com/infisical/go-sdk).
+
+Environment variables:
+
+- `INFISICAL_URL`: the Infisical instance URL, defaults to the SaaS (`https://app.infisical.com`).
+- `INFISICAL_AUTH_METHOD` (required): the authentication method, one of: `UNIVERSAL_AUTH`, `KUBERNETES`, `AWS_IAM`, `AZURE`, `GCP_IAM`, `GCP_ID_TOKEN`.
+
+Parameters:
+
+- `project` or `project_id` (required): the project slug or ID, respectively, where the secret lives in.
+- `environment` (required): the slug name (`dev`, `prod`, etc) of the environment from where the secret should be fetched.
+- `path`: the path from where the secret should be fetched.
+- `type`: the type of the secret. Valid options are `shared` (default) or `personal`.
+- `version`: the version of the secret to retrieve.
+
+Examples:
+
+- `ref+infisical://WEBHOOK_URL?project=infrastructure-hue8&path=prometheus&environment=prod`: gets the secret at "infrastructure" (project slug) -> "prometheus" (folder) -> "WEBHOOK_URL" (secret) -> "prod" (environment).
+- `ref+infisical://POSTGRES_PASSWORD?project_id=c2f75015-37b7-40b6-8412-2523ddfea5ed&environment=dev`: gets the secret at "c2f75015-37b7-40b6-8412-2523ddfea5ed" (project ID) -> "POSTGRES_PASSWORD" (secret) -> "dev" (environment).
+
+#### Authentication
+
+These are the supported authentication methods. Please, read [the SDK docs](https://infisical.com/docs/sdks/languages/go#authentication) for more information.
+
+Depending on which one is chosen with the `INFISICAL_AUTH_METHOD` environment variable, the following environment variables must also be provided.
+
+- **Universal**:`UNIVERSAL_AUTH`
+  - `INFISICAL_UNIVERSAL_AUTH_CLIENT_ID`: your machine identity client ID.
+  - `INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET`: your machine identity client secret.
+- **Kubernetes**:`KUBERNETES`
+  - `INFISICAL_KUBERNETES_IDENTITY_ID`: your Infisical Machine Identity ID.
+  - `INFISICAL_KUBERNETES_SERVICE_ACCOUNT_TOKEN_PATH`: the environment variable name that contains the path to the service account token (defaults to: `/var/run/secrets/kubernetes.io/serviceaccount/token`).
+- **AWS IAM**:`AWS_IAM`
+  - `INFISICAL_AWS_IAM_AUTH_IDENTITY_ID`: your Infisical Machine Identity ID.
+- **Azure**:`AZURE`
+  - `INFISICAL_AZURE_AUTH_IDENTITY_ID`: your Infisical Machine Identity ID.
+- **GCP IAM**:`GCP_IAM`
+  - `INFISICAL_GCP_IAM_AUTH_IDENTITY_ID`: your Infisical Machine Identity ID.
+  - `INFISICAL_GCP_IAM_SERVICE_ACCOUNT_KEY_FILE_PATH`: the path to your GCP service account key file.
+- **GCP ID Token**:`GCP_ID_TOKEN`
+  - `INFISICAL_GCP_AUTH_IDENTITY_ID`: your Infisical Machine Identity ID.
 
 ## Advanced Usages
 
