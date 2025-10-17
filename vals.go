@@ -36,6 +36,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/googlesheets"
 	"github.com/helmfile/vals/pkg/providers/hcpvaultsecrets"
 	"github.com/helmfile/vals/pkg/providers/httpjson"
+	"github.com/helmfile/vals/pkg/providers/infisical"
 	"github.com/helmfile/vals/pkg/providers/k8s"
 	"github.com/helmfile/vals/pkg/providers/keychain"
 	"github.com/helmfile/vals/pkg/providers/oci"
@@ -109,6 +110,7 @@ const (
 	ProviderBitwarden          = "bw"
 	ProviderLockbox            = "yclockbox"
 	ProviderScaleway           = "scw"
+	ProviderInfisical          = "infisical"
 )
 
 var (
@@ -293,6 +295,9 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 			return p, nil
 		case ProviderScaleway:
 			p := scaleway.New(r.logger, conf)
+			return p, nil
+		case ProviderInfisical:
+			p := infisical.New(r.logger, conf)
 			return p, nil
 		}
 		return nil, fmt.Errorf("no provider registered for scheme %q", scheme)
