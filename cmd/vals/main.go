@@ -111,7 +111,7 @@ func main() {
 			if err != nil {
 				fatal("%v", err)
 			}
-			
+
 			result, err := vals.Get(content, vals.Options{
 				ExcludeSecret:         *e,
 				LogOutput:             logOut,
@@ -120,7 +120,7 @@ func main() {
 			if err != nil {
 				fatal("%v", err)
 			}
-			
+
 			_, err = os.Stdout.WriteString(result)
 			if err != nil {
 				fatal("%v", err)

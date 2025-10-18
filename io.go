@@ -114,7 +114,7 @@ func RawInput(f string) (string, error) {
 	} else {
 		return "", fmt.Errorf("Nothing to eval: No file specified")
 	}
-	
+
 	content, err := io.ReadAll(reader)
 	if err != nil {
 		return "", err
