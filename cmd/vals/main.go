@@ -94,7 +94,7 @@ func main() {
 		e := evalCmd.Bool("exclude-secret", false, "Leave secretref+<uri> as-is and only replace ref+<uri>")
 		k := evalCmd.Bool("decode-kubernetes-secrets", false, "Decode Kubernetes secrets before evaluate them, then encode it again.")
 		failOnMissingKeyInMap := evalCmd.Bool("fail-on-missing-key-in-map", true, "When set to false, the vals-eval command exits with code 0 even when the key denoted by the #/key/for/value/in/the/json/or/yaml does not exist in the decoded map")
-		raw := evalCmd.Bool("raw", false, "Treat input as raw text (like envsubst) instead of YAML/JSON. Enables support for plain text, JSONC, and JSON5 files")
+		raw := evalCmd.Bool("raw", false, "Treat input as raw text (like envsubst) instead of YAML/JSON. Enables support for plain text, JSONC, and JSON5 files. Note: -o flag is ignored in raw mode")
 		err := evalCmd.Parse(os.Args[2:])
 		if err != nil {
 			fatal("%v", err)
