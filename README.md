@@ -1102,7 +1102,7 @@ Parameters:
 
 Examples:
 
-- `ref+infisical://WEBHOOK_URL?project=infrastructure-hue8&path=prometheus&environment=prod`: gets the secret at "infrastructure" (project slug) -> "prometheus" (folder) -> "WEBHOOK_URL" (secret) -> "prod" (environment).
+- `ref+infisical://WEBHOOK_URL?project=infrastructure-hue8&path=prometheus&environment=prod`: gets the secret at "infrastructure-hue8" (project slug) -> "prometheus" (folder) -> "WEBHOOK_URL" (secret) -> "prod" (environment).
 - `ref+infisical://POSTGRES_PASSWORD?project_id=c2f75015-37b7-40b6-8412-2523ddfea5ed&environment=dev`: gets the secret at "c2f75015-37b7-40b6-8412-2523ddfea5ed" (project ID) -> "POSTGRES_PASSWORD" (secret) -> "dev" (environment).
 
 #### Authentication
@@ -1111,20 +1111,20 @@ These are the supported authentication methods. Please, read [the SDK docs](http
 
 Depending on which one is chosen with the `INFISICAL_AUTH_METHOD` environment variable, the following environment variables must also be provided.
 
-- **Universal**:`UNIVERSAL_AUTH`
+- **Universal**: `UNIVERSAL_AUTH`
   - `INFISICAL_UNIVERSAL_AUTH_CLIENT_ID`: your machine identity client ID.
   - `INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET`: your machine identity client secret.
-- **Kubernetes**:`KUBERNETES`
+- **Kubernetes**: `KUBERNETES`
   - `INFISICAL_KUBERNETES_IDENTITY_ID`: your Infisical Machine Identity ID.
   - `INFISICAL_KUBERNETES_SERVICE_ACCOUNT_TOKEN_PATH`: the environment variable name that contains the path to the service account token (defaults to: `/var/run/secrets/kubernetes.io/serviceaccount/token`).
-- **AWS IAM**:`AWS_IAM`
+- **AWS IAM**: `AWS_IAM`
   - `INFISICAL_AWS_IAM_AUTH_IDENTITY_ID`: your Infisical Machine Identity ID.
-- **Azure**:`AZURE`
+- **Azure**: `AZURE`
   - `INFISICAL_AZURE_AUTH_IDENTITY_ID`: your Infisical Machine Identity ID.
-- **GCP IAM**:`GCP_IAM`
+- **GCP IAM**: `GCP_IAM`
   - `INFISICAL_GCP_IAM_AUTH_IDENTITY_ID`: your Infisical Machine Identity ID.
   - `INFISICAL_GCP_IAM_SERVICE_ACCOUNT_KEY_FILE_PATH`: the path to your GCP service account key file.
-- **GCP ID Token**:`GCP_ID_TOKEN`
+- **GCP ID Token**: `GCP_ID_TOKEN`
   - `INFISICAL_GCP_AUTH_IDENTITY_ID`: your Infisical Machine Identity ID.
 
 ## Advanced Usages
