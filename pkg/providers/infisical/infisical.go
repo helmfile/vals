@@ -85,11 +85,7 @@ func auth(p *provider) error {
 		_, err = p.client.Auth().GcpIdTokenAuthLogin("")
 	}
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func parseAuthMethod(s string) (util.AuthMethod, error) {
