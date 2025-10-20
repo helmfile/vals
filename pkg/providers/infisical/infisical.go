@@ -18,8 +18,7 @@ import (
 type provider struct {
 	client infisical.InfisicalClientInterface
 
-	projectSlug, projectID, environment, path, kind string
-	version                                         int
+	projectSlug, projectID, environment, path, kind, version string
 }
 
 func New(l *log.Logger, cfg api.StaticConfig) *provider {
@@ -37,17 +36,17 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 	p.environment = cfg.String("environment")
 	p.kind = cfg.String("type")
 
+	p.version = cfg.String("version")
+
+	if p.version == "" {
+		p.version = "0"
+	}
+
 	path := cfg.String("path")
 
 	if path != "" && !strings.HasPrefix(path, "/") {
 		p.path = "/" + path
 	}
-
-	// If the version can't be parsed to an integer,
-	// it fails silently and returns the last one.
-	p.version, _ = strconv.Atoi(
-		cfg.String("version"),
-	)
 
 	return p
 }
@@ -111,6 +110,12 @@ func (p *provider) GetString(key string) (string, error) {
 		return "", err
 	}
 
+	version, err := strconv.Atoi(p.version)
+
+	if err != nil {
+		return "", err
+	}
+
 	secret, err := p.client.Secrets().Retrieve(infisical.RetrieveSecretOptions{
 		SecretKey:   key,
 		ProjectSlug: p.projectSlug,
@@ -118,7 +123,7 @@ func (p *provider) GetString(key string) (string, error) {
 		Environment: p.environment,
 		SecretPath:  p.path,
 		Type:        p.kind,
-		Version:     p.version,
+		Version:     version,
 	})
 
 	if err != nil {
