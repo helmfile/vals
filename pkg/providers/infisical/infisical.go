@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	infisical "github.com/infisical/go-sdk"
 	util "github.com/infisical/go-sdk/packages/util"
@@ -38,7 +39,7 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 
 	path := cfg.String("path")
 
-	if path != "" {
+	if path != "" && !strings.HasPrefix(path, "/") {
 		p.path = "/" + path
 	}
 
