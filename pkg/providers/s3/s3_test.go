@@ -76,7 +76,7 @@ func TestGetString(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		p := New(log.New(log.Config{Output: os.Stderr}), config.MapConfig{M: map[string]interface{}{}})
+		p := New(log.New(log.Config{Output: os.Stderr}), config.MapConfig{M: map[string]interface{}{}}, "")
 
 		p.s3Client = c.s3
 
@@ -128,7 +128,7 @@ func TestGetStringMap(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		p := New(log.New(log.Config{Output: os.Stderr}), config.MapConfig{M: map[string]interface{}{}})
+		p := New(log.New(log.Config{Output: os.Stderr}), config.MapConfig{M: map[string]interface{}{}}, "")
 
 		p.s3Client = c.s3
 

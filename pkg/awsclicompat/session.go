@@ -11,30 +11,55 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 )
 
-// parseAWSLogLevel parses the AWS_SDK_GO_LOG_LEVEL environment variable
-// and returns the corresponding aws.ClientLogMode.
+const (
+	// LogModeOff represents no AWS SDK logging (secure default)
+	// This is more readable than using the literal value 0
+	LogModeOff aws.ClientLogMode = 0
+)
+
+// parseAWSLogLevel parses the AWS SDK log level from environment variable or provided default.
+// Priority: AWS_SDK_GO_LOG_LEVEL env var > paramDefault parameter
+//
 // Supported values (case-insensitive, comma-separated):
 // - "off" or empty: No logging
-// - "retries": Log retries only
-// - "request": Log requests only
-// - "request_with_body": Log requests with body
-// - "response": Log responses only
-// - "response_with_body": Log responses with body
-// - "signing": Log signing
-// Default (when not set): "retries,request" for backward compatibility
-func parseAWSLogLevel() aws.ClientLogMode {
+// - "minimal": Log retries only
+// - "standard": Log retries and requests (previous default behavior)
+// - "verbose": Log everything (requests, responses, bodies, signing)
+// - "retries", "request", "request_with_body", "response", "response_with_body", "signing": Individual flags
+//
+// Default behavior (secure-by-default):
+// - Empty/unset input: No logging to prevent sensitive information leakage
+// - Invalid/unrecognized values: No logging to prevent accidental credential exposure
+func parseAWSLogLevel(paramDefault string) aws.ClientLogMode {
+	// Environment variable takes precedence (highest priority)
 	logLevel := strings.TrimSpace(os.Getenv("AWS_SDK_GO_LOG_LEVEL"))
 
-	// Default to retries and request logging for backward compatibility
+	// If env var not set, use parameter default
 	if logLevel == "" {
+		logLevel = paramDefault
+	}
+
+	// If still empty, default to no logging for security
+	// See: https://github.com/helmfile/helmfile/issues/2270
+	if logLevel == "" {
+		return LogModeOff
+	}
+
+	// Handle preset levels (including "off")
+	logLevelLower := strings.ToLower(logLevel)
+	switch logLevelLower {
+	case "off":
+		return LogModeOff
+	case "minimal":
+		return aws.LogRetries
+	case "standard":
 		return aws.LogRetries | aws.LogRequest
+	case "verbose":
+		return aws.LogRetries | aws.LogRequest | aws.LogRequestWithBody |
+			aws.LogResponse | aws.LogResponseWithBody | aws.LogSigning
 	}
 
-	// Handle "off" explicitly
-	if strings.ToLower(logLevel) == "off" {
-		return 0 // LogOff equivalent
-	}
-
+	// Parse individual flags (comma-separated)
 	var mode aws.ClientLogMode
 	levels := strings.Split(logLevel, ",")
 
@@ -56,9 +81,10 @@ func parseAWSLogLevel() aws.ClientLogMode {
 		}
 	}
 
-	// If no valid log levels were specified, default to retries and request
-	if mode == 0 && strings.ToLower(logLevel) != "off" {
-		return aws.LogRetries | aws.LogRequest
+	// Secure-by-default: If no valid log levels were specified, default to no logging
+	// This prevents accidental credential exposure from typos or invalid values
+	if mode == 0 {
+		return LogModeOff
 	}
 
 	return mode
@@ -67,6 +93,7 @@ func parseAWSLogLevel() aws.ClientLogMode {
 // NewConfig enhances newConfig by adding support for assuming a role
 // not specified in the AWS profile.
 // The third parameter is the ARN of the role to assume.
+// Optional: accepts a variadic logLevel parameter for AWS SDK logging configuration
 //
 // Both the config creation and the assumed role credentials use the
 // specified region and the profile.
@@ -74,8 +101,13 @@ func parseAWSLogLevel() aws.ClientLogMode {
 // If we need to use separate regions and profiles for each config,
 // we might need to enhance this function further.
 // That's another story though...
-func NewConfig(ctx context.Context, region string, profile string, roleARN string) (aws.Config, error) {
-	cfg, err := newConfig(ctx, region, profile)
+func NewConfig(ctx context.Context, region string, profile string, roleARN string, logLevel ...string) (aws.Config, error) {
+	var level string
+	if len(logLevel) > 0 {
+		level = logLevel[0]
+	}
+
+	cfg, err := newConfig(ctx, region, profile, level)
 	if err != nil {
 		return aws.Config{}, err
 	}
@@ -99,7 +131,7 @@ func NewConfig(ctx context.Context, region string, profile string, roleARN strin
 //
 // The fourth option of using FORCE_AWS_PROFILE=true and AWS_PROFILE=yourprofile is equivalent to `aws --profile ${AWS_PROFILE}`.
 // See https://github.com/helmfile/vals/issues/19#issuecomment-600437486 for more details and why and when this is needed.
-func newConfig(ctx context.Context, region string, profile string) (aws.Config, error) {
+func newConfig(ctx context.Context, region string, profile string, logLevel string) (aws.Config, error) {
 	var opts []func(*config.LoadOptions) error
 
 	// Set region if provided
@@ -140,8 +172,9 @@ func newConfig(ctx context.Context, region string, profile string) (aws.Config, 
 		opts = append(opts, config.WithEndpointResolverWithOptions(customResolver))
 	}
 
-	// Configure client log mode based on AWS_SDK_GO_LOG_LEVEL environment variable
-	opts = append(opts, config.WithClientLogMode(parseAWSLogLevel()))
+	// Configure client log mode based on AWS_SDK_GO_LOG_LEVEL environment variable or provided logLevel
+	// Default to no logging for security (prevents credential leakage)
+	opts = append(opts, config.WithClientLogMode(parseAWSLogLevel(logLevel)))
 
 	cfg, err := config.LoadDefaultConfig(ctx, opts...)
 	if err != nil {
@@ -152,10 +185,11 @@ func newConfig(ctx context.Context, region string, profile string) (aws.Config, 
 }
 
 // NewSession provides backwards compatibility for existing code
+// Optional: accepts a variadic logLevel parameter for AWS SDK logging configuration
 // Deprecated: Use NewConfig instead
-func NewSession(region string, profile string, roleARN string) aws.Config {
+func NewSession(region string, profile string, roleARN string, logLevel ...string) aws.Config {
 	ctx := context.Background()
-	cfg, err := NewConfig(ctx, region, profile, roleARN)
+	cfg, err := NewConfig(ctx, region, profile, roleARN, logLevel...)
 	if err != nil {
 		panic(err) // This matches the old session.Must behavior
 	}

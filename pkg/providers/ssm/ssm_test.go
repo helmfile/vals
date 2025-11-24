@@ -129,7 +129,7 @@ func TestGetStringMap(t *testing.T) {
 				conf["recursive"] = "true"
 			}
 
-			p := New(log.New(log.Config{Output: os.Stderr}), config.MapConfig{M: conf})
+			p := New(log.New(log.Config{Output: os.Stderr}), config.MapConfig{M: conf}, "")
 
 			p.ssmClient = c.ssm
 
