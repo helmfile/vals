@@ -32,7 +32,7 @@ require (
 	github.com/tidwall/gjson v1.18.0
 	github.com/yandex-cloud/go-genproto v0.34.0
 	github.com/yandex-cloud/go-sdk v0.26.0
-	golang.org/x/oauth2 v0.32.0
+	golang.org/x/oauth2 v0.33.0
 	google.golang.org/api v0.253.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.34.1
