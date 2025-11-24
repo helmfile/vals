@@ -21,16 +21,18 @@ type provider struct {
 	log      *log.Logger
 
 	// AWS s3 Parameter store global configuration
-	Region  string
-	Version string
-	Profile string
-	RoleARN string
-	Mode    string
+	Region      string
+	Version     string
+	Profile     string
+	RoleARN     string
+	Mode        string
+	AWSLogLevel string
 }
 
-func New(l *log.Logger, cfg api.StaticConfig) *provider {
+func New(l *log.Logger, cfg api.StaticConfig, awsLogLevel string) *provider {
 	p := &provider{
-		log: l,
+		log:         l,
+		AWSLogLevel: awsLogLevel,
 	}
 	p.Region = cfg.String("region")
 	p.Version = cfg.String("version")
@@ -95,7 +97,7 @@ func (p *provider) getS3Client() *s3.Client {
 		return p.s3Client
 	}
 
-	cfg := awsclicompat.NewSession(p.Region, p.Profile, p.RoleARN)
+	cfg := awsclicompat.NewSession(p.Region, p.Profile, p.RoleARN, p.AWSLogLevel)
 
 	p.s3Client = s3.NewFromConfig(cfg)
 	return p.s3Client

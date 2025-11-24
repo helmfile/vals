@@ -20,10 +20,13 @@ type provider struct {
 	// AWS KMS configuration
 	Region, Profile, RoleARN                      string
 	KeyId, EncryptionAlgorithm, EncryptionContext string
+	AWSLogLevel                                   string
 }
 
-func New(cfg api.StaticConfig) *provider {
-	p := &provider{}
+func New(cfg api.StaticConfig, awsLogLevel string) *provider {
+	p := &provider{
+		AWSLogLevel: awsLogLevel,
+	}
 	p.Region = cfg.String("region")
 	p.Profile = cfg.String("profile")
 	p.RoleARN = cfg.String("role_arn")
@@ -103,7 +106,7 @@ func (p *provider) getClient() *kms.Client {
 		return p.client
 	}
 
-	cfg := awsclicompat.NewSession(p.Region, p.Profile, p.RoleARN)
+	cfg := awsclicompat.NewSession(p.Region, p.Profile, p.RoleARN, p.AWSLogLevel)
 
 	p.client = kms.NewFromConfig(cfg)
 	return p.client

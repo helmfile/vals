@@ -21,18 +21,18 @@ import (
 	"github.com/helmfile/vals/pkg/providers/vault"
 )
 
-func New(l *log.Logger, provider api.StaticConfig) (api.LazyLoadedStringMapProvider, error) {
+func New(l *log.Logger, provider api.StaticConfig, awsLogLevel string) (api.LazyLoadedStringMapProvider, error) {
 	tpe := provider.String("name")
 
 	switch tpe {
 	case "s3":
-		return ssm.New(l, provider), nil
+		return ssm.New(l, provider, awsLogLevel), nil
 	case "ssm":
-		return ssm.New(l, provider), nil
+		return ssm.New(l, provider, awsLogLevel), nil
 	case "vault":
 		return vault.New(l, provider), nil
 	case "awssecrets":
-		return awssecrets.New(l, provider), nil
+		return awssecrets.New(l, provider, awsLogLevel), nil
 	case "sops":
 		return sops.New(l, provider), nil
 	case "gcpsecrets":
@@ -40,7 +40,7 @@ func New(l *log.Logger, provider api.StaticConfig) (api.LazyLoadedStringMapProvi
 	case "azurekeyvault":
 		return azurekeyvault.New(provider), nil
 	case "awskms":
-		return awskms.New(provider), nil
+		return awskms.New(provider, awsLogLevel), nil
 	case "onepasswordconnect":
 		return onepasswordconnect.New(provider), nil
 	case "doppler":

@@ -18,22 +18,21 @@ import (
 )
 
 type provider struct {
-	// Keeping track of SSM services since we need a SSM service per region
-	ssmClient *ssm.Client
-	log       *log.Logger
-
-	// AWS SSM Parameter store global configuration
-	Region    string
-	Version   string
-	Profile   string
-	RoleARN   string
-	Mode      string
-	Recursive bool
+	ssmClient   *ssm.Client
+	log         *log.Logger
+	Region      string
+	Version     string
+	Profile     string
+	RoleARN     string
+	Mode        string
+	AWSLogLevel string
+	Recursive   bool
 }
 
-func New(l *log.Logger, cfg api.StaticConfig) *provider {
+func New(l *log.Logger, cfg api.StaticConfig, awsLogLevel string) *provider {
 	p := &provider{
-		log: l,
+		log:         l,
+		AWSLogLevel: awsLogLevel,
 	}
 	p.Region = cfg.String("region")
 	p.Version = cfg.String("version")
@@ -223,7 +222,7 @@ func (p *provider) getSSMClient() *ssm.Client {
 		return p.ssmClient
 	}
 
-	cfg := awsclicompat.NewSession(p.Region, p.Profile, p.RoleARN)
+	cfg := awsclicompat.NewSession(p.Region, p.Profile, p.RoleARN, p.AWSLogLevel)
 
 	p.ssmClient = ssm.NewFromConfig(cfg)
 	return p.ssmClient

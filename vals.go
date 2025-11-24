@@ -193,7 +193,7 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 			// ref+s3://foo/bar?region=ap-northeast-1#/baz
 			// 1. GetObject for the bucket foo and key bar
 			// 2. Then extracts the value for key baz(=/foo/bar/baz) from the result from step 1.
-			p := s3.New(r.logger, conf)
+			p := s3.New(r.logger, conf, r.Options.AWSLogLevel)
 			return p, nil
 		case ProviderGCS:
 			// vals+gcs://foo/bar?generation=timestamp#/baz
@@ -209,13 +209,13 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 			// ref+awsssm://foo/bar?region=ap-northeast-1#/baz
 			// 1. GetParametersByPath for the prefix /foo/bar
 			// 2. Then extracts the value for key baz(=/foo/bar/baz) from the result from step 1.
-			p := ssm.New(r.logger, conf)
+			p := ssm.New(r.logger, conf, r.Options.AWSLogLevel)
 			return p, nil
 		case ProviderSecretsManager:
 			// ref+awssecrets://foo/bar?region=ap-northeast-1#/baz
 			// 1. Get secret for key foo/bar, parse it as yaml
 			// 2. Then extracts the value for key baz) from the result from step 1.
-			p := awssecrets.New(r.logger, conf)
+			p := awssecrets.New(r.logger, conf, r.Options.AWSLogLevel)
 			return p, nil
 		case ProviderOCI:
 			p := oci.New(r.logger, conf)
@@ -253,7 +253,7 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 			p := azurekeyvault.New(conf)
 			return p, nil
 		case ProviderKms:
-			p := awskms.New(conf)
+			p := awskms.New(conf, r.Options.AWSLogLevel)
 			return p, nil
 		case ProviderKeychain:
 			p := keychain.New(conf)
@@ -520,6 +520,7 @@ var KnownValuesTypes = []string{
 
 type ctx struct {
 	ignorePrefix string
+	awsLogLevel  string
 }
 
 type Option func(*ctx)
@@ -530,8 +531,22 @@ func IgnorePrefix(p string) Option {
 	}
 }
 
+func AWSLogLevel(level string) Option {
+	return func(ctx *ctx) {
+		ctx.awsLogLevel = level
+	}
+}
+
 type Options struct {
-	LogOutput             io.Writer
+	LogOutput io.Writer
+	// AWSLogLevel controls AWS SDK logging. Valid values:
+	// - "off" or "" (default): No AWS SDK logging
+	// - "minimal": Log only retries
+	// - "standard": Log retries and requests (previous default)
+	// - "verbose": Log everything (requests, responses, signing)
+	// - Custom: Comma-separated values (e.g., "request,response")
+	// This is overridden by AWS_SDK_GO_LOG_LEVEL environment variable if set
+	AWSLogLevel           string
 	CacheSize             int
 	ExcludeSecret         bool
 	FailOnMissingKeyInMap bool
@@ -852,7 +867,7 @@ func Load(conf api.StaticConfig, opt ...Option) (map[string]interface{}, error) 
 
 	switch tpe {
 	case TypeString:
-		p, err := stringprovider.New(l, provider)
+		p, err := stringprovider.New(l, provider, ctx.awsLogLevel)
 		if err != nil {
 			return nil, err
 		}
@@ -876,11 +891,11 @@ func Load(conf api.StaticConfig, opt ...Option) (map[string]interface{}, error) 
 			return nil, fmt.Errorf("unexpected type: %T", r)
 		}
 	case TypeMap:
-		p, err := stringmapprovider.New(l, provider)
+		p, err := stringmapprovider.New(l, provider, ctx.awsLogLevel)
 		if err != nil {
 			return nil, err
 		}
-		pp, err := stringprovider.New(l, provider)
+		pp, err := stringprovider.New(l, provider, ctx.awsLogLevel)
 		if err != nil {
 			return nil, err
 		}

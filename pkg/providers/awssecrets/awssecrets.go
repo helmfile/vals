@@ -24,12 +24,14 @@ type provider struct {
 	Region, Profile, RoleARN string
 	VersionStage, VersionId  string
 
-	Format string
+	Format      string
+	AWSLogLevel string
 }
 
-func New(l *log.Logger, cfg api.StaticConfig) *provider {
+func New(l *log.Logger, cfg api.StaticConfig, awsLogLevel string) *provider {
 	p := &provider{
-		log: l,
+		log:         l,
+		AWSLogLevel: awsLogLevel,
 	}
 	p.Region = cfg.String("region")
 	p.VersionStage = cfg.String("version_stage")
@@ -140,7 +142,7 @@ func (p *provider) getClient() *secretsmanager.Client {
 		return p.client
 	}
 
-	cfg := awsclicompat.NewSession(p.Region, p.Profile, p.RoleARN)
+	cfg := awsclicompat.NewSession(p.Region, p.Profile, p.RoleARN, p.AWSLogLevel)
 
 	p.client = secretsmanager.NewFromConfig(cfg)
 	return p.client

@@ -1,6 +1,6 @@
 module github.com/helmfile/vals
 
-go 1.24.2
+go 1.25.4
 
 require (
 	cloud.google.com/go/kms v1.23.2

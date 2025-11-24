@@ -30,22 +30,22 @@ import (
 	"github.com/helmfile/vals/pkg/providers/vault"
 )
 
-func New(l *log.Logger, provider api.StaticConfig) (api.LazyLoadedStringProvider, error) {
+func New(l *log.Logger, provider api.StaticConfig, awsLogLevel string) (api.LazyLoadedStringProvider, error) {
 	tpe := provider.String("name")
 
 	switch tpe {
 	case "s3":
-		return s3.New(l, provider), nil
+		return s3.New(l, provider, awsLogLevel), nil
 	case "gcs":
 		return gcs.New(provider), nil
 	case "ssm":
-		return ssm.New(l, provider), nil
+		return ssm.New(l, provider, awsLogLevel), nil
 	case "vault":
 		return vault.New(l, provider), nil
 	case "awskms":
-		return awskms.New(provider), nil
+		return awskms.New(provider, awsLogLevel), nil
 	case "awssecrets":
-		return awssecrets.New(l, provider), nil
+		return awssecrets.New(l, provider, awsLogLevel), nil
 	case "sops":
 		return sops.New(l, provider), nil
 	case "gcpsecrets":
