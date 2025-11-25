@@ -5,7 +5,7 @@ go 1.25.4
 require (
 	cloud.google.com/go/kms v1.23.2
 	cloud.google.com/go/secretmanager v1.16.0
-	cloud.google.com/go/storage v1.57.0
+	cloud.google.com/go/storage v1.57.2
 	github.com/1Password/connect-sdk-go v1.5.3
 	github.com/1password/onepassword-sdk-go v0.3.1
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.20.0
@@ -45,7 +45,7 @@ require (
 	cel.dev/expr v0.24.0 // indirect
 	cloud.google.com/go/auth v0.17.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
-	cloud.google.com/go/longrunning v0.6.7 // indirect
+	cloud.google.com/go/longrunning v0.7.0 // indirect
 	cloud.google.com/go/monitoring v1.24.2 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.29.0 // indirect
