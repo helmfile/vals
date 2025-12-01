@@ -9,7 +9,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"time"
 
 	"github.com/helmfile/vals/pkg/api"
@@ -17,8 +16,8 @@ import (
 )
 
 const (
-	AUTH_URL        = "https://cloud.api.servercore.com/identity/v3/auth/tokens"
-	SECRET_BASE_URL = "https://cloud.api.servercore.com/secrets-manager/v1/"
+	AuthURL       = "https://cloud.api.servercore.com/identity/v3/auth/tokens"
+	SecretBaseUrl = "https://cloud.api.servercore.com/secrets-manager/v1/"
 
 	USERNAME_ENV     = "SERVERCORE_USERNAME"
 	PASSWORD_ENV     = "SERVERCORE_PASSWORD"
@@ -34,41 +33,73 @@ var (
 )
 
 type provider struct {
-	logger    *log.Logger
-
-	token string
-}
-
-func getEnvOrFail(name string) (string, error) {
-	env, ok := os.LookupEnv(name)
-	if !ok {
-		return "", fmt.Errorf("servercore: Missing %s environment variable", name)
-	}
-
-	return env, nil
+	logger *log.Logger
+	token  string
 }
 
 func New(l *log.Logger, cfg api.StaticConfig) *provider {
-	t, err := getToken()
-	if err != nil {
-		l.Debugf("servercore: auth error: %s", err)
-		return nil
-	}
-
 	p := &provider{
 		logger: l,
-		token:  t,
 	}
-
 	return p
 }
 
-func sendRequest(method string, url string, payload io.Reader, headers map[string]string, successesStatus int) (*http.Response, error) {
-	req, err := http.NewRequest(method, url, payload)
+func (p *provider) ensureToken() error {
+	if p.token != "" {
+		return nil
+	}
+	t, err := getToken()
 	if err != nil {
-		return nil, fmt.Errorf("servercore: error creating request: %w", err)
+		return err
+	}
+	p.token = t
+	return nil
+}
+
+func (p *provider) sendJSONWithAuth(method string, url string, in any, out any, successStatus int) (http.Header, error) {
+	if err := p.ensureToken(); err != nil {
+		return nil, fmt.Errorf("servercore: auth error: %w", err)
+	}
+	headers := map[string]string{"X-Auth-Token": p.token}
+	hdr, err := sendJSON(method, url, headers, in, out, successStatus)
+	switch err {
+	case nil:
+		return hdr, nil
+	case ErrUnauthorized:
+		p.token = ""
+		if err2 := p.ensureToken(); err2 != nil {
+			return nil, fmt.Errorf("servercore: re-auth error: %w", err2)
+		}
+		headers["X-Auth-Token"] = p.token
+		hdr, err = sendJSON(method, url, headers, in, out, successStatus)
+		if err != nil {
+			return nil, err
+		}
+
+		return hdr, nil
+	default:
+		return nil, err
+	}
+}
+
+func sendJSON(method string, url string, headers map[string]string, in any, out any, successStatus int) (http.Header, error) {
+	var body io.Reader
+	if in != nil {
+		b, err := json.Marshal(in)
+		if err != nil {
+			return nil, fmt.Errorf("servercore: marshal: %w", err)
+		}
+		body = bytes.NewReader(b)
 	}
 
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		return nil, fmt.Errorf("servercore: request: %w", err)
+	}
+	if in != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	req.Header.Set("Accept", "application/json")
 	for k, v := range headers {
 		req.Header.Set(k, v)
 	}
@@ -76,8 +107,9 @@ func sendRequest(method string, url string, payload io.Reader, headers map[strin
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("servercore: error send request: %w", err)
+		return nil, fmt.Errorf("servercore: do: %w", err)
 	}
+	defer resp.Body.Close()
 
 	switch resp.StatusCode {
 	case http.StatusNotFound:
@@ -86,92 +118,33 @@ func sendRequest(method string, url string, payload io.Reader, headers map[strin
 		return nil, ErrUnauthorized
 	case http.StatusForbidden:
 		return nil, ErrForbidden
-
-	case successesStatus:
+	case successStatus:
 		break
-
 	default:
 		return nil, fmt.Errorf("servercore: unexpected status %d", resp.StatusCode)
 	}
 
-	return resp, nil
+	if out != nil {
+		if err := json.NewDecoder(resp.Body).Decode(out); err != nil {
+			return resp.Header, fmt.Errorf("servercore: decode: %w", err)
+		}
+	} else {
+		_, _ = io.Copy(io.Discard, resp.Body)
+	}
+	return resp.Header, nil
 }
 
 func getToken() (string, error) {
-	username, err := getEnvOrFail(USERNAME_ENV)
+	envs, err := newAuthEnv()
+
+	payload := newAuthPayload(envs.Username, envs.Password, envs.AccountID, envs.ProjectName)
+
+	hdr, err := sendJSON(http.MethodPost, AuthURL, nil, payload, nil, http.StatusCreated)
 	if err != nil {
-		return "", err
-	}
-	pass, err := getEnvOrFail(PASSWORD_ENV)
-	if err != nil {
-		return "", err
-	}
-	accountId, err := getEnvOrFail(ACCOUNT_ID_ENV)
-	if err != nil {
-		return "", err
-	}
-	projectName, err := getEnvOrFail(PROJECT_NAME_ENV)
-	if err != nil {
-		return "", err
+		return "", fmt.Errorf("servercore: error auth request: %w", err)
 	}
 
-	type domainSpec struct {
-		Name string `json:"name"`
-	}
-
-	type userSpec struct {
-		Name     string     `json:"name"`
-		Domain   domainSpec `json:"domain"`
-		Password string     `json:"password"`
-	}
-
-	type passwordSpec struct {
-		User userSpec `json:"user"`
-	}
-
-	type identitySpec struct {
-		Methods  []string     `json:"methods"`
-		Password passwordSpec `json:"password"`
-	}
-
-	type projectSpec struct {
-		Name   string     `json:"name"`
-		Domain domainSpec `json:"domain"`
-	}
-
-	type scopeSpec struct {
-		Project projectSpec `json:"project"`
-	}
-
-	type authSpec struct {
-		Identity identitySpec `json:"identity"`
-		Scope    scopeSpec    `json:"scope"`
-	}
-
-	type authPayload struct {
-		Auth authSpec `json:"auth"`
-	}
-
-	p := authPayload{}
-	p.Auth.Identity.Methods = []string{"password"}
-	p.Auth.Identity.Password.User.Name = username
-	p.Auth.Identity.Password.User.Domain.Name = accountId
-	p.Auth.Identity.Password.User.Password = pass
-	p.Auth.Scope.Project.Name = projectName
-	p.Auth.Scope.Project.Domain.Name = accountId
-
-	payloadJson, err := json.Marshal(&p)
-	if err != nil {
-		return "", fmt.Errorf("error while serializing auth body: %w", err)
-	}
-
-	res, err := sendRequest(http.MethodPost, AUTH_URL, bytes.NewBuffer(payloadJson), nil, http.StatusCreated)
-	if err != nil {
-		return "", fmt.Errorf("servercore: error send auth request: %w", err)
-	}
-	defer res.Body.Close()
-
-	token := res.Header.Get("X-Subject-Token")
+	token := hdr.Get("X-Subject-Token")
 	if token == "" {
 		return "", fmt.Errorf("no X-Subject-Token in response headers")
 	}
@@ -180,7 +153,7 @@ func getToken() (string, error) {
 }
 
 func (p *provider) GetString(key string) (string, error) {
-	secretUrl, err := url.JoinPath(SECRET_BASE_URL, key)
+	secretUrl, err := url.JoinPath(SecretBaseUrl, key)
 	if err != nil {
 		return "", fmt.Errorf("servercore: error generate secret url: %w", err)
 	}
@@ -192,23 +165,9 @@ func (p *provider) GetString(key string) (string, error) {
 		Secret secret `json:"version"`
 	}
 
-	headers := make(map[string]string)
-	headers["X-Auth-Token"] = p.token
-
 	response := Response{}
-	res, err := sendRequest(http.MethodGet, secretUrl, nil, headers, http.StatusOK)
-	if err != nil {
+	if _, err := p.sendJSONWithAuth(http.MethodGet, secretUrl, nil, &response, http.StatusOK); err != nil {
 		return "", err
-	}
-	defer res.Body.Close()
-
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return "", fmt.Errorf("servercore: error reading response body: %w", err)
-	}
-
-	if err := json.Unmarshal(body, &response); err != nil {
-		return "", ErrUnprocessableEntity
 	}
 
 	decoded, err := base64.StdEncoding.DecodeString(response.Secret.Value)
