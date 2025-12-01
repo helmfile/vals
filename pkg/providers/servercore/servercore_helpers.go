@@ -5,6 +5,16 @@ import (
 	"os"
 )
 
+// secret response types
+type secretVersion struct {
+	Value string `json:"value"`
+}
+
+type secretResp struct {
+	Version secretVersion `json:"version"`
+}
+
+// auth payload types
 type domainSpec struct {
 	Name string `json:"name"`
 }

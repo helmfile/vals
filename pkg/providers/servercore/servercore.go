@@ -13,11 +13,12 @@ import (
 
 	"github.com/helmfile/vals/pkg/api"
 	"github.com/helmfile/vals/pkg/log"
+	"gopkg.in/yaml.v3"
 )
 
 const (
 	AuthURL       = "https://cloud.api.servercore.com/identity/v3/auth/tokens"
-	SecretBaseUrl = "https://cloud.api.servercore.com/secrets-manager/v1/"
+	SecretBaseURL = "https://cloud.api.servercore.com/secrets-manager/v1/"
 
 	USERNAME_ENV     = "SERVERCORE_USERNAME"
 	PASSWORD_ENV     = "SERVERCORE_PASSWORD"
@@ -34,13 +35,18 @@ var (
 
 type provider struct {
 	logger *log.Logger
+	client *http.Client
 	token  string
 }
 
 func New(l *log.Logger, cfg api.StaticConfig) *provider {
+	client := &http.Client{Timeout: 10 * time.Second}
+
 	p := &provider{
 		logger: l,
+		client: client,
 	}
+
 	return p
 }
 
@@ -48,7 +54,7 @@ func (p *provider) ensureToken() error {
 	if p.token != "" {
 		return nil
 	}
-	t, err := getToken()
+	t, err := p.getToken()
 	if err != nil {
 		return err
 	}
@@ -61,7 +67,7 @@ func (p *provider) sendJSONWithAuth(method string, url string, in any, out any, 
 		return nil, fmt.Errorf("servercore: auth error: %w", err)
 	}
 	headers := map[string]string{"X-Auth-Token": p.token}
-	hdr, err := sendJSON(method, url, headers, in, out, successStatus)
+	hdr, err := p.sendJSON(method, url, headers, in, out, successStatus)
 	switch err {
 	case nil:
 		return hdr, nil
@@ -71,7 +77,7 @@ func (p *provider) sendJSONWithAuth(method string, url string, in any, out any, 
 			return nil, fmt.Errorf("servercore: re-auth error: %w", err2)
 		}
 		headers["X-Auth-Token"] = p.token
-		hdr, err = sendJSON(method, url, headers, in, out, successStatus)
+		hdr, err = p.sendJSON(method, url, headers, in, out, successStatus)
 		if err != nil {
 			return nil, err
 		}
@@ -82,7 +88,7 @@ func (p *provider) sendJSONWithAuth(method string, url string, in any, out any, 
 	}
 }
 
-func sendJSON(method string, url string, headers map[string]string, in any, out any, successStatus int) (http.Header, error) {
+func (p *provider) sendJSON(method string, url string, headers map[string]string, in any, out any, successStatus int) (http.Header, error) {
 	var body io.Reader
 	if in != nil {
 		b, err := json.Marshal(in)
@@ -104,8 +110,7 @@ func sendJSON(method string, url string, headers map[string]string, in any, out 
 		req.Header.Set(k, v)
 	}
 
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Do(req)
+	resp, err := p.client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("servercore: do: %w", err)
 	}
@@ -126,7 +131,7 @@ func sendJSON(method string, url string, headers map[string]string, in any, out 
 
 	if out != nil {
 		if err := json.NewDecoder(resp.Body).Decode(out); err != nil {
-			return resp.Header, fmt.Errorf("servercore: decode: %w", err)
+			return resp.Header, fmt.Errorf("servercore: json decode: %w", err)
 		}
 	} else {
 		_, _ = io.Copy(io.Discard, resp.Body)
@@ -134,45 +139,41 @@ func sendJSON(method string, url string, headers map[string]string, in any, out 
 	return resp.Header, nil
 }
 
-func getToken() (string, error) {
+func (p *provider) getToken() (string, error) {
 	envs, err := newAuthEnv()
+	if err != nil {
+		return "", err
+	}
 
 	payload := newAuthPayload(envs.Username, envs.Password, envs.AccountID, envs.ProjectName)
 
-	hdr, err := sendJSON(http.MethodPost, AuthURL, nil, payload, nil, http.StatusCreated)
+	hdr, err := p.sendJSON(http.MethodPost, AuthURL, nil, payload, nil, http.StatusCreated)
 	if err != nil {
 		return "", fmt.Errorf("servercore: error auth request: %w", err)
 	}
 
 	token := hdr.Get("X-Subject-Token")
 	if token == "" {
-		return "", fmt.Errorf("no X-Subject-Token in response headers")
+		return "", fmt.Errorf("servercore: missing X-Subject-Token")
 	}
 
 	return token, nil
 }
 
 func (p *provider) GetString(key string) (string, error) {
-	secretUrl, err := url.JoinPath(SecretBaseUrl, key)
+	secretUrl, err := url.JoinPath(SecretBaseURL, key)
 	if err != nil {
 		return "", fmt.Errorf("servercore: error generate secret url: %w", err)
 	}
 
-	type secret struct {
-		Value string `json:"value"`
-	}
-	type Response struct {
-		Secret secret `json:"version"`
-	}
-
-	response := Response{}
+	var response secretResp
 	if _, err := p.sendJSONWithAuth(http.MethodGet, secretUrl, nil, &response, http.StatusOK); err != nil {
 		return "", err
 	}
 
-	decoded, err := base64.StdEncoding.DecodeString(response.Secret.Value)
+	decoded, err := base64.StdEncoding.DecodeString(response.Version.Value)
 	if err != nil {
-		return "", fmt.Errorf("error decoding secret: %w", err)
+		return "", fmt.Errorf("servercore: b64 decode: %w", err)
 	}
 
 	return string(decoded), nil
@@ -181,12 +182,15 @@ func (p *provider) GetString(key string) (string, error) {
 func (p *provider) GetStringMap(key string) (map[string]any, error) {
 	value, err := p.GetString(key)
 	if err != nil {
-		return nil, fmt.Errorf("error decoding secret: %w", err)
+		return nil, fmt.Errorf("servercore: get string: %w", err)
 	}
 
 	m := make(map[string]any)
 	if err := json.Unmarshal([]byte(value), &m); err != nil {
-		return nil, ErrUnprocessableEntity
+		// Fallback to YAML
+		if yerr := yaml.Unmarshal([]byte(value), &m); yerr != nil {
+			return nil, fmt.Errorf("servercore: yaml decode: %w", yerr)
+		}
 	}
 
 	return m, nil
