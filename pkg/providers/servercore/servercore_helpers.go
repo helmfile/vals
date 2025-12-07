@@ -27,8 +27,8 @@ type passwordSpec struct {
 	User userSpec `json:"user"`
 }
 type identitySpec struct {
-	Methods  []string     `json:"methods"`
 	Password passwordSpec `json:"password"`
+	Methods  []string     `json:"methods"`
 }
 type projectSpec struct {
 	Name   string     `json:"name"`
@@ -38,8 +38,8 @@ type scopeSpec struct {
 	Project projectSpec `json:"project"`
 }
 type authSpec struct {
-	Identity identitySpec `json:"identity"`
 	Scope    scopeSpec    `json:"scope"`
+	Identity identitySpec `json:"identity"`
 }
 type authPayload struct {
 	Auth authSpec `json:"auth"`
@@ -103,4 +103,3 @@ func newAuthEnv() (authEnv, error) {
 
 	return a, nil
 }
-

@@ -11,9 +11,10 @@ import (
 	"net/url"
 	"time"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/helmfile/vals/pkg/api"
 	"github.com/helmfile/vals/pkg/log"
-	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -126,7 +127,7 @@ func (p *provider) sendJSON(method string, url string, headers map[string]string
 	if err != nil {
 		return nil, fmt.Errorf("servercore: do: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	switch resp.StatusCode {
 	case http.StatusNotFound:
