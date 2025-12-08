@@ -1012,7 +1012,7 @@ Examples:
 - `ref+yclockbox://e6qeoqvd88dcpf044n5i?version_id=e6qn22seoaprg9cbe1dj#oauth_secret` - get secret entry from the `oauth_secret` key of `e6qn22seoaprg9cbe1dj` version of `e6qeoqvd88dcpf044n5i` secret
 - `ref+yclockbox://e6qeoqvd88dcpf044n5i#oauth_secret` - get secret entry from the `oauth_secret` key of current version of `e6qeoqvd88dcpf044n5i` secret
 
-### Servercore sercret manager
+### Servercore secret manager
 
 Retrieve secrets from Servercore Secrets Manager. The path identifies the secret. If a fragment is specified, the provider returns a specific key from the decoded secret.
 

@@ -167,7 +167,7 @@ func (p *provider) getToken() (string, error) {
 	p.logger.Debugf("servercore: auth request")
 	hdr, err := p.sendJSON(http.MethodPost, AuthURL, nil, payload, nil, http.StatusCreated)
 	if err != nil {
-		return "", fmt.Errorf("servercore: error auth request: %w", err)
+		return "", fmt.Errorf("servercore: auth request failed: %w", err)
 	}
 
 	token := hdr.Get("X-Subject-Token")
@@ -183,7 +183,7 @@ func (p *provider) GetString(key string) (string, error) {
 	p.logger.Debugf("servercore: get string for secret=%s", key)
 	secretUrl, err := url.JoinPath(SecretBaseURL, key)
 	if err != nil {
-		return "", fmt.Errorf("servercore: error generate secret url: %w", err)
+		return "", fmt.Errorf("servercore: error generating secret url: %w", err)
 	}
 
 	var response secretResp
