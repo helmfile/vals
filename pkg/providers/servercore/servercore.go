@@ -206,13 +206,13 @@ func (p *provider) sendJSON(method string, url string, headers map[string]string
 
 func (p *provider) GetString(key string) (string, error) {
 	p.logger.Debugf("servercore: get string for secret=%s", key)
-	secretUrl, err := url.JoinPath(SecretBaseURL, key)
+	secretURL, err := url.JoinPath(SecretBaseURL, key)
 	if err != nil {
 		return "", fmt.Errorf("servercore: error generating secret url: %w", err)
 	}
 
 	var response secretResp
-	if _, err := p.sendJSONWithAuth(http.MethodGet, secretUrl, nil, &response, http.StatusOK); err != nil {
+	if _, err := p.sendJSONWithAuth(http.MethodGet, secretURL, nil, &response, http.StatusOK); err != nil {
 		return "", err
 	}
 
