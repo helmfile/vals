@@ -23,6 +23,7 @@ It supports various backends including:
 - HCP Vault Secrets
 - Bitwarden
 - [Yandex Cloud Lockbox](https://yandex.cloud/en/docs/lockbox/)
+- Servercore secrets manager
 - HTTP JSON
 - Keychain
 - Scaleway
@@ -1011,6 +1012,30 @@ Examples:
 - `ref+yclockbox://e6qeoqvd88dcpf044n5i?version_id=e6qn22seoaprg9cbe1dj#oauth_secret` - get secret entry from the `oauth_secret` key of `e6qn22seoaprg9cbe1dj` version of `e6qeoqvd88dcpf044n5i` secret
 - `ref+yclockbox://e6qeoqvd88dcpf044n5i#oauth_secret` - get secret entry from the `oauth_secret` key of current version of `e6qeoqvd88dcpf044n5i` secret
 
+### Servercore secret manager
+
+Retrieve secrets from Servercore Secrets Manager. The path identifies the secret. If a fragment is specified, the provider returns a specific key from the decoded secret.
+
+Authentication:
+
+Set the following environment variables:
+
+- `SERVERCORE_USERNAME`
+- `SERVERCORE_PASSWORD`
+- `SERVERCORE_ACCOUNT_ID`
+- `SERVERCORE_PROJECT_NAME`
+
+URI formats:
+
+- `ref+servercore://SECRET_NAME`
+  Returns the secret value as a string.
+- `ref+servercore://SECRET_NAME#/key/in/secret`
+  Parses the decoded secret as JSON (with YAML as a fallback) and returns the value at the leaf key path.
+
+Notes:
+- The provider expects the Servercore API to return a base64-encoded string in the `version.value` field. After decoding, the provider attempts JSON parsing, and if that fails, YAML.
+- API reference: [Servercore Secrets API](https://docs.servercore.com/api/secrets-manager-secrets/).
+
 #### Authentication
 
 Vals aquires Yandex Cloud IAM token from the `YC_TOKEN` environment variable. The easiest way to get it is to run `yc iam create-token`. See [Yandex Cloud Lockbox docs](https://yandex.cloud/en/docs/lockbox/api-ref/authentication) for more details on authentication
@@ -1179,3 +1204,4 @@ Note though, `vals` does have support for simple string interpolation like usage
 ### Merge
 
 Merging YAMLs is out of the scope of `vals`. There're better alternatives like Jsonnet, Sprig, and CUE for the job.
+
