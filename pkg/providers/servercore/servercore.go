@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -38,6 +39,7 @@ type provider struct {
 	logger *log.Logger
 	client *http.Client
 	token  string
+	mu     sync.Mutex
 }
 
 func New(l *log.Logger, cfg api.StaticConfig) *provider {
@@ -53,26 +55,71 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 	return p
 }
 
-func (p *provider) ensureToken() error {
+func (p *provider) clearToken() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.token = ""
+}
+
+func (p *provider) getToken() (string, error) {
+	p.mu.Lock()
 	if p.token != "" {
+		token := p.token
+		p.mu.Unlock()
 		p.logger.Debugf("servercore: token present, skipping auth")
-		return nil
+		return token, nil
 	}
+	p.mu.Unlock()
+
 	p.logger.Debugf("servercore: acquiring token")
-	t, err := p.getToken()
+	newToken, err := p.acquireToken()
 	if err != nil {
-		return err
+		return "", err
 	}
-	p.token = t
+
+	p.mu.Lock()
+	if p.token != "" {
+		token := p.token
+		p.mu.Unlock()
+		p.logger.Debugf("servercore: token was acquired by another goroutine")
+		return token, nil
+	}
+	p.token = newToken
+	p.mu.Unlock()
+
 	p.logger.Debugf("servercore: token acquired")
-	return nil
+	return newToken, nil
+}
+
+func (p *provider) acquireToken() (string, error) {
+	envs, err := newAuthEnv()
+	if err != nil {
+		return "", err
+	}
+
+	payload := newAuthPayload(envs.Username, envs.Password, envs.AccountID, envs.ProjectName)
+
+	p.logger.Debugf("servercore: auth request")
+	hdr, err := p.sendJSON(http.MethodPost, AuthURL, nil, payload, nil, http.StatusCreated)
+	if err != nil {
+		return "", fmt.Errorf("servercore: auth request failed: %w", err)
+	}
+
+	token := hdr.Get("X-Subject-Token")
+	if token == "" {
+		return "", fmt.Errorf("servercore: missing X-Subject-Token")
+	}
+
+	p.logger.Debugf("servercore: auth success")
+	return token, nil
 }
 
 func (p *provider) sendJSONWithAuth(method string, url string, in any, out any, successStatus int) (http.Header, error) {
-	if err := p.ensureToken(); err != nil {
+	token, err := p.getToken()
+	if err != nil {
 		return nil, fmt.Errorf("servercore: auth error: %w", err)
 	}
-	headers := map[string]string{"X-Auth-Token": p.token}
+	headers := map[string]string{"X-Auth-Token": token}
 	p.logger.Debugf("servercore: request with auth: %s %s", method, url)
 	hdr, err := p.sendJSON(method, url, headers, in, out, successStatus)
 	switch err {
@@ -81,11 +128,12 @@ func (p *provider) sendJSONWithAuth(method string, url string, in any, out any, 
 		return hdr, nil
 	case ErrUnauthorized:
 		p.logger.Debugf("servercore: unauthorized, refreshing token")
-		p.token = ""
-		if err2 := p.ensureToken(); err2 != nil {
-			return nil, fmt.Errorf("servercore: re-auth error: %w", err2)
+		p.clearToken()
+		token, err = p.getToken()
+		if err != nil {
+			return nil, fmt.Errorf("servercore: re-auth error: %w", err)
 		}
-		headers["X-Auth-Token"] = p.token
+		headers["X-Auth-Token"] = token
 		p.logger.Debugf("servercore: retry with new token: %s %s", method, url)
 		hdr, err = p.sendJSON(method, url, headers, in, out, successStatus)
 		if err != nil {
@@ -154,29 +202,6 @@ func (p *provider) sendJSON(method string, url string, headers map[string]string
 		_, _ = io.Copy(io.Discard, resp.Body)
 	}
 	return resp.Header, nil
-}
-
-func (p *provider) getToken() (string, error) {
-	envs, err := newAuthEnv()
-	if err != nil {
-		return "", err
-	}
-
-	payload := newAuthPayload(envs.Username, envs.Password, envs.AccountID, envs.ProjectName)
-
-	p.logger.Debugf("servercore: auth request")
-	hdr, err := p.sendJSON(http.MethodPost, AuthURL, nil, payload, nil, http.StatusCreated)
-	if err != nil {
-		return "", fmt.Errorf("servercore: auth request failed: %w", err)
-	}
-
-	token := hdr.Get("X-Subject-Token")
-	if token == "" {
-		return "", fmt.Errorf("servercore: missing X-Subject-Token")
-	}
-
-	p.logger.Debugf("servercore: auth success")
-	return token, nil
 }
 
 func (p *provider) GetString(key string) (string, error) {
