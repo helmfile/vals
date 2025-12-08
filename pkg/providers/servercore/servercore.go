@@ -22,10 +22,10 @@ const (
 	AuthURL       = "https://cloud.api.servercore.com/identity/v3/auth/tokens"
 	SecretBaseURL = "https://cloud.api.servercore.com/secrets-manager/v1/"
 
-	USERNAME_ENV     = "SERVERCORE_USERNAME"
-	PASSWORD_ENV     = "SERVERCORE_PASSWORD"
-	ACCOUNT_ID_ENV   = "SERVERCORE_ACCOUNT_ID"
-	PROJECT_NAME_ENV = "SERVERCORE_PROJECT_NAME"
+	usernameEnv     = "SERVERCORE_USERNAME"
+	passwordEnv     = "SERVERCORE_PASSWORD"
+	accountIDEnv   = "SERVERCORE_ACCOUNT_ID"
+	projectNameEnv = "SERVERCORE_PROJECT_NAME"
 )
 
 var (

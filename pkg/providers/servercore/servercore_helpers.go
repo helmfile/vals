@@ -88,16 +88,16 @@ func newAuthEnv() (authEnv, error) {
 	var a authEnv
 	var err error
 
-	if a.Username, err = getEnvOrFail(USERNAME_ENV); err != nil {
+	if a.Username, err = getEnvOrFail(usernameEnv); err != nil {
 		return authEnv{}, err
 	}
-	if a.Password, err = getEnvOrFail(PASSWORD_ENV); err != nil {
+	if a.Password, err = getEnvOrFail(passwordEnv); err != nil {
 		return authEnv{}, err
 	}
-	if a.AccountID, err = getEnvOrFail(ACCOUNT_ID_ENV); err != nil {
+	if a.AccountID, err = getEnvOrFail(accountIDEnv); err != nil {
 		return authEnv{}, err
 	}
-	if a.ProjectName, err = getEnvOrFail(PROJECT_NAME_ENV); err != nil {
+	if a.ProjectName, err = getEnvOrFail(projectNameEnv); err != nil {
 		return authEnv{}, err
 	}
 
