@@ -19,11 +19,10 @@ import (
 )
 
 const (
-	AuthURL       = "https://cloud.api.servercore.com/identity/v3/auth/tokens"
-	SecretBaseURL = "https://cloud.api.servercore.com/secrets-manager/v1/"
-
-	usernameEnv     = "SERVERCORE_USERNAME"
-	passwordEnv     = "SERVERCORE_PASSWORD"
+	AuthURL        = "https://cloud.api.servercore.com/identity/v3/auth/tokens"
+	SecretBaseURL  = "https://cloud.api.servercore.com/secrets-manager/v1/"
+	usernameEnv    = "SERVERCORE_USERNAME"
+	passwordEnv    = "SERVERCORE_PASSWORD"
 	accountIDEnv   = "SERVERCORE_ACCOUNT_ID"
 	projectNameEnv = "SERVERCORE_PROJECT_NAME"
 )
