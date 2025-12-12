@@ -387,7 +387,6 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 			if err != nil {
 				return nil, err
 			}
-
 			// If we processed an ARN, extract it from the path and restore to host
 			if arnValue != "" {
 				// Remove the leading slash we added
