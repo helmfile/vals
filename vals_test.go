@@ -7,6 +7,8 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"crypto/md5"
+	"fmt"
 
 	"github.com/stretchr/testify/require"
 )
@@ -186,4 +188,98 @@ datetime_offset: "2025-01-01T12:34:56+01:00"
 	require.NoError(t, err)
 
 	require.Equal(t, expected, buf.String())
+}
+
+// mockProvider is a simple test double implementing api.Provider
+type mockProvider struct {
+	getStringFunc    func(string) (string, error)
+	getStringMapFunc func(string) (map[string]interface{}, error)
+}
+
+func (m *mockProvider) GetString(key string) (string, error) {
+	if m.getStringFunc != nil {
+		return m.getStringFunc(key)
+	}
+	return "", nil
+}
+
+func (m *mockProvider) GetStringMap(key string) (map[string]interface{}, error) {
+	if m.getStringMapFunc != nil {
+		return m.getStringMapFunc(key)
+	}
+	return nil, nil
+}
+
+func TestARNFragmentExtractionWithMockProvider(t *testing.T) {
+	r, err := New(Options{})
+	require.NoError(t, err)
+
+	// compute provider hash used by Runtime (scheme + query.Encode())
+	hash := fmt.Sprintf("%x", md5.Sum([]byte("echo")))
+
+	arn := "arn:aws:secretsmanager:us-east-1:123456789012:secret:/myteam/mydoc"
+
+	// mock provider returns a nested map for the ARN key
+	mock := &mockProvider{
+		getStringMapFunc: func(key string) (map[string]interface{}, error) {
+			if key != arn {
+				t.Fatalf("unexpected key passed to provider.GetStringMap: %q", key)
+			}
+			return map[string]interface{}{
+				"myteam": map[string]interface{}{
+					"mydoc": "mydoc",
+				},
+			}, nil
+		},
+	}
+
+	r.providers[hash] = mock
+
+	res, err := r.Get("ref+echo://" + arn + "#/myteam/mydoc")
+	require.NoError(t, err)
+	require.Equal(t, "mydoc", res)
+}
+
+func TestARNBasedURIParsing(t *testing.T) {
+	// Test that ARN-based URIs with colons are parsed correctly
+	// This tests the fix for issue #909
+	testCases := []struct {
+		name     string
+		input    string
+		expected string
+		checkResult bool
+	}{
+		{
+			name:     "Simple echo ARN format",
+			input:    "ref+echo://arn:aws:secretsmanager:us-east-1:123456789012:secret:/demo/app/database",
+			expected: "arn:aws:secretsmanager:us-east-1:123456789012:secret:/demo/app/database",
+			checkResult: true,
+		},
+		{
+			name:     "ARN with query params",
+			input:    "ref+echo://arn:aws:secretsmanager:us-east-1:123456789012:secret:/demo/app/database?region=us-east-1",
+			expected: "arn:aws:secretsmanager:us-east-1:123456789012:secret:/demo/app/database",
+			checkResult: true,
+		},
+		{
+			name:     "ARN with fragment - parse only",
+			input:    "ref+echo://arn:aws:secretsmanager:us-east-1:123456789012:secret:/myteam/mydoc#/myteam/mydoc",
+			checkResult: false,
+		},
+		{
+			name:     "ARN with both query and fragment - parse only",
+			input:    "ref+echo://arn:aws:secretsmanager:us-east-1:123456789012:secret:/demo/app/database?region=us-east-1#/demo/app/database",
+			checkResult: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := Get(tc.input, Options{})
+			require.NoError(t, err, "Failed to parse ARN-based URI: %s", tc.input)
+			if tc.checkResult {
+				require.Equal(t, tc.expected, result)
+			}
+		})
+	}
 }
