@@ -2,13 +2,13 @@ package vals
 
 import (
 	"bytes"
+	"crypto/md5"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"testing"
-	"crypto/md5"
-	"fmt"
 
 	"github.com/stretchr/testify/require"
 )
@@ -244,31 +244,31 @@ func TestARNBasedURIParsing(t *testing.T) {
 	// Test that ARN-based URIs with colons are parsed correctly
 	// This tests the fix for issue #909
 	testCases := []struct {
-		name     string
-		input    string
-		expected string
+		name        string
+		input       string
+		expected    string
 		checkResult bool
 	}{
 		{
-			name:     "Simple echo ARN format",
-			input:    "ref+echo://arn:aws:secretsmanager:us-east-1:123456789012:secret:/demo/app/database",
-			expected: "arn:aws:secretsmanager:us-east-1:123456789012:secret:/demo/app/database",
+			name:        "Simple echo ARN format",
+			input:       "ref+echo://arn:aws:secretsmanager:us-east-1:123456789012:secret:/demo/app/database",
+			expected:    "arn:aws:secretsmanager:us-east-1:123456789012:secret:/demo/app/database",
 			checkResult: true,
 		},
 		{
-			name:     "ARN with query params",
-			input:    "ref+echo://arn:aws:secretsmanager:us-east-1:123456789012:secret:/demo/app/database?region=us-east-1",
-			expected: "arn:aws:secretsmanager:us-east-1:123456789012:secret:/demo/app/database",
+			name:        "ARN with query params",
+			input:       "ref+echo://arn:aws:secretsmanager:us-east-1:123456789012:secret:/demo/app/database?region=us-east-1",
+			expected:    "arn:aws:secretsmanager:us-east-1:123456789012:secret:/demo/app/database",
 			checkResult: true,
 		},
 		{
-			name:     "ARN with fragment - parse only",
-			input:    "ref+echo://arn:aws:secretsmanager:us-east-1:123456789012:secret:/myteam/mydoc#/myteam/mydoc",
+			name:        "ARN with fragment - parse only",
+			input:       "ref+echo://arn:aws:secretsmanager:us-east-1:123456789012:secret:/myteam/mydoc#/myteam/mydoc",
 			checkResult: false,
 		},
 		{
-			name:     "ARN with both query and fragment - parse only",
-			input:    "ref+echo://arn:aws:secretsmanager:us-east-1:123456789012:secret:/demo/app/database?region=us-east-1#/demo/app/database",
+			name:        "ARN with both query and fragment - parse only",
+			input:       "ref+echo://arn:aws:secretsmanager:us-east-1:123456789012:secret:/demo/app/database?region=us-east-1#/demo/app/database",
 			checkResult: false,
 		},
 	}
