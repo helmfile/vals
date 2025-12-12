@@ -509,6 +509,16 @@ func TestARNBasedURIParsing(t *testing.T) {
 			expected:    "arn:aws:secretsmanager:us-east-1:123456789012:secret:/demo/app/database",
 			checkResult: true,
 		},
+		{
+			name:        "ARN with fragment - parse only",
+			input:       "ref+echo://arn:aws:secretsmanager:us-east-1:123456789012:secret:/myteam/mydoc#/myteam/mydoc",
+			checkResult: false,
+		},
+		{
+			name:        "ARN with both query and fragment - parse only",
+			input:       "ref+echo://arn:aws:secretsmanager:us-east-1:123456789012:secret:/demo/app/database?region=us-east-1#/demo/app/database",
+			checkResult: false,
+		},
 	}
 
 	for _, tc := range testCases {
