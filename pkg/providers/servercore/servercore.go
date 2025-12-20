@@ -28,10 +28,9 @@ const (
 )
 
 var (
-	ErrNotFound            = errors.New("secret not found")
-	ErrUnauthorized        = errors.New("unauthorized")
-	ErrForbidden           = errors.New("forbidden")
-	ErrUnprocessableEntity = errors.New("invalid secret format")
+	ErrNotFound     = errors.New("secret not found")
+	ErrUnauthorized = errors.New("unauthorized")
+	ErrForbidden    = errors.New("forbidden")
 )
 
 type provider struct {
@@ -42,6 +41,8 @@ type provider struct {
 }
 
 func New(l *log.Logger, cfg api.StaticConfig) *provider {
+	// cfg is accepted to satisfy the provider interface; this provider relies solely on
+	// environment variables (e.g., SERVERCORE_* env vars) for configuration.
 	client := &http.Client{Timeout: 10 * time.Second}
 
 	p := &provider{
@@ -232,11 +233,11 @@ func (p *provider) GetStringMap(key string) (map[string]any, error) {
 	}
 
 	m := make(map[string]any)
-	if err := json.Unmarshal([]byte(value), &m); err != nil {
+	if jerr := json.Unmarshal([]byte(value), &m); jerr != nil {
 		p.logger.Debugf("servercore: json decode failed for secret=%s, trying yaml", key)
 		// Fallback to YAML
 		if yerr := yaml.Unmarshal([]byte(value), &m); yerr != nil {
-			return nil, fmt.Errorf("servercore: yaml decode: %w", yerr)
+			return nil, fmt.Errorf("servercore: failed to decode secret as JSON or YAML: json error: %v, yaml error: %w", jerr, yerr)
 		}
 	}
 
