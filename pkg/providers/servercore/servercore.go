@@ -9,7 +9,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"sync"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -34,10 +33,10 @@ var (
 )
 
 type provider struct {
-	logger *log.Logger
-	client *http.Client
-	token  string
-	mu     sync.Mutex
+	logger   *log.Logger
+	client   *http.Client
+	tokenErr error
+	token    string
 }
 
 func New(l *log.Logger, cfg api.StaticConfig) *provider {
@@ -50,45 +49,25 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 		client: client,
 	}
 
-	p.logger.Debugf("servercore: provider initialized")
+	// Acquire token during initialization (token is valid for 24 hours)
+	p.logger.Debugf("servercore: acquiring token during initialization")
+	token, err := p.acquireToken()
+	if err != nil {
+		p.tokenErr = err
+		p.logger.Debugf("servercore: failed to acquire token: %v", err)
+	} else {
+		p.token = token
+		p.logger.Debugf("servercore: provider initialized with token")
+	}
 
 	return p
 }
 
-func (p *provider) clearToken() {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	p.token = ""
-}
-
 func (p *provider) getToken() (string, error) {
-	p.mu.Lock()
-	if p.token != "" {
-		token := p.token
-		p.mu.Unlock()
-		p.logger.Debugf("servercore: token present, skipping auth")
-		return token, nil
+	if p.tokenErr != nil {
+		return "", p.tokenErr
 	}
-	p.mu.Unlock()
-
-	p.logger.Debugf("servercore: acquiring token")
-	newToken, err := p.acquireToken()
-	if err != nil {
-		return "", err
-	}
-
-	p.mu.Lock()
-	if p.token != "" {
-		token := p.token
-		p.mu.Unlock()
-		p.logger.Debugf("servercore: token was acquired by another goroutine")
-		return token, nil
-	}
-	p.token = newToken
-	p.mu.Unlock()
-
-	p.logger.Debugf("servercore: token acquired")
-	return newToken, nil
+	return p.token, nil
 }
 
 func (p *provider) acquireToken() (string, error) {
@@ -122,30 +101,13 @@ func (p *provider) sendJSONWithAuth(method string, url string, in any, out any, 
 	headers := map[string]string{"X-Auth-Token": token}
 	p.logger.Debugf("servercore: request with auth: %s %s", method, url)
 	hdr, err := p.sendJSON(method, url, headers, in, out, successStatus)
-	switch err {
-	case nil:
-		p.logger.Debugf("servercore: request ok: %s %s", method, url)
-		return hdr, nil
-	case ErrUnauthorized:
-		p.logger.Debugf("servercore: unauthorized, refreshing token")
-		p.clearToken()
-		token, err = p.getToken()
-		if err != nil {
-			return nil, fmt.Errorf("servercore: re-auth error: %w", err)
-		}
-		headers["X-Auth-Token"] = token
-		p.logger.Debugf("servercore: retry with new token: %s %s", method, url)
-		hdr, err = p.sendJSON(method, url, headers, in, out, successStatus)
-		if err != nil {
-			return nil, err
-		}
-
-		p.logger.Debugf("servercore: retry ok: %s %s", method, url)
-		return hdr, nil
-	default:
+	if err != nil {
 		p.logger.Debugf("servercore: request failed: %s %s: %v", method, url, err)
 		return nil, err
 	}
+
+	p.logger.Debugf("servercore: request ok: %s %s", method, url)
+	return hdr, nil
 }
 
 func (p *provider) sendJSON(method string, url string, headers map[string]string, in any, out any, successStatus int) (http.Header, error) {
