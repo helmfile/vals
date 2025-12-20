@@ -1012,30 +1012,6 @@ Examples:
 - `ref+yclockbox://e6qeoqvd88dcpf044n5i?version_id=e6qn22seoaprg9cbe1dj#oauth_secret` - get secret entry from the `oauth_secret` key of `e6qn22seoaprg9cbe1dj` version of `e6qeoqvd88dcpf044n5i` secret
 - `ref+yclockbox://e6qeoqvd88dcpf044n5i#oauth_secret` - get secret entry from the `oauth_secret` key of current version of `e6qeoqvd88dcpf044n5i` secret
 
-### Servercore secret manager
-
-Retrieve secrets from Servercore Secrets Manager. The path identifies the secret. If a fragment is specified, the provider returns a specific key from the decoded secret.
-
-Authentication:
-
-Set the following environment variables:
-
-- `SERVERCORE_USERNAME`
-- `SERVERCORE_PASSWORD`
-- `SERVERCORE_ACCOUNT_ID`
-- `SERVERCORE_PROJECT_NAME`
-
-URI formats:
-
-- `ref+servercore://SECRET_NAME`
-  Returns the secret value as a string.
-- `ref+servercore://SECRET_NAME#/key/in/secret`
-  Parses the decoded secret as JSON (with YAML as a fallback) and returns the value at the leaf key path.
-
-Notes:
-- The provider expects the Servercore API to return a base64-encoded string in the `version.value` field. After decoding, the provider attempts JSON parsing, and if that fails, YAML.
-- API reference: [Servercore Secrets API](https://docs.servercore.com/api/secrets-manager-secrets/).
-
 #### Authentication
 
 Vals aquires Yandex Cloud IAM token from the `YC_TOKEN` environment variable. The easiest way to get it is to run `yc iam create-token`. See [Yandex Cloud Lockbox docs](https://yandex.cloud/en/docs/lockbox/api-ref/authentication) for more details on authentication
@@ -1099,6 +1075,30 @@ ref+httpjson://api.github.com/users/helmfile/repos#///*[1]/id
 # Running the following will return: 251296379
 ref+httpjson://api.github.com/users/helmfile/repos?floatAsInt=true#///*[1]/id
 ```
+
+### Servercore secret manager
+
+Retrieve secrets from Servercore Secrets Manager. The path identifies the secret. If a fragment is specified, the provider returns a specific key from the decoded secret.
+
+Authentication:
+
+Set the following environment variables:
+
+- `SERVERCORE_USERNAME`
+- `SERVERCORE_PASSWORD`
+- `SERVERCORE_ACCOUNT_ID`
+- `SERVERCORE_PROJECT_NAME`
+
+URI formats:
+
+- `ref+servercore://SECRET_NAME`
+  Returns the secret value as a string.
+- `ref+servercore://SECRET_NAME#/key/in/secret`
+  Parses the decoded secret as JSON (with YAML as a fallback) and returns the value at the leaf key path.
+
+Notes:
+- The provider expects the Servercore API to return a base64-encoded string in the `version.value` field. After decoding, the provider attempts JSON parsing, and if that fails, YAML.
+- API reference: [Servercore Secrets API](https://docs.servercore.com/api/secrets-manager-secrets/).
 
 ### Scaleway
 This provider allows retrieval of secrets from [Scaleway Secret Manager](https://www.scaleway.com/en/docs/secret-manager/) using the [Scaleway Go SDK](https://github.com/scaleway/scaleway-sdk-go). For authentication, it uses the environment variables `SCW_PROJECT_ID` (defaults to `SCW_DEFAULT_PROJECT_ID` if unset), `SCW_REGION` (defaults to `SCW_DEFAULT_REGION` if unset), `SCW_ACCESS_KEY`, and `SCW_SECRET_KEY`. You can reference secrets in your config using the `ref+scw://` URI scheme.
