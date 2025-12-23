@@ -27,6 +27,7 @@ It supports various backends including:
 - HTTP JSON
 - Keychain
 - Scaleway
+- [Delinea SecretServer](https://delinea.com/products/secret-server)
 - Infisical
 
 - Use `vals eval -f refs.yaml` to replace all the `ref`s in the file to actual values and secrets.
@@ -309,6 +310,7 @@ Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/
     - [HTTP JSON](#http-json)
       - [Fetch string value](#fetch-string-value)
       - [Fetch integer value](#fetch-integer-value)
+    - [Delinea Secret Server](#secretserver)
   - [Advanced Usages](#advanced-usages)
     - [Discriminating config and secrets](#discriminating-config-and-secrets)
   - [Non-Goals](#non-goals)
@@ -1151,6 +1153,19 @@ Depending on which one is chosen with the `INFISICAL_AUTH_METHOD` environment va
   - `INFISICAL_GCP_IAM_SERVICE_ACCOUNT_KEY_FILE_PATH`: the path to your GCP service account key file.
 - **GCP ID Token**: `GCP_ID_TOKEN`
   - `INFISICAL_GCP_AUTH_IDENTITY_ID`: your Infisical Machine Identity ID.
+
+### SecretServer
+
+This provider allows retrieval of secrets from [Delinea SecretSever](https://delinea.com/products/secret-server) using their [REST API](https://docs.delinea.com/online-help/secret-server/api-scripting/rest-api/index.htm)
+
+Environment variables:
+
+- `SECRETSERVER_TOKEN`: The API Token to authenticate with. Can be created using their [OAuth Endpoint](https://updates.thycotic.net/secretserver/restapiguide/OAuth/)
+- `SECRETSERVER_URL`: The URL to the SecretServer instance.
+
+Examples:
+
+- `ref+secretserver://12345/password`: gets the `password` field of the secret with id `12345` from the SecretServer running at the URL provdied in `SECRETSERVER_URL`
 
 ## Advanced Usages
 

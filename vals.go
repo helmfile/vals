@@ -45,6 +45,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/pulumi"
 	"github.com/helmfile/vals/pkg/providers/s3"
 	"github.com/helmfile/vals/pkg/providers/scaleway"
+	"github.com/helmfile/vals/pkg/providers/secretserver"
 	"github.com/helmfile/vals/pkg/providers/servercore"
 	"github.com/helmfile/vals/pkg/providers/sops"
 	"github.com/helmfile/vals/pkg/providers/ssm"
@@ -111,6 +112,7 @@ const (
 	ProviderBitwarden          = "bw"
 	ProviderLockbox            = "yclockbox"
 	ProviderScaleway           = "scw"
+	ProviderSecretserver       = "secretserver"
 	ProviderInfisical          = "infisical"
 	ProviderServercore         = "servercore"
 )
@@ -297,6 +299,9 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 			return p, nil
 		case ProviderScaleway:
 			p := scaleway.New(r.logger, conf)
+			return p, nil
+		case ProviderSecretserver:
+			p := secretserver.New(conf)
 			return p, nil
 		case ProviderInfisical:
 			p := infisical.New(r.logger, conf)
