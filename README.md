@@ -1204,4 +1204,3 @@ Note though, `vals` does have support for simple string interpolation like usage
 ### Merge
 
 Merging YAMLs is out of the scope of `vals`. There're better alternatives like Jsonnet, Sprig, and CUE for the job.
-
