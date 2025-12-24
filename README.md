@@ -23,7 +23,7 @@ It supports various backends including:
 - HCP Vault Secrets
 - Bitwarden
 - [Yandex Cloud Lockbox](https://yandex.cloud/en/docs/lockbox/)
-- Servercore secrets manager
+- Servercore Secrets Manager
 - HTTP JSON
 - Keychain
 - Scaleway
