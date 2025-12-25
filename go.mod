@@ -26,6 +26,7 @@ require (
 	github.com/hashicorp/golang-lru v1.0.2
 	github.com/hashicorp/vault/api v1.22.0
 	github.com/infisical/go-sdk v0.6.2
+	github.com/openbao/openbao/api/v2 v2.5.0
 	github.com/opencontainers/image-spec v1.1.1
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.35
 	github.com/stretchr/testify v1.11.1
