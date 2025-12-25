@@ -49,6 +49,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/sops"
 	"github.com/helmfile/vals/pkg/providers/ssm"
 	"github.com/helmfile/vals/pkg/providers/tfstate"
+	"github.com/helmfile/vals/pkg/providers/openbao"
 	"github.com/helmfile/vals/pkg/providers/vault"
 	"github.com/helmfile/vals/pkg/providers/yclockbox"
 	"github.com/helmfile/vals/pkg/stringmapprovider"
@@ -79,6 +80,7 @@ const (
 	defaultCacheSize = 512
 
 	ProviderVault              = "vault"
+	ProviderOpenBao            = "openbao"
 	ProviderS3                 = "s3"
 	ProviderGCS                = "gcs"
 	ProviderGitLab             = "gitlab"
@@ -190,6 +192,9 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 		switch scheme {
 		case ProviderVault:
 			p := vault.New(r.logger, conf)
+			return p, nil
+		case ProviderOpenBao:
+			p := openbao.New(r.logger, conf)
 			return p, nil
 		case ProviderS3:
 			// ref+s3://foo/bar?region=ap-northeast-1#/baz
@@ -509,6 +514,7 @@ func cloneMap(m map[string]interface{}) map[string]interface{} {
 
 var KnownValuesTypes = []string{
 	ProviderVault,
+	ProviderOpenBao,
 	ProviderS3,
 	ProviderSSM,
 	ProviderSecretsManager,
