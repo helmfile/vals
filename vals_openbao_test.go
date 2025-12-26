@@ -180,9 +180,9 @@ func TestValues_OpenBao_String(t *testing.T) {
 		config map[string]interface{}
 	}
 	commonInline := map[string]interface{}{
-		"foo": "mykey",
+		"foo": testKey,
 		"bar": map[string]interface{}{
-			"baz": "mykey",
+			"baz": testKey,
 		},
 	}
 
@@ -345,7 +345,7 @@ func TestValues_OpenBao_Map(t *testing.T) {
 				"openbao": map[string]interface{}{
 					// implies type:map format:raw
 					"prefix":     "mykv/foo/",
-					"keys":       []string{"mykey"},
+					"keys":       []string{testKey},
 					"address":    "http://127.0.0.1:8210",
 					"setForKeys": []string{"foo", "bar.baz"},
 				},
@@ -402,7 +402,7 @@ func TestValues_OpenBao_Map(t *testing.T) {
 			{
 				switch foo := vals["foo"].(type) {
 				case map[string]interface{}:
-					key := "mykey"
+					key := testKey
 					actual, ok := foo[key]
 					if !ok {
 						t.Fatalf("%q does not exist", key)
@@ -421,7 +421,7 @@ func TestValues_OpenBao_Map(t *testing.T) {
 				case map[string]interface{}:
 					switch baz := bar["baz"].(type) {
 					case map[string]interface{}:
-						key := "mykey"
+						key := testKey
 						actual, ok := baz[key]
 						if !ok {
 							t.Fatalf("%q does not exist", key)
@@ -494,7 +494,7 @@ func TestValues_OpenBao_Map_Raw(t *testing.T) {
 			{
 				switch foo := vals["foo"].(type) {
 				case map[string]interface{}:
-					key := "mykey"
+					key := testKey
 					actual, ok := foo[key]
 					if !ok {
 						t.Fatalf("%q does not exist", key)
@@ -513,7 +513,7 @@ func TestValues_OpenBao_Map_Raw(t *testing.T) {
 				case map[string]interface{}:
 					switch baz := bar["baz"].(type) {
 					case map[string]interface{}:
-						key := "mykey"
+						key := testKey
 						actual, ok := baz[key]
 						if !ok {
 							t.Fatalf("%q does not exist", key)
@@ -584,7 +584,7 @@ func TestValues_OpenBao_Map_Raw_Root(t *testing.T) {
 				"openbao": map[string]interface{}{
 					// implies format:raw
 					"prefix":  "/mykv/foo",
-					"keys":    []string{"mykey"},
+					"keys":    []string{testKey},
 					"address": "http://127.0.0.1:8210",
 				},
 			},
@@ -613,7 +613,7 @@ func TestValues_OpenBao_Map_Raw_Root(t *testing.T) {
 			}
 
 			{
-				key := "mykey"
+				key := testKey
 				actual, ok := vals[key]
 				if !ok {
 					t.Fatalf("%q does not exist", key)
