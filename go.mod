@@ -27,7 +27,7 @@ require (
 	github.com/hashicorp/vault/api v1.22.0
 	github.com/infisical/go-sdk v0.6.2
 	github.com/opencontainers/image-spec v1.1.1
-	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.35
+	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.36
 	github.com/stretchr/testify v1.11.1
 	github.com/tidwall/gjson v1.18.0
 	github.com/yandex-cloud/go-genproto v0.40.0
