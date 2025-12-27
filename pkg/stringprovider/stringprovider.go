@@ -24,6 +24,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/pulumi"
 	"github.com/helmfile/vals/pkg/providers/s3"
 	"github.com/helmfile/vals/pkg/providers/scaleway"
+	"github.com/helmfile/vals/pkg/providers/secretserver"
 	"github.com/helmfile/vals/pkg/providers/sops"
 	"github.com/helmfile/vals/pkg/providers/ssm"
 	"github.com/helmfile/vals/pkg/providers/tfstate"
@@ -86,6 +87,8 @@ func New(l *log.Logger, provider api.StaticConfig, awsLogLevel string) (api.Lazy
 		return httpjson.New(l, provider), nil
 	case "scaleway":
 		return scaleway.New(l, provider), nil
+	case "secretserver":
+		return secretserver.New(provider), nil
 	case "infisical":
 		return infisical.New(l, provider), nil
 	}
