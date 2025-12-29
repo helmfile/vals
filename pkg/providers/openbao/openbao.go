@@ -243,14 +243,14 @@ func (p *provider) ensureClient() (*openbao.Client, error) {
 				"secret_id": p.SecretId,
 			}
 
-			mount_point, ok := os.LookupEnv("BAO_LOGIN_MOUNT_POINT")
+			mountPoint, ok := os.LookupEnv("BAO_LOGIN_MOUNT_POINT")
 			if !ok {
-				mount_point = "/approle"
+				mountPoint = "/approle"
 			}
 
-			auth_path := filepath.Join("auth", mount_point, "login")
+			authPath := filepath.Join("auth", mountPoint, "login")
 
-			resp, err := cli.Logical().Write(auth_path, data)
+			resp, err := cli.Logical().Write(authPath, data)
 			if err != nil {
 				return nil, err
 			}
@@ -277,14 +277,14 @@ func (p *provider) ensureClient() (*openbao.Client, error) {
 				"jwt":  string(jwt),
 				"role": p.RoleId,
 			}
-			mount_point, ok := os.LookupEnv("BAO_KUBERNETES_MOUNT_POINT")
+			mountPoint, ok := os.LookupEnv("BAO_KUBERNETES_MOUNT_POINT")
 			if !ok {
-				mount_point = "/kubernetes"
+				mountPoint = "/kubernetes"
 			}
 
-			auth_path := filepath.Join("auth", mount_point, "login")
+			authPath := filepath.Join("auth", mountPoint, "login")
 
-			resp, err := cli.Logical().Write(auth_path, data)
+			resp, err := cli.Logical().Write(authPath, data)
 			if err != nil {
 				return nil, err
 			}
@@ -317,14 +317,14 @@ func (p *provider) ensureClient() (*openbao.Client, error) {
 				"password": password,
 			}
 
-			mount_point, ok := os.LookupEnv("BAO_LOGIN_MOUNT_POINT")
+			mountPoint, ok := os.LookupEnv("BAO_LOGIN_MOUNT_POINT")
 			if !ok {
-				mount_point = "userpass"
+				mountPoint = "userpass"
 			}
 
-			auth_path := filepath.Join("auth", mount_point, "login", p.Username)
+			authPath := filepath.Join("auth", mountPoint, "login", p.Username)
 
-			resp, err := cli.Logical().Write(auth_path, data)
+			resp, err := cli.Logical().Write(authPath, data)
 			if err != nil {
 				return nil, err
 			}

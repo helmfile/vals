@@ -13,6 +13,11 @@ import (
 	config2 "github.com/helmfile/vals/pkg/config"
 )
 
+const (
+	baoTestKey   = "mykey"
+	baoTestValue = "myvalue"
+)
+
 type OpenBaoConn struct {
 	Client *api.Client
 	Token  string
@@ -180,9 +185,9 @@ func TestValues_OpenBao_String(t *testing.T) {
 		config map[string]interface{}
 	}
 	commonInline := map[string]interface{}{
-		"foo": testKey,
+		"foo": baoTestKey,
 		"bar": map[string]interface{}{
-			"baz": testKey,
+			"baz": baoTestKey,
 		},
 	}
 
@@ -232,22 +237,22 @@ func TestValues_OpenBao_String(t *testing.T) {
 			}
 
 			{
-				expected := testValue
+				expected := baoTestValue
 				key := "foo"
 				actual := vals[key]
 				if actual != expected {
-					t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
+					t.Errorf("unexpected value for key %q: expected=%q, got=%q", key, expected, actual)
 				}
 			}
 
 			{
 				switch bar := vals["bar"].(type) {
 				case map[string]interface{}:
-					expected := testValue
+					expected := baoTestValue
 					key := "baz"
 					actual := bar[key]
 					if actual != expected {
-						t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
+						t.Errorf("unexpected value for key %q: expected=%q, got=%q", key, expected, actual)
 					}
 				default:
 					t.Fatalf("unexpected type of bar: value=%v, type=%T", bar, bar)
@@ -345,7 +350,7 @@ func TestValues_OpenBao_Map(t *testing.T) {
 				"openbao": map[string]interface{}{
 					// implies type:map format:raw
 					"prefix":     "mykv/foo/",
-					"keys":       []string{testKey},
+					"keys":       []string{baoTestKey},
 					"address":    "http://127.0.0.1:8210",
 					"setForKeys": []string{"foo", "bar.baz"},
 				},
@@ -402,14 +407,14 @@ func TestValues_OpenBao_Map(t *testing.T) {
 			{
 				switch foo := vals["foo"].(type) {
 				case map[string]interface{}:
-					key := testKey
+					key := baoTestKey
 					actual, ok := foo[key]
 					if !ok {
 						t.Fatalf("%q does not exist", key)
 					}
-					expected := testValue
+					expected := baoTestValue
 					if actual != expected {
-						t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
+						t.Errorf("unexpected value for key %q: expected=%q, got=%q", key, expected, actual)
 					}
 				default:
 					t.Fatalf("unexpected type of foo: value=%v, type=%T", foo, foo)
@@ -421,14 +426,14 @@ func TestValues_OpenBao_Map(t *testing.T) {
 				case map[string]interface{}:
 					switch baz := bar["baz"].(type) {
 					case map[string]interface{}:
-						key := testKey
+						key := baoTestKey
 						actual, ok := baz[key]
 						if !ok {
 							t.Fatalf("%q does not exist", key)
 						}
-						expected := testValue
+						expected := baoTestValue
 						if actual != expected {
-							t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
+							t.Errorf("unexpected value for key %q: expected=%q, got=%q", key, expected, actual)
 						}
 					default:
 						t.Fatalf("unexpected type of baz: value=%v, type=%T", baz, baz)
@@ -494,14 +499,14 @@ func TestValues_OpenBao_Map_Raw(t *testing.T) {
 			{
 				switch foo := vals["foo"].(type) {
 				case map[string]interface{}:
-					key := testKey
+					key := baoTestKey
 					actual, ok := foo[key]
 					if !ok {
 						t.Fatalf("%q does not exist", key)
 					}
-					expected := testValue
+					expected := baoTestValue
 					if actual != expected {
-						t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
+						t.Errorf("unexpected value for key %q: expected=%q, got=%q", key, expected, actual)
 					}
 				default:
 					t.Fatalf("unexpected type of foo: value=%v, type=%T", foo, foo)
@@ -513,14 +518,14 @@ func TestValues_OpenBao_Map_Raw(t *testing.T) {
 				case map[string]interface{}:
 					switch baz := bar["baz"].(type) {
 					case map[string]interface{}:
-						key := testKey
+						key := baoTestKey
 						actual, ok := baz[key]
 						if !ok {
 							t.Fatalf("%q does not exist", key)
 						}
-						expected := testValue
+						expected := baoTestValue
 						if actual != expected {
-							t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
+							t.Errorf("unexpected value for key %q: expected=%q, got=%q", key, expected, actual)
 						}
 					default:
 						t.Fatalf("unexpected type of baz: value=%v, type=%T", baz, baz)
@@ -584,7 +589,7 @@ func TestValues_OpenBao_Map_Raw_Root(t *testing.T) {
 				"openbao": map[string]interface{}{
 					// implies format:raw
 					"prefix":  "/mykv/foo",
-					"keys":    []string{testKey},
+					"keys":    []string{baoTestKey},
 					"address": "http://127.0.0.1:8210",
 				},
 			},
@@ -613,14 +618,14 @@ func TestValues_OpenBao_Map_Raw_Root(t *testing.T) {
 			}
 
 			{
-				key := testKey
+				key := baoTestKey
 				actual, ok := vals[key]
 				if !ok {
 					t.Fatalf("%q does not exist", key)
 				}
-				expected := testValue
+				expected := baoTestValue
 				if actual != expected {
-					t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
+					t.Errorf("unexpected value for key %q: expected=%q, got=%q", key, expected, actual)
 				}
 			}
 		})
