@@ -114,7 +114,7 @@ const (
 	ProviderBitwarden          = "bw"
 	ProviderLockbox            = "yclockbox"
 	ProviderScaleway           = "scw"
-	ProviderSecretserver       = "secretserver"
+	ProviderSecretserver       = "tss"
 	ProviderInfisical          = "infisical"
 	ProviderServercore         = "servercore"
 )
@@ -306,8 +306,7 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 			p := scaleway.New(r.logger, conf)
 			return p, nil
 		case ProviderSecretserver:
-			p := secretserver.New(conf)
-			return p, nil
+			return secretserver.New(conf)
 		case ProviderInfisical:
 			p := infisical.New(r.logger, conf)
 			return p, nil
