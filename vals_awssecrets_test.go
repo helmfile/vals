@@ -102,7 +102,7 @@ func TestValues_AWSSecrets_String(t *testing.T) {
 				key := "foo"
 				actual := vals[key]
 				if actual != expected {
-					t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
+					t.Errorf("unexpected value for key %q: expected=%q, got=%q", key, expected, actual)
 				}
 			}
 
@@ -113,7 +113,7 @@ func TestValues_AWSSecrets_String(t *testing.T) {
 					key := "baz"
 					actual := bar[key]
 					if actual != expected {
-						t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
+						t.Errorf("unexpected value for key %q: expected=%q, got=%q", key, expected, actual)
 					}
 				default:
 					t.Fatalf("unexpected type of bar: value=%v, type=%T", bar, bar)
@@ -193,7 +193,7 @@ func TestValues_AWSSecrets_Map(t *testing.T) {
 					}
 					expected := "myvalue"
 					if actual != expected {
-						t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
+						t.Errorf("unexpected value for key %q: expected=%q, got=%q", key, expected, actual)
 					}
 				default:
 					t.Fatalf("unexpected type of foo: value=%v, type=%T", foo, foo)
@@ -212,7 +212,7 @@ func TestValues_AWSSecrets_Map(t *testing.T) {
 						}
 						expected := "myvalue"
 						if actual != expected {
-							t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
+							t.Errorf("unexpected value for key %q: expected=%q, got=%q", key, expected, actual)
 						}
 					default:
 						t.Fatalf("unexpected type of baz: value=%v, type=%T", baz, baz)
@@ -288,7 +288,7 @@ func TestValues_AWSSecrets_Map_Raw(t *testing.T) {
 					}
 					expected := "myvalue"
 					if actual != expected {
-						t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
+						t.Errorf("unexpected value for key %q: expected=%q, got=%q", key, expected, actual)
 					}
 				default:
 					t.Fatalf("unexpected type of foo: value=%v, type=%T", foo, foo)
@@ -307,7 +307,7 @@ func TestValues_AWSSecrets_Map_Raw(t *testing.T) {
 						}
 						expected := "myvalue"
 						if actual != expected {
-							t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
+							t.Errorf("unexpected value for key %q: expected=%q, got=%q", key, expected, actual)
 						}
 					default:
 						t.Fatalf("unexpected type of baz: value=%v, type=%T", baz, baz)
@@ -405,7 +405,7 @@ func TestValues_AWSSecrets_Map_YAML(t *testing.T) {
 						}
 						expected := "myvalue"
 						if actual != expected {
-							t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
+							t.Errorf("unexpected value for key %q: expected=%q, got=%q", key, expected, actual)
 						}
 					default:
 						t.Fatalf("unexpected type of baz: value=%v, type=%T", baz, baz)
@@ -514,7 +514,7 @@ func TestValues_AWSSecrets_Map_YAML_Root(t *testing.T) {
 					}
 					expected := "myvalue"
 					if actual != expected {
-						t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
+						t.Errorf("unexpected value for key %q: expected=%q, got=%q", key, expected, actual)
 					}
 				default:
 					t.Fatalf("unexpected type of baz: value=%v, type=%T", baz, baz)
@@ -623,7 +623,7 @@ func TestValues_AWSSecrets_Map_Raw_Root(t *testing.T) {
 				}
 				expected := "myvalue"
 				if actual != expected {
-					t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
+					t.Errorf("unexpected value for key %q: expected=%q, got=%q", key, expected, actual)
 				}
 			}
 		})

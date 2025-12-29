@@ -274,6 +274,7 @@ Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/
   - [Supported Backends](#supported-backends)
     - [Vault](#vault)
     - [Authentication](#authentication)
+    - [OpenBao](#openbao)
     - [AWS](#aws)
       - [AWS SDK Logging Configuration](#aws-sdk-logging-configuration)
       - [AWS SSM Parameter Store](#aws-ssm-parameter-store)
@@ -350,6 +351,38 @@ Examples:
 - `ref+vault://mykv/foo?role_id=my-kube-role#/bar` using the Kubernetes role to log in to Vault
 - `ref+vault://mykv/foo?auth_method=userpass&username=some-user&password_env=VAULT_PASSWORD#/bar` using `userpass` authentication with password read from env `VAULT_PASSWORD`
 - `ref+vault://mykv/foo?auth_method=userpass&username=some-user&password_file=PATH/TO/FILE#/bar` using `userpass` authentication with password read from file `VAULT_PASSWORD_FILE`
+
+### OpenBao
+
+[OpenBao](https://openbao.org/) is an open source, community-driven fork of Vault managed by the Linux Foundation. It provides the same secrets management capabilities as Vault and is API-compatible.
+
+- `ref+openbao://PATH/TO/KVBACKEND[?address=BAO_ADDR:PORT&token_file=PATH/TO/FILE&token_env=BAO_TOKEN&namespace=BAO_NAMESPACE]#/fieldkey`
+- `ref+openbao://PATH/TO/KVBACKEND[?address=BAO_ADDR:PORT&auth_method=approle&role_id=ce5e571a-f7d4-4c73-93dd-fd6922119839&secret_id=5c9194b9-585e-4539-a865-f45604bd6f56]#/fieldkey`
+- `ref+openbao://PATH/TO/KVBACKEND[?address=BAO_ADDR:PORT&auth_method=kubernetes&role_id=K8S-ROLE]#/fieldkey`
+- `ref+openbao://PATH/TO/KVBACKEND[?address=BAO_ADDR:PORT&auth_method=userpass&username=some-user&password_file=PATH/TO/FILE&password_env=BAO_PASSWORD]#/fieldkey`
+
+* `address` defaults to the value of the `BAO_ADDR` envvar.
+* `namespace` defaults to the value of the `BAO_NAMESPACE` envvar.
+* `auth_method` defaults to `token` and can also be set to the value of the `BAO_AUTH_METHOD` envvar.
+* `role_id` defaults to the value of the `BAO_ROLE_ID` envvar.
+* `secret_id` defaults to the value of the `BAO_SECRET_ID` envvar.
+* `version` is the specific version of the secret to be obtained. Used when you want to get a previous content of the secret.
+
+The `auth_method` or `BAO_AUTH_METHOD` envvar configures how `vals` authenticates to OpenBao. The following methods are supported:
+
+* [approle](https://openbao.org/docs/auth/approle/): it requires you pass on a `role_id` together with a `secret_id`.
+* [token](https://openbao.org/docs/auth/token/): you just need creating and passing on a `BAO_TOKEN`. If `BAO_TOKEN` isn't set, token can be retrieved from `BAO_TOKEN_FILE` env or `~/.bao-token` file.
+* [kubernetes](https://openbao.org/docs/auth/kubernetes/): if you're running inside a Kubernetes cluster, you can use this option. It requires you configure a policy, a Kubernetes role, a service account and a JWT token. The login path can also be set using the environment variable `BAO_KUBERNETES_MOUNT_POINT` (default is `/kubernetes`). You must also set `role_id` or `BAO_ROLE_ID` envvar to the Kubernetes role.
+* [userpass](https://openbao.org/docs/auth/userpass/): you need to provide a username, e.g. via `BAO_USERNAME`, and a password retrieved from the file `BAO_PASSWORD_FILE` or from the env variable referred to in `BAO_PASSWORD_ENV`. `BAO_PASSWORD_ENV` takes precedence over `BAO_PASSWORD_FILE`.
+
+Examples:
+
+- `ref+openbao://mykv/foo?address=https://bao.example.com:8200#/bar` reads the value for the field `bar` in the kv `foo` on OpenBao listening on `https://bao.example.com` with the token read from **the envvar `BAO_TOKEN`, or the file `~/.bao-token` when the envvar is not set**
+- `ref+openbao://mykv/foo?token_env=BAO_TOKEN_BAO1&namespace=ns1&address=https://bao.example.com:8200#/bar` reads the value for the field `bar` from namespace `ns1` in the kv `foo` on OpenBao listening on `https://bao.example.com` with the token read from **the envvar `BAO_TOKEN_BAO1`**
+- `ref+openbao://mykv/foo?token_file=~/.bao_token_bao1&address=https://bao.example.com:8200#/bar` reads the value for the field `bar` in the kv `foo` on OpenBao listening on `https://bao.example.com` with the token read from **the file `~/.bao_token_bao1`**
+- `ref+openbao://mykv/foo?role_id=my-kube-role#/bar` using the Kubernetes role to log in to OpenBao
+- `ref+openbao://mykv/foo?auth_method=userpass&username=some-user&password_env=BAO_PASSWORD#/bar` using `userpass` authentication with password read from env `BAO_PASSWORD`
+- `ref+openbao://mykv/foo?auth_method=userpass&username=some-user&password_file=PATH/TO/FILE#/bar` using `userpass` authentication with password read from file `BAO_PASSWORD_FILE`
 
 ### AWS
 
