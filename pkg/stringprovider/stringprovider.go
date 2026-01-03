@@ -87,8 +87,8 @@ func New(l *log.Logger, provider api.StaticConfig, awsLogLevel string) (api.Lazy
 		return httpjson.New(l, provider), nil
 	case "scaleway":
 		return scaleway.New(l, provider), nil
-	case "secretserver":
-		return secretserver.New(provider), nil
+	case "tss":
+		return secretserver.New(provider)
 	case "infisical":
 		return infisical.New(l, provider), nil
 	}

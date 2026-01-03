@@ -1191,14 +1191,34 @@ Depending on which one is chosen with the `INFISICAL_AUTH_METHOD` environment va
 
 This provider allows retrieval of secrets from [Delinea SecretSever](https://delinea.com/products/secret-server) using their [REST API](https://docs.delinea.com/online-help/secret-server/api-scripting/rest-api/index.htm)
 
-Environment variables:
+#### Configuration
 
-- `SECRETSERVER_TOKEN`: The API Token to authenticate with. Can be created using their [OAuth Endpoint](https://updates.thycotic.net/secretserver/restapiguide/OAuth/)
-- `SECRETSERVER_URL`: The URL to the SecretServer instance.
+For on-prem instances set `TSS_SERVER_URL`. For cloud use set `TSS_TLD` to the top level domain and `TSS_TENANT` to your tenant id. If `TSS_SERVER_URL` is set other connection variables are ignored.
 
-Examples:
+#### Authentication
 
-- `ref+secretserver://12345/password`: gets the `password` field of the secret with id `12345` from the SecretServer running at the URL provdied in `SECRETSERVER_URL`
+Authentication is done via environment variables:
+
+- `TSS_USERNAME`: username to authenticate with
+- `TSS_PASSWORD`: password to authenticate with
+- `TSS_DOMAIN`: optional domain for the user
+
+Alternatively you can provide an OAuth token directly via `TSS_TOKEN`. If you do all other authentication environment variables are ignored.
+
+#### Parameters
+
+You can disable ssl certificate verification by setting `ssl_verify=false` in the URLs
+query.
+
+#### Examples
+
+- `ref+tss://12345#/password`: gets the `password` field of the secret with id `12345`
+- `ref+tss://secret-name/password`: gets the `password` field of the secret with the name `secret-name`. The name has to uniquely identify the secret
+
+
+#### Limitations
+
+The content of file fields, like certificates can't be retrieved. They will be replaced with the string `*** Not Valid For Display ***`.
 
 ## Advanced Usages
 
