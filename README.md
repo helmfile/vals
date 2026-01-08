@@ -150,6 +150,61 @@ Save the YAML content to `x.vals.yaml` and running `vals eval -f x.vals.yaml` do
 foo: myvalue
 ```
 
+### Raw Text Mode
+
+By default, `vals eval` expects valid YAML or JSON input. However, you can use the `--raw` flag to treat input as plain text, similar to `envsubst` but with the `ref+` syntax. This enables support for:
+
+- Plain text files
+- JSONC (JSON with comments)
+- JSON5
+- Configuration files
+- Any text format where you want to replace `ref+` expressions
+
+**Example with plain text:**
+
+```console
+$ echo 'DATABASE_URL=ref+echo://postgres://localhost:5432/mydb' | vals eval -f - --raw
+DATABASE_URL=postgres://localhost:5432/mydb
+```
+
+**Example with JSONC (JSON with comments):**
+
+```console
+$ cat config.jsonc
+{
+  // Database configuration
+  "database": "ref+vault://secret/data/db#/url",
+  /* API Keys */
+  "api_key": "ref+awssecrets://prod/api#/key"
+}
+
+$ vals eval -f config.jsonc --raw
+{
+  // Database configuration
+  "database": "postgres://prod-db:5432/myapp",
+  /* API Keys */
+  "api_key": "sk-prod-1234567890"
+}
+```
+
+**Example with configuration file:**
+
+```console
+$ cat app.conf
+# Application Configuration
+DATABASE_URL=ref+awsssm://prod/db/url
+API_KEY=ref+vault://secret/data/api#/key
+REDIS_URL=ref+awsssm://prod/redis/url
+
+$ vals eval -f app.conf --raw
+# Application Configuration
+DATABASE_URL=postgres://prod-db:5432/myapp
+API_KEY=my-secret-api-key
+REDIS_URL=redis://prod-redis:6379
+```
+
+The `--raw` flag preserves the original file format and structure while replacing all `ref+` expressions with their actual values.
+
 ### Helm
 
 Use value references as Helm Chart values, so that you can feed the `helm template` output to `vals -f -` for transforming the refs to secrets.
