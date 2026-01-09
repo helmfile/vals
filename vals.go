@@ -119,9 +119,7 @@ const (
 	ProviderServercore         = "servercore"
 )
 
-var (
-	EnvFallbackPrefix = "VALS_"
-)
+var EnvFallbackPrefix = "VALS_"
 
 type Evaluator interface {
 	Eval(map[string]interface{}) (map[string]interface{}, error)
@@ -344,25 +342,23 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 	expand := expansion.ExpandRegexMatch{
 		Only:   only,
 		Target: expansion.DefaultRefRegexp,
-		Lookup: func(key string) (string, error) {
+		Lookup: func(key string) (interface{}, error) {
 			if val, ok := r.docCache.Get(key); ok {
-				valStr, ok := val.(string)
-				if ok {
-					return valStr, nil
+				if isTerminalValue(val) {
+					return val, nil
 				}
 			}
 
 			uri, err := url.Parse(key)
 			if err != nil {
-				return "", err
+				return nil, err
 			}
 
 			hash := uriToProviderHash(uri)
 
 			p, err := updateProviders(uri, hash)
-
 			if err != nil {
-				return "", err
+				return nil, err
 			}
 
 			var frag string
@@ -401,12 +397,12 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 				if cachedStr, ok := r.strCache.Get(cacheKey); ok {
 					str, ok = cachedStr.(string)
 					if !ok {
-						return "", fmt.Errorf("error reading str from cache: unsupported value type %T", cachedStr)
+						return nil, fmt.Errorf("error reading str from cache: unsupported value type %T", cachedStr)
 					}
 				} else {
 					str, err = p.GetString(path)
 					if err != nil {
-						return "", err
+						return nil, err
 					}
 					r.strCache.Add(cacheKey, str)
 				}
@@ -418,7 +414,7 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 				if cachedMap, ok := r.docCache.Get(mapRequestURI); ok {
 					obj, ok = cachedMap.(map[string]interface{})
 					if !ok {
-						return "", fmt.Errorf("error reading map from cache: unsupported value type %T", cachedMap)
+						return nil, fmt.Errorf("error reading map from cache: unsupported value type %T", cachedMap)
 					}
 				} else if uri.Scheme == "httpjson" {
 					// Due to the unpredictability in the structure of the JSON object,
@@ -430,13 +426,13 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 					// object, accommodating different configurations and variations.
 					value, err := p.GetString(key)
 					if err != nil {
-						return "", err
+						return nil, err
 					}
 					return value, nil
 				} else {
 					obj, err = p.GetStringMap(path)
 					if err != nil {
-						return "", err
+						return nil, err
 					}
 					r.docCache.Add(mapRequestURI, obj)
 				}
@@ -445,9 +441,9 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 				for i, k := range keys {
 					newobj := map[string]interface{}{}
 					switch t := obj[k].(type) {
-					case string:
+					case bool, int, string:
 						if i != len(keys)-1 {
-							return "", fmt.Errorf("unexpected type of value for key at %d=%s in %v: expected map[string]interface{}, got %v(%T)", i, k, keys, t, t)
+							return nil, fmt.Errorf("unexpected type of value for key at %d=%s in %v: expected map[string]interface{}, got %v(%T)", i, k, keys, t, t)
 						}
 						r.docCache.Add(key, t)
 						return t, nil
@@ -457,20 +453,30 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 						for k, v := range t {
 							newobj[fmt.Sprintf("%v", k)] = v
 						}
+					default:
 					}
 					obj = newobj
 				}
 
 				if r.Options.FailOnMissingKeyInMap {
-					return "", fmt.Errorf("no value found for key %s", frag)
+					return nil, fmt.Errorf("no value found for key %s", frag)
 				}
 
-				return "", nil
+				return nil, nil
 			}
 		},
 	}
 
 	return &expand, nil
+}
+
+func isTerminalValue(v any) bool {
+	switch v.(type) {
+	case bool, int, string:
+		return true
+	default:
+		return false
+	}
 }
 
 // Eval replaces 'ref+<provider>://xxxxx' entries by their actual values
@@ -597,8 +603,10 @@ func applyEnvWithQuote(quote bool) func(map[string]interface{}, ...Options) ([]s
 	}
 }
 
-var Env = applyEnvWithQuote(false)
-var QuotedEnv = applyEnvWithQuote(true)
+var (
+	Env       = applyEnvWithQuote(false)
+	QuotedEnv = applyEnvWithQuote(true)
+)
 
 type ExecConfig struct {
 	Stdout io.Writer
