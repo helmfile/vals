@@ -17,7 +17,7 @@ func TestExec(t *testing.T) {
 	// should evaluate to "x: baz"
 	data := []byte("x: ref+echo://foo/bar/baz#/foo/bar")
 
-	require.NoError(t, os.WriteFile(filepath.Join(dir, "input.yaml"), data, 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "input.yaml"), data, 0o644))
 
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
@@ -42,7 +42,7 @@ func TestEnv(t *testing.T) {
 	input["var3"] = "ref+echo://val'ue"
 	input["var4"] = "ref+echo://'value"
 
-	var expected = []string{
+	expected := []string{
 		"var1=value",
 		"var2=val;ue",
 		"var3=val'ue",
@@ -64,7 +64,7 @@ func TestQuotedEnv(t *testing.T) {
 	input["var3"] = "ref+echo://val'ue"
 	input["var4"] = "ref+echo://'value"
 
-	var expected = []string{
+	expected := []string{
 		"var1=value",
 		`var2='val;ue'`,
 		`var3='val'"'"'ue'`,
@@ -79,7 +79,7 @@ func TestQuotedEnv(t *testing.T) {
 }
 
 func TestEvalNodes(t *testing.T) {
-	var yamlDocs = `apiVersion: monitoring.coreos.com/v1
+	yamlDocs := `apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
 ---
 apiVersion: v1
@@ -88,7 +88,7 @@ data:
 kind: Secret
 `
 
-	var expected = `apiVersion: monitoring.coreos.com/v1
+	expected := `apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
 ---
 apiVersion: v1
@@ -118,13 +118,13 @@ kind: Secret
 }
 
 func TestEvalNodesWithDictionaries(t *testing.T) {
-	var yamlDocs = `- entry: first
+	yamlDocs := `- entry: first
   username: ref+echo://secrets.enc.yaml
 - entry: second
   username: ref+echo://secrets.enc.yaml
 `
 
-	var expected = `- entry: first
+	expected := `- entry: first
   username: secrets.enc.yaml
 - entry: second
   username: secrets.enc.yaml
@@ -151,16 +151,16 @@ func TestEvalNodesWithDictionaries(t *testing.T) {
 }
 
 func TestEvalNodesWithTime(t *testing.T) {
-	var yamlDocs = `
+	yamlDocs := `
 date: 2025-01-01
-datet_in_list: 
+datet_in_list:
   - from: 2025-01-01
 datetime: 2025-01-01T12:34:56Z
 datetime_millis: 2025-01-01T12:34:56.789Z
 datetime_offset: 2025-01-01T12:34:56+01:00
 `
 
-	var expected = `date: "2025-01-01"
+	expected := `date: "2025-01-01"
 datet_in_list:
   - from: "2025-01-01"
 datetime: "2025-01-01T12:34:56Z"
@@ -176,6 +176,49 @@ datetime_offset: "2025-01-01T12:34:56+01:00"
 	require.NoError(t, err)
 
 	input, err := Inputs(tmpFile.Name())
+	require.NoError(t, err)
+
+	nodes, err := EvalNodes(input, Options{})
+	require.NoError(t, err)
+	buf := new(strings.Builder)
+
+	err = Output(buf, "", nodes)
+	require.NoError(t, err)
+
+	require.Equal(t, expected, buf.String())
+}
+
+func TestEvalNodesTypes(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	createTmpFile := func(t *testing.T, dir, name, content string) string {
+		tmpFilePath := filepath.Join(dir, name)
+		err := os.WriteFile(tmpFilePath, []byte(content), 0o600)
+		require.NoError(t, err)
+		return tmpFilePath
+	}
+
+	secretYaml := `
+bool: true
+int: 42
+string: "It's a string"
+`
+	secretsFile := createTmpFile(t, tmpDir, "secrets.yaml", secretYaml)
+
+	replacer := strings.NewReplacer("{file-ref}", "ref+file://"+secretsFile)
+	inputYaml := replacer.Replace(`
+bool_value: {file-ref}#/bool
+int_value: {file-ref}#/int
+string_value: {file-ref}#/string
+`)
+	inputFile := createTmpFile(t, tmpDir, "input.yaml", inputYaml)
+
+	expected := `bool_value: true
+int_value: 42
+string_value: It's a string
+`
+
+	input, err := Inputs(inputFile)
 	require.NoError(t, err)
 
 	nodes, err := EvalNodes(input, Options{})
