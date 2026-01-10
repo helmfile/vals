@@ -454,6 +454,7 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 							newobj[fmt.Sprintf("%v", k)] = v
 						}
 					default:
+						return nil, fmt.Errorf("unsupported type for key at %d=%s in %v: %v(%T)", i, k, keys, t, t)
 					}
 					obj = newobj
 				}
