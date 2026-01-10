@@ -439,24 +439,25 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 
 				keys := strings.Split(frag, "/")
 				for i, k := range keys {
-					newobj := map[string]interface{}{}
-					switch t := obj[k].(type) {
-					case bool, int, string:
+					t := obj[k]
+					if isTerminalValue(t) {
 						if i != len(keys)-1 {
 							return nil, fmt.Errorf("unexpected type of value for key at %d=%s in %v: expected map[string]interface{}, got %v(%T)", i, k, keys, t, t)
 						}
 						r.docCache.Add(key, t)
 						return t, nil
+					}
+					switch t := t.(type) {
 					case map[string]interface{}:
-						newobj = t
+						obj = t
 					case map[interface{}]interface{}:
+						obj := map[string]interface{}{}
 						for k, v := range t {
-							newobj[fmt.Sprintf("%v", k)] = v
+							obj[fmt.Sprintf("%v", k)] = v
 						}
 					default:
 						return nil, fmt.Errorf("unsupported type for key at %d=%s in %v: %v(%T)", i, k, keys, t, t)
 					}
-					obj = newobj
 				}
 
 				if r.Options.FailOnMissingKeyInMap {
