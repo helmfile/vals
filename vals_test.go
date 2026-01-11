@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -79,42 +80,78 @@ func TestQuotedEnv(t *testing.T) {
 }
 
 func TestEvalNodes(t *testing.T) {
-	var yamlDocs = `apiVersion: monitoring.coreos.com/v1
+	testCases := []struct {
+		yamlDocs string
+		expected string
+	}{
+		{`apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
 ---
 apiVersion: v1
 data:
   username: ref+echo://secrets.enc.yaml
 kind: Secret
-`
-
-	var expected = `apiVersion: monitoring.coreos.com/v1
+`, `apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
 ---
 apiVersion: v1
 data:
   username: secrets.enc.yaml
 kind: Secret
-`
+`},
+		{`foo: ref+echo://foo/bar
+bar: ref+echo://foo/bar#/foo
+`, `bar: bar
+foo: foo/bar
+`},
+		{`bar: ref+echo://foo/bar#/foo
+foo: ref+echo://foo/bar`, `bar: bar
+foo: foo/bar
+`},
+	}
 
-	tmpFile, err := os.CreateTemp("", "secrets.yaml")
-	defer os.Remove(tmpFile.Name())
-	require.NoError(t, err)
+	for idx, testCase := range testCases {
+		t.Run(strconv.Itoa(idx), func(t *testing.T) {
+			t.Parallel()
+			tmpFile, err := os.CreateTemp("", "secrets.yaml")
+			defer os.Remove(tmpFile.Name())
+			require.NoError(t, err)
+			_, err = tmpFile.WriteString(testCase.yamlDocs)
+			require.NoError(t, err)
 
-	_, err = tmpFile.WriteString(yamlDocs)
-	require.NoError(t, err)
+			input, err := Inputs(tmpFile.Name())
+			require.NoError(t, err)
+			nodes, err := EvalNodes(input, Options{})
+			require.NoError(t, err)
+			buf := new(strings.Builder)
 
-	input, err := Inputs(tmpFile.Name())
-	require.NoError(t, err)
+			err = Output(buf, "", nodes)
+			require.NoError(t, err)
 
-	nodes, err := EvalNodes(input, Options{})
-	require.NoError(t, err)
-	buf := new(strings.Builder)
+			require.Equal(t, testCase.expected, buf.String())
+		})
+	}
+}
 
-	err = Output(buf, "", nodes)
-	require.NoError(t, err)
+func TestGet(t *testing.T) {
+	testCases := []struct {
+		code     string
+		expected string
+	}{
+		{"ref+echo://foo/bar", "foo/bar"},
+		{"ref+echo://foo/bar#/foo", "bar"},
+		{"ref+echo://foo/bar ref+echo://foo/bar#/foo", "foo/bar bar"},
+		{"ref+echo://foo/bar#/foo ref+echo://foo/bar", "bar foo/bar"},
+	}
 
-	require.Equal(t, expected, buf.String())
+	for idx, testCase := range testCases {
+		t.Run(strconv.Itoa(idx), func(t *testing.T) {
+			t.Parallel()
+			got, err := Get(testCase.code, Options{})
+			require.NoError(t, err)
+			require.Equal(t, testCase.expected, got)
+		})
+	}
 }
 
 func TestEvalNodesWithDictionaries(t *testing.T) {

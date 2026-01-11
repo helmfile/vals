@@ -347,10 +347,9 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 		Lookup: func(key string) (string, error) {
 			if val, ok := r.docCache.Get(key); ok {
 				valStr, ok := val.(string)
-				if !ok {
-					return "", fmt.Errorf("error reading string from cache: unsupported value type %T", val)
+				if ok {
+					return valStr, nil
 				}
-				return valStr, nil
 			}
 
 			uri, err := url.Parse(key)
