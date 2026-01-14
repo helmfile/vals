@@ -224,3 +224,35 @@ datetime_offset: "2025-01-01T12:34:56+01:00"
 
 	require.Equal(t, expected, buf.String())
 }
+
+func TestGetRawText(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "plain text with ref",
+			input:    "plain text with ref+echo://hello-world embedded",
+			expected: "plain text with hello-world embedded",
+		},
+		{
+			name:     "JSONC with refs",
+			input:    "{\n  // comment\n  \"key\": \"ref+echo://value\"\n}",
+			expected: "{\n  // comment\n  \"key\": \"value\"\n}",
+		},
+		{
+			name:     "config file",
+			input:    "DATABASE_URL=ref+echo://postgres://localhost/db\nAPI_KEY=ref+echo://secret-123",
+			expected: "DATABASE_URL=postgres://localhost/db\nAPI_KEY=secret-123",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := Get(tt.input, Options{})
+			require.NoError(t, err)
+			require.Equal(t, tt.expected, result)
+		})
+	}
+}
