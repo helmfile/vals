@@ -12,39 +12,60 @@ type ExpandRegexMatch struct {
 	Only   []string
 }
 
-var DefaultRefRegexp = regexp.MustCompile(`((secret)?ref)\+([^\+:]*:\/\/[^\+\n ]+[^\+\n ",])\+?`)
+var DefaultRefRegexp = regexp.MustCompile(`((secret)?ref)\+([^:]*:\/\/[^ \n",]*[^ \n",+])\+?`)
 
 func (e *ExpandRegexMatch) InString(s string) (string, error) {
-	var sb strings.Builder
-	for {
-		ixs := e.Target.FindStringSubmatchIndex(s)
-		if ixs == nil {
-			sb.WriteString(s)
-			return sb.String(), nil
-		}
-		kind := s[ixs[2]:ixs[3]]
-		if len(e.Only) > 0 {
-			var shouldExpand bool
-			for _, k := range e.Only {
-				if k == kind {
-					shouldExpand = true
+	// Keep expanding until no more expressions are found (for nested expressions)
+	maxIterations := 10 // Prevent infinite loops
+	iteration := 0
+
+	for iteration < maxIterations {
+		originalString := s
+		var sb strings.Builder
+		hasChanges := false
+
+		for {
+			ixs := e.Target.FindStringSubmatchIndex(s)
+			if ixs == nil {
+				sb.WriteString(s)
+				break
+			}
+			kind := s[ixs[2]:ixs[3]]
+			if len(e.Only) > 0 {
+				var shouldExpand bool
+				for _, k := range e.Only {
+					if k == kind {
+						shouldExpand = true
+						break
+					}
+				}
+				if !shouldExpand {
+					sb.WriteString(s)
 					break
 				}
 			}
-			if !shouldExpand {
-				sb.WriteString(s)
-				return sb.String(), nil
+			ref := s[ixs[6]:ixs[7]]
+			val, err := e.Lookup(ref)
+			if err != nil {
+				return "", fmt.Errorf("expand %s: %v", ref, err)
 			}
+			sb.WriteString(s[:ixs[0]])
+			sb.WriteString(val)
+			s = s[ixs[1]:]
+			hasChanges = true
 		}
-		ref := s[ixs[6]:ixs[7]]
-		val, err := e.Lookup(ref)
-		if err != nil {
-			return "", fmt.Errorf("expand %s: %v", ref, err)
+
+		s = sb.String()
+
+		// If no changes were made in this iteration, we're done
+		if !hasChanges || s == originalString {
+			return s, nil
 		}
-		sb.WriteString(s[:ixs[0]])
-		sb.WriteString(val)
-		s = s[ixs[1]:]
+
+		iteration++
 	}
+
+	return "", fmt.Errorf("maximum iterations (%d) reached while expanding nested expressions", maxIterations)
 }
 
 func (e *ExpandRegexMatch) InMap(target map[string]interface{}) (map[string]interface{}, error) {
