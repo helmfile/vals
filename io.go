@@ -97,6 +97,31 @@ func replaceTimestamp(n *yaml.Node) {
 	}
 }
 
+// RawInput reads the raw text content from a file or stdin
+func RawInput(f string) (string, error) {
+	var reader io.Reader
+	if f == "-" {
+		reader = os.Stdin
+	} else if f != "" {
+		fp, err := os.Open(f)
+		if err != nil {
+			return "", err
+		}
+		defer func() {
+			_ = fp.Close()
+		}()
+		reader = fp
+	} else {
+		return "", fmt.Errorf("Nothing to eval: No file specified")
+	}
+
+	content, err := io.ReadAll(reader)
+	if err != nil {
+		return "", err
+	}
+	return string(content), nil
+}
+
 func Output(output io.Writer, format string, nodes []yaml.Node) error {
 	for i, node := range nodes {
 		var v interface{}

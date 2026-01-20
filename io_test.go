@@ -2,6 +2,7 @@ package vals
 
 import (
 	"bytes"
+	"os"
 	"strings"
 	"testing"
 )
@@ -123,6 +124,54 @@ func Test_NodesFromReader(t *testing.T) {
 
 			if len(nodes) != tt.nodes {
 				t.Errorf("Expected %v nodes, got %v", tt.nodes, len(nodes))
+			}
+		})
+	}
+}
+
+func Test_RawInput(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "plain text",
+			input:    "plain text content",
+			expected: "plain text content",
+		},
+		{
+			name:     "text with newlines",
+			input:    "line1\nline2\nline3",
+			expected: "line1\nline2\nline3",
+		},
+		{
+			name:     "JSONC with comments",
+			input:    "{\n  // comment\n  \"key\": \"value\"\n}",
+			expected: "{\n  // comment\n  \"key\": \"value\"\n}",
+		},
+		{
+			name:     "JSON5 with trailing comma",
+			input:    "{\n  key: 'value',\n}",
+			expected: "{\n  key: 'value',\n}",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a temp file with the input content
+			tmpFile := t.TempDir() + "/test.txt"
+			if err := os.WriteFile(tmpFile, []byte(tt.input), 0644); err != nil {
+				t.Fatal(err)
+			}
+
+			result, err := RawInput(tmpFile)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if result != tt.expected {
+				t.Errorf("Expected %q, got %q", tt.expected, result)
 			}
 		})
 	}
