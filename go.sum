@@ -384,8 +384,8 @@ github.com/ianlancetaylor/demangle v0.0.0-20240805132620-81f5be970eca h1:T54Ema1
 github.com/ianlancetaylor/demangle v0.0.0-20240805132620-81f5be970eca/go.mod h1:gx7rwoVhcfuVKG5uya9Hs3Sxj7EIvldVofAWIUtGouw=
 github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2s0bqwp9tc8=
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
-github.com/infisical/go-sdk v0.6.5 h1:99Njy2pt3fMSSbm7ysx34acxgUgPM7Z5UEtArWu9QZQ=
-github.com/infisical/go-sdk v0.6.5/go.mod h1:A6l7EhwCkPw8tmJjgA09KtueEHYko+VdGCEupK8hL08=
+github.com/infisical/go-sdk v0.6.7 h1:8wkHfE3DCR7wPmcJcYUOdoxkkhfIUqYJ4ip9Z7D9A68=
+github.com/infisical/go-sdk v0.6.7/go.mod h1:A6l7EhwCkPw8tmJjgA09KtueEHYko+VdGCEupK8hL08=
 github.com/itchyny/gojq v0.12.16 h1:yLfgLxhIr/6sJNVmYfQjTIv0jGctu6/DgDoivmxTr7g=
 github.com/itchyny/gojq v0.12.16/go.mod h1:6abHbdC2uB9ogMS38XsErnfqJ94UlngIJGlRAIj4jTM=
 github.com/itchyny/timefmt-go v0.1.6 h1:ia3s54iciXDdzWzwaVKXZPbiXzxxnv1SPGFfM/myJ5Q=
