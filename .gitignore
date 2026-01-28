@@ -1,6 +1,7 @@
 .idea
 *~
 bin/
+dist/
 cover.out
 vals
 .vscode

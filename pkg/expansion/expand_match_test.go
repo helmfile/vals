@@ -144,7 +144,7 @@ func TestExpandRegexpMatchInString(t *testing.T) {
 		tc := testcases[i]
 
 		t.Run(tc.name, func(t *testing.T) {
-			lookup := func(m string) (string, error) {
+			lookup := func(m string) (interface{}, error) {
 				parsed, err := url.Parse(m)
 				if err != nil {
 					return "", err
@@ -160,7 +160,6 @@ func TestExpandRegexpMatchInString(t *testing.T) {
 			}
 
 			actual, err := expand.InString(tc.input)
-
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -227,7 +226,7 @@ func TestExpandRegexpMatchInMap(t *testing.T) {
 		tc := testcases[i]
 
 		t.Run(tc.name, func(t *testing.T) {
-			lookup := func(m string) (string, error) {
+			lookup := func(m string) (interface{}, error) {
 				parsed, err := url.Parse(m)
 				if err != nil {
 					return "", err
@@ -242,7 +241,6 @@ func TestExpandRegexpMatchInMap(t *testing.T) {
 			}
 
 			actual, err := expand.InMap(tc.input)
-
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
