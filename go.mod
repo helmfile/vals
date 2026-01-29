@@ -19,7 +19,7 @@ require (
 	github.com/aws/aws-sdk-go v1.55.8
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.41.1
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.67.8
-	github.com/cyberark/conjur-api-go v0.13.14
+	github.com/cyberark/conjur-api-go v0.13.15
 	github.com/fujiwara/tfstate-lookup v1.10.0
 	github.com/getsops/sops/v3 v3.11.0
 	github.com/go-openapi/runtime v0.29.2
