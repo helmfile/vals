@@ -98,6 +98,7 @@ const (
 	ProviderTFStateS3          = "tfstates3"
 	ProviderTFStateAzureRM     = "tfstateazurerm"
 	ProviderTFStateRemote      = "tfstateremote"
+	ProviderTFStateGitLab      = "tfstategitlab"
 	ProviderAzureKeyVault      = "azurekeyvault"
 	ProviderEnvSubst           = "envsubst"
 	ProviderKeychain           = "keychain"
@@ -255,6 +256,9 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 			return p, nil
 		case ProviderTFStateRemote:
 			p := tfstate.New(conf, "remote")
+			return p, nil
+		case ProviderTFStateGitLab:
+			p := tfstate.New(conf, "gitlab")
 			return p, nil
 		case ProviderAzureKeyVault:
 			p := azurekeyvault.New(conf)
