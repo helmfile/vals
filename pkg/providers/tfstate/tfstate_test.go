@@ -3,45 +3,46 @@ package tfstate
 import (
 	"testing"
 
-	"github.com/helmfile/vals/pkg/config"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/helmfile/vals/pkg/config"
 )
 
 func TestNewGitLabProvider(t *testing.T) {
 	tests := []struct {
-		name     string
 		cfg      map[string]interface{}
-		backend  string
 		expected *provider
+		name     string
+		backend  string
 	}{
 		{
-			name:    "default config",
-			cfg:     map[string]interface{}{},
-			backend: "gitlab",
+			cfg: map[string]interface{}{},
 			expected: &provider{
 				backend: "gitlab",
 			},
+			name:    "default config",
+			backend: "gitlab",
 		},
 		{
-			name: "with gitlab_user and gitlab_token",
 			cfg: map[string]interface{}{
 				"gitlab_user":  "testuser",
 				"gitlab_token": "testtoken",
 			},
-			backend: "gitlab",
 			expected: &provider{
 				backend:     "gitlab",
 				gitlabUser:  "testuser",
 				gitlabToken: "testtoken",
 			},
+			name:    "with gitlab_user and gitlab_token",
+			backend: "gitlab",
 		},
 		{
-			name:    "s3 backend",
-			cfg:     map[string]interface{}{},
-			backend: "s3",
+			cfg: map[string]interface{}{},
 			expected: &provider{
 				backend: "s3",
 			},
+			name:    "s3 backend",
+			backend: "s3",
 		},
 	}
 
