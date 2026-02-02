@@ -14,10 +14,11 @@ import (
 )
 
 type provider struct {
-	cfg              api.StaticConfig
 	backend          string
 	awsProfile       string
 	azSubscriptionId string
+	gitlabUser       string
+	gitlabToken      string
 }
 
 func New(cfg api.StaticConfig, backend string) *provider {
@@ -25,7 +26,8 @@ func New(cfg api.StaticConfig, backend string) *provider {
 	p.backend = backend
 	p.awsProfile = cfg.String("aws_profile")
 	p.azSubscriptionId = cfg.String("az_subscription_id")
-	p.cfg = cfg
+	p.gitlabUser = cfg.String("gitlab_user")
+	p.gitlabToken = cfg.String("gitlab_token")
 	return p
 }
 
@@ -103,11 +105,11 @@ func (p *provider) ReadTFState(f, k string) (*tfstate.TFState, error) {
 			stateURL = "https://" + f
 		}
 
-		user := p.cfg.String("gitlab_user")
+		user := p.gitlabUser
 		if user == "" {
 			user = os.Getenv("GITLAB_USER")
 		}
-		token := p.cfg.String("gitlab_token")
+		token := p.gitlabToken
 		if token == "" {
 			token = os.Getenv("GITLAB_TOKEN")
 		}

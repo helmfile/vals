@@ -29,7 +29,9 @@ func TestNewGitLabProvider(t *testing.T) {
 				"gitlab_token": "testtoken",
 			},
 			expected: &provider{
-				backend: "gitlab",
+				gitlabUser:  "testuser",
+				gitlabToken: "testtoken",
+				backend:     "gitlab",
 			},
 			name:    "with gitlab_user and gitlab_token",
 			backend: "gitlab",
@@ -50,6 +52,8 @@ func TestNewGitLabProvider(t *testing.T) {
 			p := New(cfg, tt.backend)
 
 			assert.Equal(t, tt.expected.backend, p.backend)
+			assert.Equal(t, tt.expected.gitlabUser, p.gitlabUser)
+			assert.Equal(t, tt.expected.gitlabToken, p.gitlabToken)
 		})
 	}
 }
