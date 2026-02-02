@@ -3,6 +3,7 @@ package tfstate
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -16,6 +17,8 @@ type provider struct {
 	backend          string
 	awsProfile       string
 	azSubscriptionId string
+	gitlabUser       string
+	gitlabToken      string
 }
 
 func New(cfg api.StaticConfig, backend string) *provider {
@@ -23,6 +26,8 @@ func New(cfg api.StaticConfig, backend string) *provider {
 	p.backend = backend
 	p.awsProfile = cfg.String("aws_profile")
 	p.azSubscriptionId = cfg.String("az_subscription_id")
+	p.gitlabUser = cfg.String("gitlab_user")
+	p.gitlabToken = cfg.String("gitlab_token")
 	return p
 }
 
@@ -90,6 +95,37 @@ func (p *provider) ReadTFState(f, k string) (*tfstate.TFState, error) {
 	switch p.backend {
 	case "":
 		state, err := tfstate.ReadFile(context.TODO(), f)
+		if err != nil {
+			return nil, fmt.Errorf("reading tfstate for %s: %w", k, err)
+		}
+		return state, nil
+	case "gitlab":
+		stateURL := f
+		if !strings.HasPrefix(stateURL, "http://") && !strings.HasPrefix(stateURL, "https://") {
+			stateURL = "https://" + f
+		}
+
+		user := p.gitlabUser
+		if user == "" {
+			user = os.Getenv("GITLAB_USER")
+		}
+		token := p.gitlabToken
+		if token == "" {
+			token = os.Getenv("GITLAB_TOKEN")
+		}
+
+		parsedURL, err := url.Parse(stateURL)
+		if err != nil {
+			return nil, fmt.Errorf("parsing GitLab URL: %w", err)
+		}
+
+		if user != "" && token != "" {
+			parsedURL.User = url.UserPassword(user, token)
+		} else if token != "" {
+			parsedURL.User = url.UserPassword(token, "")
+		}
+
+		state, err := tfstate.ReadURL(context.TODO(), parsedURL.String())
 		if err != nil {
 			return nil, fmt.Errorf("reading tfstate for %s: %w", k, err)
 		}
