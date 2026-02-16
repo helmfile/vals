@@ -48,7 +48,7 @@ func New(l *log.Logger, provider api.StaticConfig, awsLogLevel string) (api.Lazy
 	case "awssecrets":
 		return awssecrets.New(l, provider, awsLogLevel), nil
 	case "sops":
-		return sops.New(l, provider), nil
+		return sops.New(l, provider, awsLogLevel), nil
 	case "gcpsecrets":
 		return gcpsecrets.New(provider), nil
 	case "tfstate":
