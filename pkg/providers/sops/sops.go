@@ -32,9 +32,12 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 	return p
 }
 
-// Get gets an AWS SSM Parameter Store value
+// GetString decrypts and returns a plaintext value from a sops-encrypted file or data.
 func (p *provider) GetString(key string) (string, error) {
-	cleartext, err := p.decrypt(key, p.format("binary"))
+	// Empty string lets sops auto-detect the format from the file extension
+	// via FormatForPathOrString → FormatForPath (e.g. .yaml, .json, .env, .ini).
+	// Do not change this to "binary" — that would short-circuit extension detection.
+	cleartext, err := p.decrypt(key, p.format(""))
 	if err != nil {
 		return "", err
 	}
