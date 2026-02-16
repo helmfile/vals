@@ -79,6 +79,26 @@ func TestQuotedEnv(t *testing.T) {
 	require.Equal(t, expected, got)
 }
 
+func TestGetExecProvider(t *testing.T) {
+	testCases := []struct {
+		code     string
+		expected string
+	}{
+		{"ref+exec://echo/hello", "hello"},
+		{"ref+exec://echo/hello world", "hello world"},
+		{"ref+exec://printf/hello?trim=false", "hello"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.code, func(t *testing.T) {
+			t.Parallel()
+			got, err := Get(tc.code, Options{})
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, got)
+		})
+	}
+}
+
 func TestEvalNodes(t *testing.T) {
 	testCases := []struct {
 		yamlDocs string
