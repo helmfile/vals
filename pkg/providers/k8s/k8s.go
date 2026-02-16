@@ -2,6 +2,7 @@ package k8s
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -79,46 +80,101 @@ func getKubeConfigPath(cfg api.StaticConfig) (string, error) {
 	return "", fmt.Errorf("No path was found in any of the following: kubeContext URI param, KUBECONFIG environment variable, or default path %s does not exist.", defaultPath)
 }
 
-func (p *provider) GetString(path string) (string, error) {
-	separator := "/"
-	splits := strings.Split(path, separator)
-
-	if len(splits) != 5 {
-		return "", fmt.Errorf("Invalid path %s. Path must be in the format <apiVersion>/<kind>/<namespace>/<name>/<key>", path)
+// fetchObjectData validates a 4-part path and fetches the object data from Kubernetes.
+func (p *provider) fetchObjectData(path string) (kind, namespace, name string, objectData map[string]string, err error) {
+	splits := strings.Split(path, "/")
+	if len(splits) != 4 {
+		return "", "", "", nil, fmt.Errorf("Invalid path %s. Path must be in the format <apiVersion>/<kind>/<namespace>/<name>", path)
 	}
 
 	apiVersion := splits[0]
-	kind := splits[1]
-	namespace := splits[2]
-	name := splits[3]
-	key := splits[4]
+	kind = splits[1]
+	namespace = splits[2]
+	name = splits[3]
 
 	if apiVersion != "v1" {
-		return "", fmt.Errorf("Invalid apiVersion %s. Only apiVersion v1 is supported at this time.", apiVersion)
+		return "", "", "", nil, fmt.Errorf("Invalid apiVersion %s. Only apiVersion v1 is supported at this time.", apiVersion)
 	}
 
-	objectData, err := getObject(kind, namespace, name, p.KubeConfigPath, p.KubeContext, p.InCluster, context.Background())
+	objectData, err = getObject(kind, namespace, name, p.KubeConfigPath, p.KubeContext, p.InCluster, context.Background())
 	if err != nil {
-		return "", fmt.Errorf("Unable to get %s %s/%s: %s", kind, namespace, name, err)
+		return "", "", "", nil, fmt.Errorf("Unable to get %s %s/%s: %s", kind, namespace, name, err)
 	}
 
-	object, exists := objectData[key]
-	if !exists {
-		return "", fmt.Errorf("Key %s does not exist in %s/%s", key, namespace, name)
+	// Normalize nil data (e.g., ConfigMap with no .data) to an empty map
+	// so callers get consistent behavior ({} instead of null in JSON).
+	if objectData == nil {
+		objectData = map[string]string{}
 	}
 
-	// Print success message with kubeContext if provided
-	message := fmt.Sprintf("vals-k8s: Retrieved %s: %s/%s/%s", kind, namespace, name, key)
+	return kind, namespace, name, objectData, nil
+}
+
+func (p *provider) logRetrieval(message string) {
 	if p.KubeContext != "" {
 		message += fmt.Sprintf(" (KubeContext: %s)", p.KubeContext)
 	}
 	p.log.Debugf(message)
+}
 
-	return object, nil
+func (p *provider) GetString(path string) (string, error) {
+	splits := strings.Split(path, "/")
+
+	if len(splits) != 4 && len(splits) != 5 {
+		return "", fmt.Errorf("Invalid path %s. Path must be in the format <apiVersion>/<kind>/<namespace>/<name>[/<key>]", path)
+	}
+
+	// 5-part path: fetch a single key
+	if len(splits) == 5 {
+		key := splits[4]
+		if key == "" {
+			return "", fmt.Errorf("Invalid path %s. Key must not be empty in the format <apiVersion>/<kind>/<namespace>/<name>/<key>", path)
+		}
+
+		basePath := strings.Join(splits[:4], "/")
+		kind, namespace, name, objectData, err := p.fetchObjectData(basePath)
+		if err != nil {
+			return "", err
+		}
+
+		object, exists := objectData[key]
+		if !exists {
+			return "", fmt.Errorf("Key %s does not exist in %s/%s", key, namespace, name)
+		}
+
+		p.logRetrieval(fmt.Sprintf("vals-k8s: Retrieved %s: %s/%s/%s", kind, namespace, name, key))
+		return object, nil
+	}
+
+	// 4-part path: return all keys as JSON
+	kind, namespace, name, objectData, err := p.fetchObjectData(path)
+	if err != nil {
+		return "", err
+	}
+
+	jsonBytes, err := json.Marshal(objectData)
+	if err != nil {
+		return "", fmt.Errorf("Unable to marshal %s %s/%s to JSON: %w", kind, namespace, name, err)
+	}
+
+	p.logRetrieval(fmt.Sprintf("vals-k8s: Retrieved all keys from %s: %s/%s", kind, namespace, name))
+	return string(jsonBytes), nil
 }
 
 func (p *provider) GetStringMap(path string) (map[string]interface{}, error) {
-	return nil, fmt.Errorf("This provider does not support values from URI fragments")
+	kind, namespace, name, objectData, err := p.fetchObjectData(path)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert map[string]string to map[string]interface{}
+	result := make(map[string]interface{}, len(objectData))
+	for k, v := range objectData {
+		result[k] = v
+	}
+
+	p.logRetrieval(fmt.Sprintf("vals-k8s: Retrieved all keys from %s: %s/%s", kind, namespace, name))
+	return result, nil
 }
 
 // Return an empty Kube context if none is provided
