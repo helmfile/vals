@@ -9,6 +9,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/awssecrets"
 	"github.com/helmfile/vals/pkg/providers/azurekeyvault"
 	"github.com/helmfile/vals/pkg/providers/doppler"
+	execprovider "github.com/helmfile/vals/pkg/providers/exec"
 	"github.com/helmfile/vals/pkg/providers/gcpsecrets"
 	"github.com/helmfile/vals/pkg/providers/gkms"
 	"github.com/helmfile/vals/pkg/providers/httpjson"
@@ -55,6 +56,8 @@ func New(l *log.Logger, provider api.StaticConfig, awsLogLevel string) (api.Lazy
 		return scaleway.New(l, provider), nil
 	case "infisical":
 		return infisical.New(l, provider), nil
+	case "exec":
+		return execprovider.New(l, provider), nil
 	}
 
 	return nil, fmt.Errorf("failed initializing string-map provider from config: %v", provider)

@@ -790,6 +790,32 @@ Examples:
 - `ref+file://some.yaml#/foo/bar` loads the YAML file at `some.yaml` and reads the value for the path `$.foo.bar`.
   Let's say `some.yaml` contains `{"foo":{"bar":"BAR"}}`, `key1: ref+file://some.yaml#/foo/bar` results in `key1: BAR`.
 
+### Exec
+
+Exec provider executes an arbitrary CLI command and uses its stdout as the secret value. This enables integration with any secrets backend that has a CLI tool, without needing a dedicated provider.
+
+- `ref+exec://COMMAND[/ARG1/ARG2][?args=EXTRA1,EXTRA2&timeout=30&trim=true&env_KEY=VALUE][#/json/path]`
+
+The command name is taken from the URI host, and path segments become positional arguments. Additional comma-separated arguments can be appended via the `args` query parameter. The command is executed directly (no shell invocation) for security.
+
+Parameters:
+
+| Parameter | Description | Default |
+|---|---|---|
+| `args` | Additional comma-separated arguments appended after path args | (none) |
+| `timeout` | Execution timeout in seconds | `30` |
+| `trim` | Trim trailing whitespace from stdout | `true` |
+| `env_KEY` | Set environment variable `KEY` for the child process | (none) |
+
+Examples:
+
+- `ref+exec://echo/hello` — runs `echo hello`, returns `hello`
+- `ref+exec://bw/get/password/item-id` — runs `bw get password item-id`
+- `ref+exec://my-script.sh?args=--key,my-secret` — runs `my-script.sh --key my-secret`
+- `ref+exec://vault-helper.sh?args=read,secret/db#/password` — runs the command, parses JSON/YAML output, and extracts `$.password`
+- `ref+exec:///usr/local/bin/my-tool?args=fetch,key1` — absolute path command
+- `ref+exec://my-tool?env_API_TOKEN=xyz&timeout=10` — sets env var `API_TOKEN=xyz` with 10s timeout
+
 ### Azure Key Vault
 
 Retrieve secrets from Azure Key Vault. Path is used to specify the vault and secret name. Optionally a specific secret version can be retrieved.

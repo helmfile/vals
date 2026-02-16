@@ -28,6 +28,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/doppler"
 	"github.com/helmfile/vals/pkg/providers/echo"
 	"github.com/helmfile/vals/pkg/providers/envsubst"
+	execprovider "github.com/helmfile/vals/pkg/providers/exec"
 	"github.com/helmfile/vals/pkg/providers/file"
 	"github.com/helmfile/vals/pkg/providers/gcpsecrets"
 	"github.com/helmfile/vals/pkg/providers/gcs"
@@ -90,6 +91,7 @@ const (
 	ProviderSecretsManager     = "awssecrets"
 	ProviderSOPS               = "sops"
 	ProviderEcho               = "echo"
+	ProviderExec               = "exec"
 	ProviderFile               = "file"
 	ProviderGCPSecretManager   = "gcpsecrets"
 	ProviderGoogleSheets       = "googlesheets"
@@ -310,6 +312,9 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 			return p, nil
 		case ProviderServercore:
 			p := servercore.New(r.logger, conf)
+			return p, nil
+		case ProviderExec:
+			p := execprovider.New(r.logger, conf)
 			return p, nil
 		}
 		return nil, fmt.Errorf("no provider registered for scheme %q", scheme)
@@ -535,6 +540,7 @@ var KnownValuesTypes = []string{
 	ProviderTFState,
 	ProviderFile,
 	ProviderEcho,
+	ProviderExec,
 	ProviderKeychain,
 	ProviderEnvSubst,
 	ProviderPulumiStateAPI,
