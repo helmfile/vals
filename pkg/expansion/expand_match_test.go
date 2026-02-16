@@ -4,6 +4,7 @@ import (
 	"net/url"
 	"reflect"
 	"regexp"
+	"strings"
 	"testing"
 )
 
@@ -15,6 +16,56 @@ func TestExpandRegexpMatchInString(t *testing.T) {
 		expected string
 		only     []string
 	}{
+		{
+			name:     "nested ref",
+			regex:    DefaultRefRegexp,
+			input:    "ref+echo://ref+echo://inner/value",
+			expected: "echo-echo-inner--/value",
+		},
+		{
+			name:     "triple nested ref",
+			regex:    DefaultRefRegexp,
+			input:    "ref+echo://ref+echo://ref+echo://deep/value",
+			expected: "echo-echo-echo-deep---/value",
+		},
+		{
+			name:     "nested ref with surrounding text",
+			regex:    DefaultRefRegexp,
+			input:    "prefix ref+echo://ref+echo://inner/value suffix",
+			expected: "prefix echo-echo-inner--/value suffix",
+		},
+		{
+			name:     "mixed nested and independent refs",
+			regex:    DefaultRefRegexp,
+			input:    "ref+echo://simple ref+echo://ref+echo://inner/value",
+			expected: "echo-simple- echo-echo-inner--/value",
+		},
+		{
+			name:     "nested secretref",
+			regex:    DefaultRefRegexp,
+			input:    "secretref+echo://secretref+echo://inner/value",
+			expected: "echo-echo-inner--/value",
+		},
+		{
+			name:     "mixed nested ref and secretref",
+			regex:    DefaultRefRegexp,
+			input:    "ref+echo://secretref+echo://inner/value",
+			expected: "echo-echo-inner--/value",
+		},
+		{
+			name:     "nested ref with only filter on inner",
+			regex:    DefaultRefRegexp,
+			only:     []string{"ref"},
+			input:    "ref+echo://secretref+echo://inner/value",
+			expected: "echo-secretref-echo://inner/value",
+		},
+		{
+			name:     "nested ref with only filter on outer",
+			regex:    DefaultRefRegexp,
+			only:     []string{"secretref"},
+			input:    "secretref+echo://ref+echo://inner/value",
+			expected: "echo-ref-echo://inner/value",
+		},
 		{
 			name:     "ref",
 			regex:    DefaultRefRegexp,
@@ -249,5 +300,132 @@ func TestExpandRegexpMatchInMap(t *testing.T) {
 				t.Errorf("unexpected result: expected:\n%v\ngot:%v\n", tc.expected, actual)
 			}
 		})
+	}
+}
+
+func TestResolveInnerRefs(t *testing.T) {
+	lookup := func(m string) (interface{}, error) {
+		parsed, err := url.Parse(m)
+		if err != nil {
+			return "", err
+		}
+		return parsed.Scheme + "-" + parsed.Host + "-" + parsed.Path, nil
+	}
+
+	expand := ExpandRegexMatch{
+		Target: DefaultRefRegexp,
+		Lookup: lookup,
+	}
+
+	testcases := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "no ref prefix",
+			input:    "just a plain string",
+			expected: "just a plain string",
+		},
+		{
+			name:     "single ref unchanged",
+			input:    "ref+echo://simple/value",
+			expected: "ref+echo://simple/value",
+		},
+		{
+			name:     "single nesting resolved",
+			input:    "ref+echo://ref+echo://inner/value",
+			expected: "ref+echo://echo-inner-/value",
+		},
+		{
+			name:     "double nesting resolved",
+			input:    "ref+echo://ref+echo://ref+echo://deep/value",
+			expected: "ref+echo://echo-echo-deep--/value",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			actual, err := expand.resolveInnerRefs(tc.input, 0)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if actual != tc.expected {
+				t.Errorf("expected: %s, got: %s", tc.expected, actual)
+			}
+		})
+	}
+}
+
+func TestResolveInnerRefsNonScalarError(t *testing.T) {
+	input := "ref+echo://ref+echo://trigger/value"
+
+	t.Run("map value", func(t *testing.T) {
+		expand := ExpandRegexMatch{
+			Target: DefaultRefRegexp,
+			Lookup: func(m string) (interface{}, error) {
+				return map[string]interface{}{"key": "value"}, nil
+			},
+		}
+		_, err := expand.resolveInnerRefs(input, 0)
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "scalar") {
+			t.Fatalf("expected scalar type error, got: %v", err)
+		}
+	})
+
+	t.Run("nil value", func(t *testing.T) {
+		expand := ExpandRegexMatch{
+			Target: DefaultRefRegexp,
+			Lookup: func(m string) (interface{}, error) {
+				return nil, nil
+			},
+		}
+		_, err := expand.resolveInnerRefs(input, 0)
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "nil") {
+			t.Fatalf("expected nil error, got: %v", err)
+		}
+	})
+
+	t.Run("slice value", func(t *testing.T) {
+		expand := ExpandRegexMatch{
+			Target: DefaultRefRegexp,
+			Lookup: func(m string) (interface{}, error) {
+				return []string{"a", "b"}, nil
+			},
+		}
+		_, err := expand.resolveInnerRefs(input, 0)
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "scalar") {
+			t.Fatalf("expected scalar type error, got: %v", err)
+		}
+	})
+}
+
+func TestResolveInnerRefsDepthLimit(t *testing.T) {
+	lookup := func(m string) (interface{}, error) {
+		// Always returns another nested ref to trigger infinite recursion
+		return "ref+echo://nested/value", nil
+	}
+
+	expand := ExpandRegexMatch{
+		Target: DefaultRefRegexp,
+		Lookup: lookup,
+	}
+
+	input := "ref+echo://ref+echo://trigger/value"
+	_, err := expand.resolveInnerRefs(input, 0)
+	if err == nil {
+		t.Fatal("expected depth limit error, got nil")
+	}
+	if !strings.Contains(err.Error(), "maximum nesting depth") {
+		t.Fatalf("expected depth limit error, got: %v", err)
 	}
 }
