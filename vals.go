@@ -230,7 +230,7 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 			p := oci.New(r.logger, conf)
 			return p, nil
 		case ProviderSOPS:
-			p := sops.New(r.logger, conf)
+			p := sops.New(r.logger, conf, r.Options.AWSLogLevel)
 			return p, nil
 		case ProviderEcho:
 			p := echo.New(conf)
