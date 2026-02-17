@@ -27,6 +27,7 @@ Available Commands:
   eval		Evaluate a JSON/YAML document and replace any template expressions in it and prints the result
   exec		Populates the environment variables and executes the command
   env		Renders environment variables to be consumed by eval or a tool like direnv
+  flatten	Read any text file and resolve ref+ expressions in it, preserving the original format
   get		Evaluate a string value passed as the first argument and replace any expressions in it and prints the result
   ksdecode	Decode YAML document(s) by converting Secret resources' "data" to "stringData" for use with "vals eval"
   version	Print vals version
@@ -74,6 +75,7 @@ func main() {
 	flag.Usage = flagUsage
 
 	CmdEval := "eval"
+	CmdFlatten := "flatten"
 	CmdGet := "get"
 	CmdExec := "exec"
 	CmdEnv := "env"
@@ -143,6 +145,38 @@ func main() {
 		}
 
 		writeOrFail(o, res)
+	case CmdFlatten:
+		flattenCmd := flag.NewFlagSet(CmdFlatten, flag.ExitOnError)
+		f := flattenCmd.String("f", "-", "Text file to be flattened. When set to \"-\", vals reads from STDIN")
+		silent := flattenCmd.Bool("s", false, "Silent mode")
+		e := flattenCmd.Bool("exclude-secret", false, "Leave secretref+<uri> as-is and only replace ref+<uri>")
+		err := flattenCmd.Parse(os.Args[2:])
+		if err != nil {
+			fatal("%v", err)
+		}
+
+		var logOut io.Writer = os.Stderr
+		if *silent {
+			logOut = io.Discard
+		}
+
+		text, err := vals.TextInput(*f)
+		if err != nil {
+			fatal("%v", err)
+		}
+
+		result, err := vals.Get(text, vals.Options{
+			ExcludeSecret: *e,
+			LogOutput:     logOut,
+		})
+		if err != nil {
+			fatal("%v", err)
+		}
+
+		_, err = os.Stdout.WriteString(result)
+		if err != nil {
+			fatal("%v", err)
+		}
 	case CmdGet:
 		getCmd := flag.NewFlagSet(CmdGet, flag.ExitOnError)
 		silent := getCmd.Bool("s", false, "Silent mode")
