@@ -174,6 +174,118 @@ func TestGet(t *testing.T) {
 	}
 }
 
+func TestFlatten(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "plain text with refs",
+			input:    "The secret is ref+echo://mysecret\n",
+			expected: "The secret is mysecret\n",
+		},
+		{
+			name:     "JSONC-like with comments",
+			input:    "{\n  \"key\": \"ref+echo://hello\"\n  // this is a comment\n}\n",
+			expected: "{\n  \"key\": \"hello\"\n  // this is a comment\n}\n",
+		},
+		{
+			name:     "JSON5-like with trailing comma and unquoted keys",
+			input:    "{\n  key: \"ref+echo://value\",\n  other: 123,\n}\n",
+			expected: "{\n  key: \"value\",\n  other: 123,\n}\n",
+		},
+		{
+			name:     "multiple refs on different lines",
+			input:    "line1: ref+echo://first\nline2: ref+echo://second\nline3: ref+echo://third\n",
+			expected: "line1: first\nline2: second\nline3: third\n",
+		},
+		{
+			name:     "no refs passthrough",
+			input:    "just some plain text\nwith multiple lines\nand no refs at all\n",
+			expected: "just some plain text\nwith multiple lines\nand no refs at all\n",
+		},
+		{
+			name:     "ref embedded in larger string",
+			input:    "prefix-ref+echo://middle-suffix\n",
+			expected: "prefix-middle-suffix\n",
+		},
+		{
+			name:     "ref with fragment",
+			input:    "value is ref+echo://foo/bar#/foo\n",
+			expected: "value is bar\n",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			// Integration test: write to file, read via TextInput, resolve via Get
+			dir := t.TempDir()
+			path := filepath.Join(dir, "input.txt")
+			require.NoError(t, os.WriteFile(path, []byte(tc.input), 0o644))
+
+			text, err := TextInput(path)
+			require.NoError(t, err)
+			require.Equal(t, tc.input, text)
+
+			got, err := Get(text, Options{})
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, got)
+		})
+	}
+}
+
+func TestTextInput(t *testing.T) {
+	t.Run("read file", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "test.txt")
+		content := "hello ref+echo://world\n// comment\n"
+		require.NoError(t, os.WriteFile(path, []byte(content), 0o644))
+
+		got, err := TextInput(path)
+		require.NoError(t, err)
+		require.Equal(t, content, got)
+	})
+
+	t.Run("read from stdin", func(t *testing.T) {
+		content := "line1=ref+echo://value1\nline2=ref+echo://value2\n"
+
+		r, w, err := os.Pipe()
+		require.NoError(t, err)
+
+		origStdin := os.Stdin
+		os.Stdin = r
+		defer func() { os.Stdin = origStdin }()
+
+		_, err = w.WriteString(content)
+		require.NoError(t, err)
+		w.Close()
+
+		got, err := TextInput("-")
+		require.NoError(t, err)
+		require.Equal(t, content, got)
+	})
+
+	t.Run("directory returns error", func(t *testing.T) {
+		dir := t.TempDir()
+		_, err := TextInput(dir)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "does not support directories")
+	})
+
+	t.Run("empty string returns error", func(t *testing.T) {
+		_, err := TextInput("")
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "No file specified")
+	})
+
+	t.Run("nonexistent file returns error", func(t *testing.T) {
+		_, err := TextInput("/nonexistent/path/file.txt")
+		require.Error(t, err)
+	})
+}
+
 func TestEvalNodesWithDictionaries(t *testing.T) {
 	yamlDocs := `- entry: first
   username: ref+echo://secrets.enc.yaml
