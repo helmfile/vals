@@ -2,6 +2,7 @@ package k8s
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"testing"
@@ -317,13 +318,13 @@ func Test_GetString(t *testing.T) {
 		{
 			path:    "v1/Secret/test-namespace/mysecret/key/more/path",
 			want:    "",
-			wantErr: "Invalid path v1/Secret/test-namespace/mysecret/key/more/path. Path must be in the format <apiVersion>/<kind>/<namespace>/<name>/<key>",
+			wantErr: "Invalid path v1/Secret/test-namespace/mysecret/key/more/path. Path must be in the format <apiVersion>/<kind>/<namespace>/<name>[/<key>]",
 		},
 		// (configmap) Invalid path is specified
 		{
 			path:    "v1/ConfigMap/test-namespace/myconfigmap/key/more/path",
 			want:    "",
-			wantErr: "Invalid path v1/ConfigMap/test-namespace/myconfigmap/key/more/path. Path must be in the format <apiVersion>/<kind>/<namespace>/<name>/<key>",
+			wantErr: "Invalid path v1/ConfigMap/test-namespace/myconfigmap/key/more/path. Path must be in the format <apiVersion>/<kind>/<namespace>/<name>[/<key>]",
 		},
 		// (secret) Non-existent namespace is specified
 		{
@@ -365,7 +366,7 @@ func Test_GetString(t *testing.T) {
 		{
 			path:    "bad/data/path",
 			want:    "",
-			wantErr: "Invalid path bad/data/path. Path must be in the format <apiVersion>/<kind>/<namespace>/<name>/<key>",
+			wantErr: "Invalid path bad/data/path. Path must be in the format <apiVersion>/<kind>/<namespace>/<name>[/<key>]",
 		},
 		// Unsupported kind is specified
 		{
@@ -397,6 +398,217 @@ func Test_GetString(t *testing.T) {
 
 			if diff := cmp.Diff(tc.want, got); diff != "" {
 				t.Errorf("unexpected result: -(want), +(got)\n%s", diff)
+			}
+		})
+	}
+}
+
+func Test_GetStringMap_Validation(t *testing.T) {
+	// These tests validate path parsing and don't require a kubeconfig or cluster.
+	logger := log.New(log.Config{Output: os.Stderr})
+	p := &provider{log: logger}
+
+	tests := []struct {
+		path    string
+		wantErr string
+	}{
+		// Invalid path - too few parts
+		{
+			path:    "v1/Secret/test-namespace",
+			wantErr: "Invalid path v1/Secret/test-namespace. Path must be in the format <apiVersion>/<kind>/<namespace>/<name>",
+		},
+		// Invalid path - too many parts
+		{
+			path:    "v1/Secret/test-namespace/mysecret/key",
+			wantErr: "Invalid path v1/Secret/test-namespace/mysecret/key. Path must be in the format <apiVersion>/<kind>/<namespace>/<name>",
+		},
+		// Invalid apiVersion
+		{
+			path:    "v2/Secret/test-namespace/mysecret",
+			wantErr: "Invalid apiVersion v2. Only apiVersion v1 is supported at this time.",
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.path, func(t *testing.T) {
+			got, err := p.GetStringMap(tc.path)
+			require.EqualError(t, err, tc.wantErr)
+			require.Nil(t, got)
+		})
+	}
+}
+
+func Test_GetStringMap(t *testing.T) {
+	logger := log.New(log.Config{Output: os.Stderr})
+	tests := []struct {
+		path    string
+		want    map[string]interface{}
+		wantErr string
+	}{
+		// (secret) Valid 4-part path returns all keys
+		{
+			path:    "v1/Secret/test-namespace/mysecret",
+			want:    map[string]interface{}{"key": "p4ssw0rd"},
+			wantErr: "",
+		},
+		// (configmap) Valid 4-part path returns all keys
+		{
+			path:    "v1/ConfigMap/test-namespace/myconfigmap",
+			want:    map[string]interface{}{"key": "configValue"},
+			wantErr: "",
+		},
+		// Unsupported kind
+		{
+			path:    "v1/UnsupportedKind/test-namespace/myresource",
+			want:    nil,
+			wantErr: "Unable to get UnsupportedKind test-namespace/myresource: The specified kind is not valid. Valid kinds: Secret, ConfigMap",
+		},
+		// (secret) Non-existent namespace
+		{
+			path:    "v1/Secret/badnamespace/mysecret",
+			want:    nil,
+			wantErr: "Unable to get Secret badnamespace/mysecret: Unable to get the Secret object from Kubernetes: secrets \"mysecret\" not found",
+		},
+		// (secret) Non-existent secret
+		{
+			path:    "v1/Secret/test-namespace/badsecret",
+			want:    nil,
+			wantErr: "Unable to get Secret test-namespace/badsecret: Unable to get the Secret object from Kubernetes: secrets \"badsecret\" not found",
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.path, func(t *testing.T) {
+			homeDir, err := os.UserHomeDir()
+			require.NoError(t, err, "failed to determine user home directory")
+			conf := map[string]interface{}{}
+			conf["kubeConfigPath"] = fmt.Sprintf("%s/.kube/config", homeDir)
+			conf["kubeContext"] = "kind-cluster"
+			p, err := New(logger, config.MapConfig{M: conf})
+			require.NoErrorf(t, err, "unexpected error creating provider: %v", err)
+
+			got, err := p.GetStringMap(tc.path)
+			if err != nil {
+				if tc.wantErr == "" {
+					t.Fatalf("unexpected error: %v", err)
+				}
+				if err.Error() != tc.wantErr {
+					t.Fatalf("unexpected error: want %q, got %q", tc.wantErr, err.Error())
+				}
+			} else if tc.wantErr != "" {
+				t.Fatalf("expected error did not occur: want %q, got none", tc.wantErr)
+			}
+
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("unexpected result: -(want), +(got)\n%s", diff)
+			}
+		})
+	}
+}
+
+func Test_GetString_AllKeys_Validation(t *testing.T) {
+	// These tests validate path parsing and don't require a kubeconfig or cluster.
+	logger := log.New(log.Config{Output: os.Stderr})
+	p := &provider{log: logger}
+
+	tests := []struct {
+		path    string
+		wantErr string
+	}{
+		// Invalid apiVersion with 4-part path
+		{
+			path:    "v2/Secret/test-namespace/mysecret",
+			wantErr: "Invalid apiVersion v2. Only apiVersion v1 is supported at this time.",
+		},
+		// Invalid path - too few parts
+		{
+			path:    "bad/data/path",
+			wantErr: "Invalid path bad/data/path. Path must be in the format <apiVersion>/<kind>/<namespace>/<name>[/<key>]",
+		},
+		// Invalid path - too many parts (6+)
+		{
+			path:    "v1/Secret/test-namespace/mysecret/key/extra/path",
+			wantErr: "Invalid path v1/Secret/test-namespace/mysecret/key/extra/path. Path must be in the format <apiVersion>/<kind>/<namespace>/<name>[/<key>]",
+		},
+		// Empty key (trailing slash)
+		{
+			path:    "v1/Secret/test-namespace/mysecret/",
+			wantErr: "Invalid path v1/Secret/test-namespace/mysecret/. Key must not be empty in the format <apiVersion>/<kind>/<namespace>/<name>/<key>",
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.path, func(t *testing.T) {
+			got, err := p.GetString(tc.path)
+			require.EqualError(t, err, tc.wantErr)
+			require.Empty(t, got)
+		})
+	}
+}
+
+func Test_GetString_AllKeys(t *testing.T) {
+	logger := log.New(log.Config{Output: os.Stderr})
+	tests := []struct {
+		path    string
+		want    map[string]interface{}
+		wantErr string
+	}{
+		// (secret) 4-part path returns JSON of all keys
+		{
+			path:    "v1/Secret/test-namespace/mysecret",
+			want:    map[string]interface{}{"key": "p4ssw0rd"},
+			wantErr: "",
+		},
+		// (configmap) 4-part path returns JSON of all keys
+		{
+			path:    "v1/ConfigMap/test-namespace/myconfigmap",
+			want:    map[string]interface{}{"key": "configValue"},
+			wantErr: "",
+		},
+		// Unsupported kind with 4-part path
+		{
+			path:    "v1/UnsupportedKind/test-namespace/myresource",
+			want:    nil,
+			wantErr: "Unable to get UnsupportedKind test-namespace/myresource: The specified kind is not valid. Valid kinds: Secret, ConfigMap",
+		},
+		// (secret) Non-existent namespace with 4-part path
+		{
+			path:    "v1/Secret/badnamespace/mysecret",
+			want:    nil,
+			wantErr: "Unable to get Secret badnamespace/mysecret: Unable to get the Secret object from Kubernetes: secrets \"mysecret\" not found",
+		},
+		// (secret) Non-existent secret with 4-part path
+		{
+			path:    "v1/Secret/test-namespace/badsecret",
+			want:    nil,
+			wantErr: "Unable to get Secret test-namespace/badsecret: Unable to get the Secret object from Kubernetes: secrets \"badsecret\" not found",
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.path, func(t *testing.T) {
+			homeDir, err := os.UserHomeDir()
+			require.NoError(t, err, "failed to determine user home directory")
+			conf := map[string]interface{}{}
+			conf["kubeConfigPath"] = fmt.Sprintf("%s/.kube/config", homeDir)
+			conf["kubeContext"] = "kind-cluster"
+			p, err := New(logger, config.MapConfig{M: conf})
+			require.NoErrorf(t, err, "unexpected error creating provider: %v", err)
+
+			got, err := p.GetString(tc.path)
+			if err != nil {
+				if tc.wantErr == "" {
+					t.Fatalf("unexpected error: %v", err)
+				}
+				if err.Error() != tc.wantErr {
+					t.Fatalf("unexpected error: want %q, got %q", tc.wantErr, err.Error())
+				}
+			} else if tc.wantErr != "" {
+				t.Fatalf("expected error did not occur: want %q, got none", tc.wantErr)
+			}
+
+			if tc.want != nil {
+				var gotMap map[string]interface{}
+				require.NoErrorf(t, json.Unmarshal([]byte(got), &gotMap), "failed to unmarshal JSON: %s", got)
+				if diff := cmp.Diff(tc.want, gotMap); diff != "" {
+					t.Errorf("unexpected result: -(want), +(got)\n%s", diff)
+				}
 			}
 		})
 	}
