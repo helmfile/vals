@@ -354,9 +354,50 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 				}
 			}
 
-			uri, err := url.Parse(key)
+			// Handle ARN-based URIs which contain colons that would be misinterpreted as port separators
+			// ARN format: arn:aws:service:region:account:resource
+			// We need to detect and transform the ARN to avoid URL parsing issues with colons
+			processedKey := key
+			arnValue := ""
+			
+			// Check if this looks like an ARN-based URI (contains "://arn:aws:" or "://arn:aws-")
+			if strings.Contains(key, "://arn:aws:") || strings.Contains(key, "://arn:aws-") {
+				// Find the scheme end and extract the ARN
+				schemeEnd := strings.Index(key, "://")
+				if schemeEnd != -1 {
+					prefix := key[:schemeEnd+3] // includes "://"
+					remainder := key[schemeEnd+3:]
+					
+					// Find where the ARN ends (at ? for query params, # for fragment, or end of string)
+					arnEnd := len(remainder)
+					if idx := strings.IndexAny(remainder, "?#"); idx != -1 {
+						arnEnd = idx
+					}
+					
+					arnValue = remainder[:arnEnd]
+					suffix := remainder[arnEnd:]
+					
+					// Transform to use triple-slash format (empty host, ARN in path)
+					// This prevents the colon in ARN from being interpreted as a port separator
+					processedKey = prefix + "/" + arnValue + suffix
+				}
+			}
+
+			uri, err := url.Parse(processedKey)
 			if err != nil {
 				return nil, err
+			}
+			// If we processed an ARN, extract it from the path and restore to host
+			if arnValue != "" {
+				// Remove the leading slash we added
+				uri.Host = strings.TrimPrefix(uri.Path, "/")
+				// Find the actual path after the ARN
+				arnLen := len(arnValue)
+				if len(uri.Path) > arnLen+1 {
+					uri.Path = uri.Path[arnLen+1:]
+				} else {
+					uri.Path = ""
+				}
 			}
 
 			hash := uriToProviderHash(uri)
