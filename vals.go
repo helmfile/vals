@@ -354,19 +354,18 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 				}
 			}
 
-			// Handle ARN-based URIs which contain colons that would be misinterpreted as port separators
-			// ARN format: arn:aws:service:region:account:resource
-			// We need to detect and transform the ARN to avoid URL parsing issues with colons
+			// Handle ARN-based URIs which contain colons that would be misinterpreted as port separators.
+			// ARN examples: arn:aws:service:region:account:resource (standard), arn:aws-cn:..., arn:aws-us-gov:...
+			// We need to detect and transform the ARN to avoid URL parsing issues with colons across AWS partitions.
 			processedKey := key
 			arnValue := ""
 
-			// Check if this looks like an ARN-based URI (contains "://arn:aws:" or "://arn:aws-")
-			if strings.Contains(key, "://arn:aws:") || strings.Contains(key, "://arn:aws-") {
-				// Find the scheme end and extract the ARN
-				schemeEnd := strings.Index(key, "://")
-				if schemeEnd != -1 {
+			// Check if this looks like an ARN-based URI (ARN immediately follows "://")
+			if schemeEnd := strings.Index(key, "://"); schemeEnd != -1 {
+				afterScheme := key[schemeEnd+3:]
+				if strings.HasPrefix(afterScheme, "arn:aws:") || strings.HasPrefix(afterScheme, "arn:aws-") {
 					prefix := key[:schemeEnd+3] // includes "://"
-					remainder := key[schemeEnd+3:]
+					remainder := afterScheme
 
 					// Find where the ARN ends (at ? for query params, # for fragment, or end of string)
 					arnEnd := len(remainder)
@@ -377,8 +376,9 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 					arnValue = remainder[:arnEnd]
 					suffix := remainder[arnEnd:]
 
-					// Transform to use triple-slash format (empty host, ARN in path)
-					// This prevents the colon in ARN from being interpreted as a port separator
+					// Temporarily transform to a triple-slash format so the ARN is kept in the path.
+					// This avoids net/url interpreting colons in the ARN as port separators; after parsing,
+					// we move the ARN from the path into the host field (see logic below).
 					processedKey = prefix + "/" + arnValue + suffix
 				}
 			}

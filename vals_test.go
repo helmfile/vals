@@ -519,6 +519,18 @@ func TestARNBasedURIParsing(t *testing.T) {
 			input:       "ref+echo://arn:aws:secretsmanager:us-east-1:123456789012:secret:/demo/app/database?region=us-east-1#/demo/app/database",
 			checkResult: false,
 		},
+		{
+			name:        "ARN with aws-cn partition",
+			input:       "ref+echo://arn:aws-cn:secretsmanager:cn-north-1:123456789012:secret:/demo/app/database",
+			expected:    "arn:aws-cn:secretsmanager:cn-north-1:123456789012:secret:/demo/app/database",
+			checkResult: true,
+		},
+		{
+			name:        "ARN with aws-us-gov partition",
+			input:       "ref+echo://arn:aws-us-gov:secretsmanager:us-gov-west-1:123456789012:secret:/demo/app/database",
+			expected:    "arn:aws-us-gov:secretsmanager:us-gov-west-1:123456789012:secret:/demo/app/database",
+			checkResult: true,
+		},
 	}
 
 	for _, tc := range testCases {
