@@ -354,9 +354,45 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 				}
 			}
 
-			uri, err := url.Parse(key)
+			// Handle ARN-based URIs which contain colons that would be misinterpreted as port separators.
+			// ARN examples: arn:aws:service:region:account:resource (standard), arn:aws-cn:..., arn:aws-us-gov:...
+			// We need to detect and transform the ARN to avoid URL parsing issues with colons across AWS partitions.
+			processedKey := key
+			arnValue := ""
+
+			// Check if this looks like an ARN-based URI (ARN immediately follows "://")
+			if schemeEnd := strings.Index(key, "://"); schemeEnd != -1 {
+				afterScheme := key[schemeEnd+3:]
+				if strings.HasPrefix(afterScheme, "arn:aws:") || strings.HasPrefix(afterScheme, "arn:aws-") {
+					prefix := key[:schemeEnd+3] // includes "://"
+					remainder := afterScheme
+
+					// Find where the ARN ends (at ? for query params, # for fragment, or end of string)
+					arnEnd := len(remainder)
+					if idx := strings.IndexAny(remainder, "?#"); idx != -1 {
+						arnEnd = idx
+					}
+
+					arnValue = remainder[:arnEnd]
+					suffix := remainder[arnEnd:]
+
+					// Temporarily transform to a triple-slash format so the ARN is kept in the path.
+					// This avoids net/url interpreting colons in the ARN as port separators; after parsing,
+					// we move the ARN from the path into the host field (see logic below).
+					processedKey = prefix + "/" + arnValue + suffix
+				}
+			}
+
+			uri, err := url.Parse(processedKey)
 			if err != nil {
 				return nil, err
+			}
+			// If we processed an ARN, restore it directly from the original value
+			if arnValue != "" {
+				// Use the exact ARN string captured before parsing to avoid net/url normalization/decoding.
+				uri.Host = arnValue
+				uri.Path = ""
+				uri.RawPath = ""
 			}
 
 			hash := uriToProviderHash(uri)
