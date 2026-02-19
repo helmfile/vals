@@ -387,17 +387,11 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 			if err != nil {
 				return nil, err
 			}
-			// If we processed an ARN, extract it from the path and restore to host
+			// If we processed an ARN, extract it from the path and restore it to host
 			if arnValue != "" {
-				// Remove the leading slash we added
+				// Remove the leading slash we added and clear the path (no extra segments after ARN)
 				uri.Host = strings.TrimPrefix(uri.Path, "/")
-				// Find the actual path after the ARN
-				arnLen := len(arnValue)
-				if len(uri.Path) > arnLen+1 {
-					uri.Path = uri.Path[arnLen+1:]
-				} else {
-					uri.Path = ""
-				}
+				uri.Path = ""
 			}
 
 			hash := uriToProviderHash(uri)
