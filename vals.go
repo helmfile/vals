@@ -387,11 +387,12 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 			if err != nil {
 				return nil, err
 			}
-			// If we processed an ARN, extract it from the path and restore it to host
+			// If we processed an ARN, restore it directly from the original value
 			if arnValue != "" {
-				// Remove the leading slash we added and clear the path (no extra segments after ARN)
-				uri.Host = strings.TrimPrefix(uri.Path, "/")
+				// Use the exact ARN string captured before parsing to avoid net/url normalization/decoding.
+				uri.Host = arnValue
 				uri.Path = ""
+				uri.RawPath = ""
 			}
 
 			hash := uriToProviderHash(uri)
