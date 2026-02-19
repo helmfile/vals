@@ -532,6 +532,9 @@ func TestARNBasedURIParsingWithFragment(t *testing.T) {
 
 	mock := &mockProvider{
 		getStringMapFunc: func(key string) (map[string]interface{}, error) {
+			if key != arn {
+				t.Fatalf("unexpected key passed to provider.GetStringMap: %q", key)
+			}
 			return map[string]interface{}{
 				"demo": map[string]interface{}{
 					"app": map[string]interface{}{
@@ -559,6 +562,9 @@ func TestARNBasedURIParsingWithQueryAndFragment(t *testing.T) {
 
 	mock := &mockProvider{
 		getStringMapFunc: func(key string) (map[string]interface{}, error) {
+			if key != arn {
+				t.Fatalf("unexpected key passed to provider.GetStringMap: %q", key)
+			}
 			return map[string]interface{}{
 				"demo": map[string]interface{}{
 					"app": map[string]interface{}{
