@@ -236,6 +236,31 @@ func TestFlatten(t *testing.T) {
 	}
 }
 
+func TestGetNested(t *testing.T) {
+	testCases := []struct {
+		envVars  map[string]string
+		name     string
+		code     string
+		expected string
+	}{
+		{nil, "nested echo", "ref+echo://ref+echo://inner/value", "inner/value"},
+		{nil, "triple nested echo", "ref+echo://ref+echo://ref+echo://deep/value", "deep/value"},
+		{nil, "non-nested unchanged", "ref+echo://simple/value", "simple/value"},
+		{map[string]string{"TEST_NESTED_VAR": "resolved"}, "nested envsubst in echo", "ref+echo://ref+envsubst://$TEST_NESTED_VAR/path", "resolved/path"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			for k, v := range tc.envVars {
+				t.Setenv(k, v)
+			}
+			got, err := Get(tc.code, Options{})
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, got)
+		})
+	}
+}
+
 func TestTextInput(t *testing.T) {
 	t.Run("read file", func(t *testing.T) {
 		dir := t.TempDir()
@@ -284,6 +309,22 @@ func TestTextInput(t *testing.T) {
 		_, err := TextInput("/nonexistent/path/file.txt")
 		require.Error(t, err)
 	})
+}
+
+func TestEvalNested(t *testing.T) {
+	t.Setenv("TEST_NESTED_VAR", "resolved")
+
+	template := map[string]interface{}{
+		"key1": "ref+echo://ref+echo://inner/value",
+		"key2": "ref+echo://simple/value",
+		"key3": "ref+echo://ref+envsubst://$TEST_NESTED_VAR/path",
+	}
+
+	got, err := Eval(template)
+	require.NoError(t, err)
+	require.Equal(t, "inner/value", got["key1"])
+	require.Equal(t, "simple/value", got["key2"])
+	require.Equal(t, "resolved/path", got["key3"])
 }
 
 func TestEvalNodesWithDictionaries(t *testing.T) {
