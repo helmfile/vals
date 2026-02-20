@@ -3,7 +3,7 @@ module github.com/helmfile/vals
 go 1.25.4
 
 require (
-	cloud.google.com/go/kms v1.25.0
+	cloud.google.com/go/kms v1.26.0
 	cloud.google.com/go/secretmanager v1.16.0
 	cloud.google.com/go/storage v1.60.0
 	github.com/1Password/connect-sdk-go v1.5.3
