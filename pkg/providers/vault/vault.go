@@ -261,16 +261,21 @@ func (p *provider) ensureClient() (*vault.Client, error) {
 
 			cli.SetToken(resp.Auth.ClientToken)
 		case "kubernetes":
-			fd, err := os.Open(kubernetesJwtTokenPath)
+			tokenPath := kubernetesJwtTokenPath
+			if v, ok := os.LookupEnv("VAULT_KUBERNETES_JWT_TOKEN_PATH"); ok && v != "" {
+				tokenPath = v
+			}
+
+			fd, err := os.Open(tokenPath)
+			if err != nil {
+				return nil, fmt.Errorf("unable to open service account token file %q: %w", tokenPath, err)
+			}
 			defer func() {
 				_ = fd.Close()
 			}()
-			if err != nil {
-				return nil, fmt.Errorf("unable to read file containing service account token: %w", err)
-			}
 			jwt, err := io.ReadAll(fd)
 			if err != nil {
-				return nil, fmt.Errorf("unable to read file containing service account token: %w", err)
+				return nil, fmt.Errorf("unable to read service account token file %q: %w", tokenPath, err)
 			}
 
 			data := map[string]interface{}{
