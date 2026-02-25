@@ -39,6 +39,7 @@ func TestNew(t *testing.T) {
 
 			if p == nil {
 				t.Fatal("New() returned nil provider")
+				return
 			}
 
 			if p.log != logger {
