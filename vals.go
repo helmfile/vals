@@ -44,6 +44,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/onepassword"
 	"github.com/helmfile/vals/pkg/providers/onepasswordconnect"
 	"github.com/helmfile/vals/pkg/providers/openbao"
+	"github.com/helmfile/vals/pkg/providers/passbolt"
 	"github.com/helmfile/vals/pkg/providers/pulumi"
 	"github.com/helmfile/vals/pkg/providers/s3"
 	"github.com/helmfile/vals/pkg/providers/scaleway"
@@ -119,6 +120,7 @@ const (
 	ProviderSecretserver       = "tss"
 	ProviderInfisical          = "infisical"
 	ProviderServercore         = "servercore"
+	ProviderPassbolt           = "passbolt"
 )
 
 var EnvFallbackPrefix = "VALS_"
@@ -312,6 +314,9 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 			return p, nil
 		case ProviderServercore:
 			p := servercore.New(r.logger, conf)
+			return p, nil
+		case ProviderPassbolt:
+			p := passbolt.New(r.logger, conf)
 			return p, nil
 		case ProviderExec:
 			p := execprovider.New(r.logger, conf)
