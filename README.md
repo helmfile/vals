@@ -290,6 +290,7 @@ Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/
     - [Terraform in S3 bucket (tfstates3)](#terraform-in-s3-bucket-tfstates3)
     - [Terraform in AzureRM Blob storage (tfstateazurerm)](#terraform-in-azurerm-blob-storage-tfstateazurerm)
     - [Terraform in Terraform Cloud / Terraform Enterprise (tfstateremote)](#terraform-in-terraform-cloud--terraform-enterprise-tfstateremote)
+    - [Terraform in GitLab (tfstategitlab)](#terraform-in-gitlab-tfstategitlab)
     - [SOPS](#sops)
     - [Keychain](#keychain)
     - [Echo](#echo)
@@ -733,6 +734,36 @@ which is equivalent to the following input for `vals`:
 
 ```
 $ echo 'foo: ref+tfstateremote://app.terraform.io/myorg/myworkspace/output.virtual_network.name' | vals eval -f -
+```
+
+### Terraform in GitLab (tfstategitlab)
+
+- `ref+tfstategitlab://{gitlab_host}/api/v4/projects/{project_id}/terraform/state/{state_name}/RESOURCE_NAME[?gitlab_user=GITLAB_USER&gitlab_token=GITLAB_TOKEN]`
+
+* `gitlab_user` defaults to value of `GITLAB_USER` envvar.
+* `gitlab_token` defaults to value of `GITLAB_TOKEN` envvar.
+
+Examples:
+
+- `ref+tfstategitlab://gitlab.com/api/v4/projects/123/terraform/state/my-state/aws_vpc.main.id`
+- `ref+tfstategitlab://my-gitlab.com/api/v4/projects/xx/terraform/state/xxx/output.my_output`
+
+It allows to use Terraform state stored in GitLab given GitLab host, project ID and state name. You can try to read state with command:
+
+```
+$ tfstate-lookup -s https://username:password@my-gitlab.com/api/v4/projects/xx/terraform/state/xxx/ output.my_output
+```
+
+which is equivalent to following input for `vals` (with environment variables `GITLAB_USER` and `GITLAB_TOKEN`):
+
+```
+$ echo 'foo: ref+tfstategitlab://my-gitlab.com/api/v4/projects/xx/terraform/state/xxx/output.my_output' | vals eval -f -
+```
+
+Or you can provide credentials via URL parameters:
+
+```
+$ echo 'foo: ref+tfstategitlab://my-gitlab.com/api/v4/projects/xx/terraform/state/xxx/output.my_output?gitlab_user=username&gitlab_token=token' | vals eval -f -
 ```
 
 ### SOPS

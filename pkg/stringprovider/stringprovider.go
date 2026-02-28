@@ -62,6 +62,8 @@ func New(l *log.Logger, provider api.StaticConfig, awsLogLevel string) (api.Lazy
 		return tfstate.New(provider, "azurerm"), nil
 	case "tfstateremote":
 		return tfstate.New(provider, "remote"), nil
+	case "tfstategitlab":
+		return tfstate.New(provider, "gitlab"), nil
 	case "azurekeyvault":
 		return azurekeyvault.New(provider), nil
 	case "gitlab":
