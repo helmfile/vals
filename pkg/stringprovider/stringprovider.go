@@ -22,6 +22,7 @@ import (
 	"github.com/helmfile/vals/pkg/providers/oci"
 	"github.com/helmfile/vals/pkg/providers/onepassword"
 	"github.com/helmfile/vals/pkg/providers/onepasswordconnect"
+	"github.com/helmfile/vals/pkg/providers/passbolt"
 	"github.com/helmfile/vals/pkg/providers/pulumi"
 	"github.com/helmfile/vals/pkg/providers/s3"
 	"github.com/helmfile/vals/pkg/providers/scaleway"
@@ -92,6 +93,8 @@ func New(l *log.Logger, provider api.StaticConfig, awsLogLevel string) (api.Lazy
 		return secretserver.New(provider)
 	case "infisical":
 		return infisical.New(l, provider), nil
+	case "passbolt":
+		return passbolt.New(l, provider), nil
 	case "exec":
 		return execprovider.New(l, provider), nil
 	}

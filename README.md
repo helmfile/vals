@@ -29,6 +29,7 @@ It supports various backends including:
 - Scaleway
 - [Delinea SecretServer](https://delinea.com/products/secret-server)
 - Infisical
+- Passbolt
 
 - Use `vals eval -f refs.yaml` to replace all the `ref`s in the file to actual values and secrets.
 - Use `vals exec -f env.yaml -- <COMMAND>` to populate envvars and execute the command.
@@ -311,6 +312,7 @@ Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/
     - [HTTP JSON](#http-json)
       - [Fetch string value](#fetch-string-value)
       - [Fetch integer value](#fetch-integer-value)
+    - [Passbolt](#passbolt)
     - [Delinea Secret Server](#secretserver)
   - [Advanced Usages](#advanced-usages)
     - [Discriminating config and secrets](#discriminating-config-and-secrets)
@@ -1212,6 +1214,43 @@ Depending on which one is chosen with the `INFISICAL_AUTH_METHOD` environment va
   - `INFISICAL_GCP_IAM_SERVICE_ACCOUNT_KEY_FILE_PATH`: the path to your GCP service account key file.
 - **GCP ID Token**: `GCP_ID_TOKEN`
   - `INFISICAL_GCP_AUTH_IDENTITY_ID`: your Infisical Machine Identity ID.
+
+### Passbolt
+
+Retrieve secrets from [Passbolt](https://www.passbolt.com/), an open-source password manager for teams.
+
+This provider uses the [go-passbolt](https://github.com/passbolt/go-passbolt) SDK and supports Passbolt CE and PRO editions.
+
+- `ref+passbolt://RESOURCE_UUID#/password`
+- `ref+passbolt://RESOURCE_UUID#/username`
+- `ref+passbolt://RESOURCE_UUID[?address=PASSBOLT_URL&gpg_key_file=PATH&passphrase=PASSPHRASE]#/FIELD`
+
+Environment variables:
+
+- `PASSBOLT_BASE_URL`: The Passbolt server URL (e.g., `https://passbolt.example.com`)
+- `PASSBOLT_GPG_KEY_FILE`: Path to the GPG private key file (ASCII armored)
+- `PASSBOLT_GPG_KEY`: The GPG private key content directly (alternative to file)
+- `PASSBOLT_GPG_PASSPHRASE`: The passphrase for the GPG private key
+
+Parameters (override environment variables):
+
+- `address`: Passbolt server URL
+- `gpg_key_file`: Path to GPG private key file
+- `passphrase`: GPG private key passphrase
+
+Supported fields: `password` (default), `username`, `name`, `uri`, `description`, `custom_fields/FieldName`
+
+Custom fields require Passbolt v5.3+ with encrypted metadata enabled.
+
+Examples:
+
+- `ref+passbolt://aaa-bbb-ccc-ddd#/password` gets the password of the resource
+- `ref+passbolt://aaa-bbb-ccc-ddd#/username` gets the username of the resource
+- `ref+passbolt://aaa-bbb-ccc-ddd?address=https://passbolt.example.com#/password` with explicit server URL
+- `ref+passbolt://aaa-bbb-ccc-ddd#/custom_fields/ProjectID` gets the value of custom field `ProjectID`
+- `ref+passbolt://RESOURCE_UUID` returns a map with all available fields when no fragment is specified
+
+Note: This provider does not support MFA. Use a service account without MFA enabled for automation.
 
 ### SecretServer
 
