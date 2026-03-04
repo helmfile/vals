@@ -51,20 +51,51 @@ func New(cfg api.StaticConfig) *provider {
 	return p
 }
 
+// buildURL constructs the GitLab API URL based on the key path.
+//
+// Supported formats:
+//   - host/id/varname           → projects (legacy, 2-component path)
+//   - host/projects/id/varname  → projects (explicit)
+//   - host/groups/id/varname    → groups
+func (p *provider) buildURL(key string) (string, error) {
+	splits := strings.SplitN(key, "/", 4)
+
+	switch len(splits) {
+	case 3:
+		// legacy: host/project_id/varname → treated as projects
+		host, id, varName := splits[0], splits[1], splits[2]
+		return fmt.Sprintf("%s://%s/api/%s/projects/%s/variables/%s",
+			p.Scheme, host, p.APIVersion, id, varName), nil
+
+	case 4:
+		host, kind, id, varName := splits[0], splits[1], splits[2], splits[3]
+		switch kind {
+		case "projects":
+			return fmt.Sprintf("%s://%s/api/%s/projects/%s/variables/%s",
+				p.Scheme, host, p.APIVersion, id, varName), nil
+		case "groups":
+			return fmt.Sprintf("%s://%s/api/%s/groups/%s/variables/%s",
+				p.Scheme, host, p.APIVersion, id, varName), nil
+		default:
+			return "", fmt.Errorf("unsupported resource type %q: must be 'projects' or 'groups'", kind)
+		}
+
+	default:
+		return "", fmt.Errorf("invalid key format %q: expected host/id/var or host/projects|groups/id/var", key)
+	}
+}
+
 // Get gets secret from GitLab API
 func (p *provider) GetString(key string) (string, error) {
-	splits := strings.Split(key, "/")
 	gitlabToken, ok := os.LookupEnv("GITLAB_TOKEN")
 	if !ok {
-		return "", errors.New("Missing GITLAB_TOKEN environment variable")
+		return "", errors.New("missing GITLAB_TOKEN environment variable")
 	}
 
-	url := fmt.Sprintf("%s://%s/api/%s/projects/%s/variables/%s",
-		p.Scheme,
-		splits[0],
-		p.APIVersion,
-		splits[1],
-		splits[2])
+	url, err := p.buildURL(key)
+	if err != nil {
+		return "", err
+	}
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: p.SSLVerify},
