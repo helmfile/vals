@@ -54,7 +54,7 @@ func New(cfg api.StaticConfig) *provider {
 // buildURL constructs the GitLab API URL based on the key path.
 //
 // Supported formats:
-//   - host/id/varname           → projects (legacy, 2-component path)
+//   - host/id/varname           → projects (legacy, 2-component path after host)
 //   - host/projects/id/varname  → projects (explicit)
 //   - host/groups/id/varname    → groups
 func (p *provider) buildURL(key string) (string, error) {
