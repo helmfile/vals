@@ -864,12 +864,26 @@ Examples:
 
 For this provider to work you require an [access token](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html) exported as the environment variable `GITLAB_TOKEN`.
 
+- `ref+gitlab://my-gitlab-server.com/[projects/|groups/]id/secret_name?[ssl_verify=false&scheme=https&api_version=v4]`
 
-- `ref+gitlab://my-gitlab-server.com/project_id/secret_name?[ssl_verify=false&scheme=https&api_version=v4]`
+* `Project variables`
+
+Fetches a CI/CD variable `password` from a `project`. Both forms are equivalent:
+
+- `ref+gitlab://gitlab.com/11111/password`
+- `ref+gitlab://gitlab.com/projects/11111/password`
+
+* `Group variables`
+
+Fetches a CI/CD variable `password` from a `group`:
+
+- `ref+gitlab://gitlab.com/groups/2222/password`
 
 Examples:
 
 - `ref+gitlab://gitlab.com/11111/password`
+- `ref+gitlab://gitlab.com/projects/11111/password`
+- `ref+gitlab://gitlab.com/groups/2222/password`
 - `ref+gitlab://my-gitlab.org/11111/password?ssl_verify=true&scheme=https`
 
 ### 1Password
