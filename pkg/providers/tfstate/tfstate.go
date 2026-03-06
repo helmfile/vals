@@ -65,13 +65,17 @@ func (p *provider) ReadTFState(f, k string) (*tfstate.TFState, error) {
 	defer tfstateMu.Unlock()
 
 	if p.awsProfile != "" {
-		v := os.Getenv("AWS_PROFILE")
+		v, wasSet := os.LookupEnv("AWS_PROFILE")
 		err := os.Setenv("AWS_PROFILE", p.awsProfile)
 		if err != nil {
 			return nil, fmt.Errorf("setting AWS_PROFILE envvar: %w", err)
 		}
 		defer func() {
-			_ = os.Setenv("AWS_PROFILE", v)
+			if wasSet {
+				_ = os.Setenv("AWS_PROFILE", v)
+			} else {
+				_ = os.Unsetenv("AWS_PROFILE")
+			}
 		}()
 	}
 
