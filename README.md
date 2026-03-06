@@ -1091,6 +1091,14 @@ Examples:
 
 Vals aquires Yandex Cloud IAM token from the `YC_TOKEN` environment variable. The easiest way to get it is to run `yc iam create-token`. See [Yandex Cloud Lockbox docs](https://yandex.cloud/en/docs/lockbox/api-ref/authentication) for more details on authentication
 
+To override the Yandex Cloud API endpoint used by the Lockbox provider (for example, when using regional endpoints like `api.yandexcloud.kz:443`), set the `YC_LOCKBOX_ENDPOINT` environment variable:
+
+```sh
+export YC_TOKEN="$(yc iam create-token)"
+export YC_LOCKBOX_ENDPOINT="api.yandexcloud.kz:443"
+vals get 'ref+yclockbox://SECRET_ID'
+```
+
 ### HTTP JSON
 
 This provider retrieves values stored in JSON hosted by a HTTP frontend.
