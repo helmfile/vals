@@ -14,7 +14,8 @@ import (
 )
 
 const (
-	TOKEN_ENV = "YC_TOKEN"
+	TOKEN_ENV    = "YC_TOKEN"
+	ENDPOINT_ENV = "YC_LOCKBOX_ENDPOINT"
 )
 
 // Format: ref+yclockbox://SECRET_ID[?version_id=VERSION_ID][#KEY]
@@ -30,13 +31,17 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 		l.Debugf("yclockbox: Missing %s environment variable", TOKEN_ENV)
 	}
 
+	config := sdk.Config{
+		Credentials: sdk.NewIAMTokenCredentials(token),
+	}
+
+	if endpoint := os.Getenv(ENDPOINT_ENV); endpoint != "" {
+		config.Endpoint = endpoint
+	}
+
 	sdk, err := sdk.Build(
 		context.TODO(),
-		sdk.Config{
-			Credentials: sdk.NewIAMTokenCredentials(
-				token,
-			),
-		},
+		config,
 	)
 
 	if err != nil {
