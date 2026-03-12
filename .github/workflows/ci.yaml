@@ -16,5 +16,7 @@ jobs:
       with:
         go-version-file: 'go.mod'
         cache: true
-    - name: build 
+    - name: build
       run: make build
+    - name: build (minimal, without optional providers)
+      run: go build -tags custom_providers -o /dev/null ./cmd/vals
