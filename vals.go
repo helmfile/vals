@@ -20,40 +20,11 @@ import (
 	"github.com/helmfile/vals/pkg/config"
 	"github.com/helmfile/vals/pkg/expansion"
 	"github.com/helmfile/vals/pkg/log"
-	"github.com/helmfile/vals/pkg/providers/awskms"
-	"github.com/helmfile/vals/pkg/providers/awssecrets"
-	"github.com/helmfile/vals/pkg/providers/azurekeyvault"
-	"github.com/helmfile/vals/pkg/providers/bitwarden"
-	"github.com/helmfile/vals/pkg/providers/conjur"
-	"github.com/helmfile/vals/pkg/providers/doppler"
 	"github.com/helmfile/vals/pkg/providers/echo"
 	"github.com/helmfile/vals/pkg/providers/envsubst"
 	execprovider "github.com/helmfile/vals/pkg/providers/exec"
 	"github.com/helmfile/vals/pkg/providers/file"
-	"github.com/helmfile/vals/pkg/providers/gcpsecrets"
-	"github.com/helmfile/vals/pkg/providers/gcs"
-	"github.com/helmfile/vals/pkg/providers/gitlab"
-	"github.com/helmfile/vals/pkg/providers/gkms"
-	"github.com/helmfile/vals/pkg/providers/googlesheets"
-	"github.com/helmfile/vals/pkg/providers/hcpvaultsecrets"
-	"github.com/helmfile/vals/pkg/providers/httpjson"
-	"github.com/helmfile/vals/pkg/providers/infisical"
-	"github.com/helmfile/vals/pkg/providers/k8s"
-	"github.com/helmfile/vals/pkg/providers/keychain"
-	"github.com/helmfile/vals/pkg/providers/oci"
-	"github.com/helmfile/vals/pkg/providers/onepassword"
-	"github.com/helmfile/vals/pkg/providers/onepasswordconnect"
-	"github.com/helmfile/vals/pkg/providers/openbao"
-	"github.com/helmfile/vals/pkg/providers/pulumi"
-	"github.com/helmfile/vals/pkg/providers/s3"
-	"github.com/helmfile/vals/pkg/providers/scaleway"
-	"github.com/helmfile/vals/pkg/providers/secretserver"
-	"github.com/helmfile/vals/pkg/providers/servercore"
-	"github.com/helmfile/vals/pkg/providers/sops"
-	"github.com/helmfile/vals/pkg/providers/ssm"
-	"github.com/helmfile/vals/pkg/providers/tfstate"
 	"github.com/helmfile/vals/pkg/providers/registry"
-	"github.com/helmfile/vals/pkg/providers/vault"
 	"github.com/helmfile/vals/pkg/stringmapprovider"
 	"github.com/helmfile/vals/pkg/stringprovider"
 )
@@ -192,130 +163,17 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 		conf := config.MapConfig{M: m, FallbackFunc: envFallback}
 
 		switch scheme {
-		case ProviderVault:
-			p := vault.New(r.logger, conf)
-			return p, nil
-		case ProviderOpenBao:
-			p := openbao.New(r.logger, conf)
-			return p, nil
-		case ProviderS3:
-			// ref+s3://foo/bar?region=ap-northeast-1#/baz
-			// 1. GetObject for the bucket foo and key bar
-			// 2. Then extracts the value for key baz(=/foo/bar/baz) from the result from step 1.
-			p := s3.New(r.logger, conf, r.Options.AWSLogLevel)
-			return p, nil
-		case ProviderGCS:
-			// vals+gcs://foo/bar?generation=timestamp#/baz
-			// 1. GetObject for the bucket foo and key bar
-			// 2. Then extracts the value for key baz(=/foo/bar/baz) from the result from step 1.
-			p := gcs.New(conf)
-			return p, nil
-		case ProviderGitLab:
-			// vals+gitlab://project/variable#key
-			p := gitlab.New(conf)
-			return p, nil
-		case ProviderSSM:
-			// ref+awsssm://foo/bar?region=ap-northeast-1#/baz
-			// 1. GetParametersByPath for the prefix /foo/bar
-			// 2. Then extracts the value for key baz(=/foo/bar/baz) from the result from step 1.
-			p := ssm.New(r.logger, conf, r.Options.AWSLogLevel)
-			return p, nil
-		case ProviderSecretsManager:
-			// ref+awssecrets://foo/bar?region=ap-northeast-1#/baz
-			// 1. Get secret for key foo/bar, parse it as yaml
-			// 2. Then extracts the value for key baz) from the result from step 1.
-			p := awssecrets.New(r.logger, conf, r.Options.AWSLogLevel)
-			return p, nil
-		case ProviderOCI:
-			p := oci.New(r.logger, conf)
-			return p, nil
-		case ProviderSOPS:
-			p := sops.New(r.logger, conf, r.Options.AWSLogLevel)
-			return p, nil
 		case ProviderEcho:
-			p := echo.New(conf)
-			return p, nil
+			return echo.New(conf), nil
 		case ProviderFile:
-			p := file.New(conf)
-			return p, nil
-		case ProviderGCPSecretManager:
-			p := gcpsecrets.New(conf)
-			return p, nil
-		case ProviderGoogleSheets:
-			return googlesheets.New(conf), nil
-		case ProviderTFState:
-			p := tfstate.New(conf, "")
-			return p, nil
-		case ProviderTFStateGS:
-			p := tfstate.New(conf, "gs")
-			return p, nil
-		case ProviderTFStateS3:
-			p := tfstate.New(conf, "s3")
-			return p, nil
-		case ProviderTFStateAzureRM:
-			p := tfstate.New(conf, "azurerm")
-			return p, nil
-		case ProviderTFStateRemote:
-			p := tfstate.New(conf, "remote")
-			return p, nil
-		case ProviderAzureKeyVault:
-			p := azurekeyvault.New(conf)
-			return p, nil
-		case ProviderKms:
-			p := awskms.New(conf, r.Options.AWSLogLevel)
-			return p, nil
-		case ProviderKeychain:
-			p := keychain.New(conf)
-			return p, nil
+			return file.New(conf), nil
 		case ProviderEnvSubst:
-			p := envsubst.New(conf)
-			return p, nil
-		case ProviderOnePassword:
-			p := onepassword.New(conf)
-			return p, nil
-		case ProviderOnePasswordConnect:
-			p := onepasswordconnect.New(conf)
-			return p, nil
-		case ProviderDoppler:
-			p := doppler.New(r.logger, conf)
-			return p, nil
-		case ProviderPulumiStateAPI:
-			p := pulumi.New(r.logger, conf, "pulumistateapi")
-			return p, nil
-		case ProviderGKMS:
-			p := gkms.New(r.logger, conf)
-			return p, nil
-		case ProviderK8s:
-			return k8s.New(r.logger, conf)
-		case ProviderConjur:
-			p := conjur.New(r.logger, conf)
-			return p, nil
-		case ProviderHCPVaultSecrets:
-			p := hcpvaultsecrets.New(r.logger, conf)
-			return p, nil
-		case ProviderHttpJsonManager:
-			p := httpjson.New(r.logger, conf)
-			return p, nil
-		case ProviderBitwarden:
-			p := bitwarden.New(r.logger, conf)
-			return p, nil
-		case ProviderScaleway:
-			p := scaleway.New(r.logger, conf)
-			return p, nil
-		case ProviderSecretserver:
-			return secretserver.New(conf)
-		case ProviderInfisical:
-			p := infisical.New(r.logger, conf)
-			return p, nil
-		case ProviderServercore:
-			p := servercore.New(r.logger, conf)
-			return p, nil
+			return envsubst.New(conf), nil
 		case ProviderExec:
-			p := execprovider.New(r.logger, conf)
-			return p, nil
+			return execprovider.New(r.logger, conf), nil
 		default:
-			if factory, ok := registry.Get(scheme); ok {
-				return factory(r.logger, conf)
+			if factory, ok := registry.GetProvider(scheme); ok {
+				return factory(r.logger, conf, r.Options.AWSLogLevel)
 			}
 			return nil, fmt.Errorf("no provider registered for scheme %q", scheme)
 		}
