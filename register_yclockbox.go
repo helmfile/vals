@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	registry.Register(ProviderLockbox, func(l *log.Logger, conf config.MapConfig) (api.Provider, error) {
+	registry.RegisterProvider(ProviderLockbox, func(l *log.Logger, conf config.MapConfig, _ string) (api.Provider, error) {
 		return yclockbox.New(l, conf), nil
 	})
 }
