@@ -52,8 +52,8 @@ import (
 	"github.com/helmfile/vals/pkg/providers/sops"
 	"github.com/helmfile/vals/pkg/providers/ssm"
 	"github.com/helmfile/vals/pkg/providers/tfstate"
+	"github.com/helmfile/vals/pkg/providers/registry"
 	"github.com/helmfile/vals/pkg/providers/vault"
-	"github.com/helmfile/vals/pkg/providers/yclockbox"
 	"github.com/helmfile/vals/pkg/stringmapprovider"
 	"github.com/helmfile/vals/pkg/stringprovider"
 )
@@ -299,9 +299,6 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 		case ProviderBitwarden:
 			p := bitwarden.New(r.logger, conf)
 			return p, nil
-		case ProviderLockbox:
-			p := yclockbox.New(r.logger, conf)
-			return p, nil
 		case ProviderScaleway:
 			p := scaleway.New(r.logger, conf)
 			return p, nil
@@ -316,8 +313,12 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 		case ProviderExec:
 			p := execprovider.New(r.logger, conf)
 			return p, nil
+		default:
+			if factory, ok := registry.Get(scheme); ok {
+				return factory(r.logger, conf)
+			}
+			return nil, fmt.Errorf("no provider registered for scheme %q", scheme)
 		}
-		return nil, fmt.Errorf("no provider registered for scheme %q", scheme)
 	}
 
 	updateProviders := func(uri *url.URL, hash string) (api.Provider, error) {
