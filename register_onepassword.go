@@ -18,15 +18,4 @@ func init() {
 	registry.RegisterProvider(ProviderOnePasswordConnect, func(_ *log.Logger, conf config.MapConfig, _ string) (api.Provider, error) {
 		return onepasswordconnect.New(conf), nil
 	})
-
-	registry.RegisterStringProvider("onepassword", func(_ *log.Logger, provider api.StaticConfig, _ string) (api.LazyLoadedStringProvider, error) {
-		return onepassword.New(provider), nil
-	})
-	registry.RegisterStringProvider("onepasswordconnect", func(_ *log.Logger, provider api.StaticConfig, _ string) (api.LazyLoadedStringProvider, error) {
-		return onepasswordconnect.New(provider), nil
-	})
-
-	registry.RegisterStringMapProvider("onepasswordconnect", func(_ *log.Logger, provider api.StaticConfig, _ string) (api.LazyLoadedStringMapProvider, error) {
-		return onepasswordconnect.New(provider), nil
-	})
 }

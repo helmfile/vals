@@ -14,7 +14,6 @@ import (
 )
 
 func init() {
-	// vals.go createProvider
 	registry.RegisterProvider(ProviderGCS, func(_ *log.Logger, conf config.MapConfig, _ string) (api.Provider, error) {
 		return gcs.New(conf), nil
 	})
@@ -26,21 +25,5 @@ func init() {
 	})
 	registry.RegisterProvider(ProviderGoogleSheets, func(_ *log.Logger, conf config.MapConfig, _ string) (api.Provider, error) {
 		return googlesheets.New(conf), nil
-	})
-
-	// stringprovider
-	registry.RegisterStringProvider("gcs", func(_ *log.Logger, provider api.StaticConfig, _ string) (api.LazyLoadedStringProvider, error) {
-		return gcs.New(provider), nil
-	})
-	registry.RegisterStringProvider("gcpsecrets", func(_ *log.Logger, provider api.StaticConfig, _ string) (api.LazyLoadedStringProvider, error) {
-		return gcpsecrets.New(provider), nil
-	})
-	registry.RegisterStringProvider("gkms", func(l *log.Logger, provider api.StaticConfig, _ string) (api.LazyLoadedStringProvider, error) {
-		return gkms.New(l, provider), nil
-	})
-
-	// stringmapprovider
-	registry.RegisterStringMapProvider("gcpsecrets", func(_ *log.Logger, provider api.StaticConfig, _ string) (api.LazyLoadedStringMapProvider, error) {
-		return gcpsecrets.New(provider), nil
 	})
 }

@@ -11,7 +11,6 @@ import (
 )
 
 func init() {
-	// vals.go createProvider
 	registry.RegisterProvider(ProviderTFState, func(_ *log.Logger, conf config.MapConfig, _ string) (api.Provider, error) {
 		return tfstate.New(conf, ""), nil
 	})
@@ -26,22 +25,5 @@ func init() {
 	})
 	registry.RegisterProvider(ProviderTFStateRemote, func(_ *log.Logger, conf config.MapConfig, _ string) (api.Provider, error) {
 		return tfstate.New(conf, "remote"), nil
-	})
-
-	// stringprovider
-	registry.RegisterStringProvider("tfstate", func(_ *log.Logger, provider api.StaticConfig, _ string) (api.LazyLoadedStringProvider, error) {
-		return tfstate.New(provider, ""), nil
-	})
-	registry.RegisterStringProvider("tfstategs", func(_ *log.Logger, provider api.StaticConfig, _ string) (api.LazyLoadedStringProvider, error) {
-		return tfstate.New(provider, "gs"), nil
-	})
-	registry.RegisterStringProvider("tfstates3", func(_ *log.Logger, provider api.StaticConfig, _ string) (api.LazyLoadedStringProvider, error) {
-		return tfstate.New(provider, "s3"), nil
-	})
-	registry.RegisterStringProvider("tfstateazurerm", func(_ *log.Logger, provider api.StaticConfig, _ string) (api.LazyLoadedStringProvider, error) {
-		return tfstate.New(provider, "azurerm"), nil
-	})
-	registry.RegisterStringProvider("tfstateremote", func(_ *log.Logger, provider api.StaticConfig, _ string) (api.LazyLoadedStringProvider, error) {
-		return tfstate.New(provider, "remote"), nil
 	})
 }

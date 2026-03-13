@@ -5,3 +5,5 @@ dist/
 cover.out
 vals
 .vscode
+.codex-review/
+vals-all
