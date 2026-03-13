@@ -5,7 +5,7 @@ go 1.25.4
 require (
 	cloud.google.com/go/kms v1.26.0
 	cloud.google.com/go/secretmanager v1.16.0
-	cloud.google.com/go/storage v1.61.0
+	cloud.google.com/go/storage v1.61.2
 	github.com/1Password/connect-sdk-go v1.5.3
 	github.com/1password/onepassword-sdk-go v0.3.1
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.21.0
@@ -245,7 +245,7 @@ require (
 	golang.org/x/crypto v0.48.0 // indirect
 	golang.org/x/net v0.51.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/sys v0.41.0 // indirect
+	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/term v0.40.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
