@@ -21,7 +21,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.68.2
 	github.com/cyberark/conjur-api-go v0.13.16
 	github.com/fujiwara/tfstate-lookup v1.10.0
-	github.com/getsops/sops/v3 v3.12.1
+	github.com/getsops/sops/v3 v3.12.2
 	github.com/go-openapi/runtime v0.29.3
 	github.com/google/go-cmp v0.7.0
 	github.com/hashicorp/golang-lru v1.0.2
@@ -150,7 +150,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.32.12
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.12
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.20 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.22.0 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.22.2 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.20 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.20 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.6 // indirect
