@@ -25,7 +25,7 @@ require (
 	github.com/go-openapi/runtime v0.29.3
 	github.com/google/go-cmp v0.7.0
 	github.com/hashicorp/golang-lru v1.0.2
-	github.com/hashicorp/vault/api v1.22.0
+	github.com/hashicorp/vault/api v1.23.0
 	github.com/infisical/go-sdk v0.6.8
 	github.com/openbao/openbao/api/v2 v2.5.1
 	github.com/opencontainers/image-spec v1.1.1
