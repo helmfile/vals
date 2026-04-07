@@ -178,11 +178,37 @@ func TestPresetLevels(t *testing.T) {
 // does not exist in the shared config, newConfig falls back to the default
 // credential chain instead of returning an error.
 func TestNewConfigProfileNotFoundFallback(t *testing.T) {
-	// Use a profile name that is guaranteed not to exist on this machine.
+	// Use a profile name that is guaranteed not to exist in the temp config files.
 	const nonExistentProfile = "vals-test-profile-does-not-exist-12345"
 
+	// Create empty temp AWS config and credentials files so the test is fully
+	// hermetic and does not depend on the developer's or CI machine's ~/.aws setup.
+	emptyConfig, err := os.CreateTemp(t.TempDir(), "aws-config-*")
+	if err != nil {
+		t.Fatalf("creating temp AWS config file: %v", err)
+	}
+	emptyConfig.Close()
+
+	emptyCredentials, err := os.CreateTemp(t.TempDir(), "aws-credentials-*")
+	if err != nil {
+		t.Fatalf("creating temp AWS credentials file: %v", err)
+	}
+	emptyCredentials.Close()
+
+	// Override environment so LoadDefaultConfig only reads the empty temp files.
+	t.Setenv("AWS_CONFIG_FILE", emptyConfig.Name())
+	t.Setenv("AWS_SHARED_CREDENTIALS_FILE", emptyCredentials.Name())
+	t.Setenv("AWS_DEFAULT_REGION", "us-east-1")
+	// Clear variables that could interfere with profile or credential resolution.
+	t.Setenv("AWS_PROFILE", "")
+	t.Setenv("FORCE_AWS_PROFILE", "")
+	t.Setenv("AWS_SDK_LOAD_CONFIG", "")
+	t.Setenv("AWS_ACCESS_KEY_ID", "")
+	t.Setenv("AWS_SECRET_ACCESS_KEY", "")
+	t.Setenv("AWS_SESSION_TOKEN", "")
+
 	ctx := context.Background()
-	cfg, err := newConfig(ctx, "", nonExistentProfile, "")
+	cfg, err := newConfig(ctx, "us-east-1", nonExistentProfile, "")
 	if err != nil {
 		t.Fatalf("newConfig with non-existent profile should fall back to default credentials, got error: %v", err)
 	}
