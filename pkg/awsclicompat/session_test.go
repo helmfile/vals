@@ -1,6 +1,7 @@
 package awsclicompat
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -170,5 +171,25 @@ func TestPresetLevels(t *testing.T) {
 				t.Errorf("parseAWSLogLevel(%q) = %d, want %d", tt.level, result, tt.expected)
 			}
 		})
+	}
+}
+
+// TestNewConfigProfileNotFoundFallback verifies that when a specified AWS profile
+// does not exist in the shared config, newConfig falls back to the default
+// credential chain instead of returning an error.
+func TestNewConfigProfileNotFoundFallback(t *testing.T) {
+	// Use a profile name that is guaranteed not to exist on this machine.
+	const nonExistentProfile = "vals-test-profile-does-not-exist-12345"
+
+	ctx := context.Background()
+	cfg, err := newConfig(ctx, "", nonExistentProfile, "")
+	if err != nil {
+		t.Fatalf("newConfig with non-existent profile should fall back to default credentials, got error: %v", err)
+	}
+
+	// The returned config must have a non-nil credentials provider, which indicates
+	// the fallback to the default credential chain succeeded.
+	if cfg.Credentials == nil {
+		t.Error("expected cfg.Credentials to be non-nil after profile fallback")
 	}
 }
