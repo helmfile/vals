@@ -151,7 +151,7 @@ func newConfig(ctx context.Context, region string, profile string, logLevel stri
 	// Build full options including profile selection
 	opts := baseOpts
 	if effectiveProfile != "" {
-		opts = append(baseOpts, config.WithSharedConfigProfile(effectiveProfile))
+		opts = append(opts, config.WithSharedConfigProfile(effectiveProfile))
 	}
 
 	cfg, err := config.LoadDefaultConfig(ctx, opts...)

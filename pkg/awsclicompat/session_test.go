@@ -2,10 +2,12 @@ package awsclicompat
 
 import (
 	"context"
+	"errors"
 	"os"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 )
 
 func TestParseAWSLogLevel(t *testing.T) {
@@ -208,14 +210,22 @@ func TestNewConfigProfileNotFoundFallback(t *testing.T) {
 	t.Setenv("AWS_SESSION_TOKEN", "")
 
 	ctx := context.Background()
-	cfg, err := newConfig(ctx, "us-east-1", nonExistentProfile, "")
-	if err != nil {
-		t.Fatalf("newConfig with non-existent profile should fall back to default credentials, got error: %v", err)
+
+	// First, confirm that loading directly with the non-existent profile does produce
+	// SharedConfigProfileNotExistError — this ensures the fallback is actually exercised.
+	_, directErr := awsconfig.LoadDefaultConfig(ctx,
+		awsconfig.WithSharedConfigFiles([]string{emptyConfig.Name()}),
+		awsconfig.WithSharedCredentialsFiles([]string{emptyCredentials.Name()}),
+		awsconfig.WithSharedConfigProfile(nonExistentProfile),
+	)
+	var profileNotExist awsconfig.SharedConfigProfileNotExistError
+	if !errors.As(directErr, &profileNotExist) {
+		t.Fatalf("expected SharedConfigProfileNotExistError from direct load, got: %v", directErr)
 	}
 
-	// The returned config must have a non-nil credentials provider, which indicates
-	// the fallback to the default credential chain succeeded.
-	if cfg.Credentials == nil {
-		t.Error("expected cfg.Credentials to be non-nil after profile fallback")
+	// Now verify that newConfig falls back rather than propagating that error.
+	_, fallbackErr := newConfig(ctx, "us-east-1", nonExistentProfile, "")
+	if fallbackErr != nil {
+		t.Fatalf("newConfig with non-existent profile should fall back to default credentials, got error: %v", fallbackErr)
 	}
 }
