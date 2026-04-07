@@ -135,9 +135,10 @@ func NewConfig(ctx context.Context, region string, profile string, roleARN strin
 //
 // If the explicit profile parameter is specified but not found in the shared config, the
 // function falls back to the default credential chain (e.g. EC2 instance profile,
-// environment variables, etc.). Note: this fallback does not apply when the profile is
-// selected via FORCE_AWS_PROFILE/AWS_PROFILE env vars, because the AWS SDK would still
-// read AWS_PROFILE from the environment during the fallback load, causing the same error.
+// environment variables, etc.). During the fallback, the profile is explicitly set to
+// "default" so that any AWS_PROFILE value in the environment is not honored (it might
+// point to the same missing profile). Note: this fallback does not apply when the profile
+// is selected via FORCE_AWS_PROFILE/AWS_PROFILE env vars (without an explicit profile param).
 func newConfig(ctx context.Context, region string, profile string, logLevel string) (aws.Config, error) {
 	// Build base options shared between initial load and fallback
 	baseOpts := buildBaseOpts(region, logLevel)
@@ -158,11 +159,13 @@ func newConfig(ctx context.Context, region string, profile string, logLevel stri
 	if err != nil {
 		// If the explicit profile parameter doesn't exist, fall back to the default
 		// credential chain (e.g. EC2 instance profile, environment variables, etc.).
-		// The fallback is not applied for FORCE_AWS_PROFILE/AWS_PROFILE env vars because
-		// the AWS SDK would still read AWS_PROFILE from the environment in the fallback load.
+		// Explicitly set profile to "default" so that AWS_PROFILE from the environment
+		// is not honored during the fallback (it might be set to the same missing profile
+		// and cause the same error). Using "default" falls through to the standard credential
+		// chain (env vars, EC2 IMDS, etc.) when no credentials are configured in the profile.
 		var profileNotExist config.SharedConfigProfileNotExistError
 		if profile != "" && errors.As(err, &profileNotExist) {
-			return config.LoadDefaultConfig(ctx, baseOpts...)
+			return config.LoadDefaultConfig(ctx, append(baseOpts, config.WithSharedConfigProfile("default"))...)
 		}
 		return aws.Config{}, err
 	}
