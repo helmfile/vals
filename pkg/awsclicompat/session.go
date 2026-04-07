@@ -2,6 +2,7 @@ package awsclicompat
 
 import (
 	"context"
+	"errors"
 	"os"
 	"strings"
 
@@ -131,22 +132,55 @@ func NewConfig(ctx context.Context, region string, profile string, roleARN strin
 //
 // The fourth option of using FORCE_AWS_PROFILE=true and AWS_PROFILE=yourprofile is equivalent to `aws --profile ${AWS_PROFILE}`.
 // See https://github.com/helmfile/vals/issues/19#issuecomment-600437486 for more details and why and when this is needed.
+//
+// If the explicit profile parameter is specified but not found in the shared config, the
+// function falls back to the default credential chain (e.g. EC2 instance profile,
+// environment variables, etc.). During the fallback, the profile is explicitly set to
+// "default" so that any AWS_PROFILE value in the environment is not honored (it might
+// point to the same missing profile). Note: this fallback does not apply when the profile
+// is selected via FORCE_AWS_PROFILE/AWS_PROFILE env vars (without an explicit profile param).
 func newConfig(ctx context.Context, region string, profile string, logLevel string) (aws.Config, error) {
+	// Build base options shared between initial load and fallback
+	baseOpts := buildBaseOpts(region, logLevel)
+
+	// Determine the effective profile: explicit param takes priority, then FORCE_AWS_PROFILE env path.
+	effectiveProfile := profile
+	if effectiveProfile == "" && os.Getenv("FORCE_AWS_PROFILE") == "true" {
+		effectiveProfile = os.Getenv("AWS_PROFILE")
+	}
+
+	// Build full options including profile selection
+	opts := baseOpts
+	if effectiveProfile != "" {
+		opts = append(opts, config.WithSharedConfigProfile(effectiveProfile))
+	}
+
+	cfg, err := config.LoadDefaultConfig(ctx, opts...)
+	if err != nil {
+		// If the explicit profile parameter doesn't exist, fall back to the default
+		// credential chain (e.g. EC2 instance profile, environment variables, etc.).
+		// Explicitly set profile to "default" so that AWS_PROFILE from the environment
+		// is not honored during the fallback (it might be set to the same missing profile
+		// and cause the same error). Using "default" falls through to the standard credential
+		// chain (env vars, EC2 IMDS, etc.) when no credentials are configured in the profile.
+		var profileNotExist config.SharedConfigProfileNotExistError
+		if profile != "" && errors.As(err, &profileNotExist) {
+			return config.LoadDefaultConfig(ctx, append(baseOpts, config.WithSharedConfigProfile("default"))...)
+		}
+		return aws.Config{}, err
+	}
+
+	return cfg, nil
+}
+
+// buildBaseOpts constructs the common AWS config options (region, endpoint, log level)
+// that are used both in the initial config load and in the profile-not-found fallback.
+func buildBaseOpts(region string, logLevel string) []func(*config.LoadOptions) error {
 	var opts []func(*config.LoadOptions) error
 
 	// Set region if provided
 	if region != "" {
 		opts = append(opts, config.WithRegion(region))
-	}
-
-	// Handle profile selection
-	switch {
-	case profile != "":
-		opts = append(opts, config.WithSharedConfigProfile(profile))
-	case os.Getenv("FORCE_AWS_PROFILE") == "true":
-		if awsProfile := os.Getenv("AWS_PROFILE"); awsProfile != "" {
-			opts = append(opts, config.WithSharedConfigProfile(awsProfile))
-		}
 	}
 
 	// AWS_ENDPOINT_URL
@@ -176,12 +210,7 @@ func newConfig(ctx context.Context, region string, profile string, logLevel stri
 	// Default to no logging for security (prevents credential leakage)
 	opts = append(opts, config.WithClientLogMode(parseAWSLogLevel(logLevel)))
 
-	cfg, err := config.LoadDefaultConfig(ctx, opts...)
-	if err != nil {
-		return aws.Config{}, err
-	}
-
-	return cfg, nil
+	return opts
 }
 
 // NewSession provides backwards compatibility for existing code

@@ -1,10 +1,13 @@
 package awsclicompat
 
 import (
+	"context"
+	"errors"
 	"os"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 )
 
 func TestParseAWSLogLevel(t *testing.T) {
@@ -170,5 +173,117 @@ func TestPresetLevels(t *testing.T) {
 				t.Errorf("parseAWSLogLevel(%q) = %d, want %d", tt.level, result, tt.expected)
 			}
 		})
+	}
+}
+
+// TestNewConfigProfileNotFoundFallback verifies that when a specified AWS profile
+// does not exist in the shared config, newConfig falls back to the default
+// credential chain instead of returning an error.
+//
+// The test simulates a realistic developer setup: ~/.aws/config has a [default]
+// profile but not the profile specified in vals, and AWS_PROFILE is not set.
+func TestNewConfigProfileNotFoundFallback(t *testing.T) {
+	// Use a profile name that is guaranteed not to exist in the temp config files.
+	const nonExistentProfile = "vals-test-profile-does-not-exist-12345"
+
+	// Create temp AWS config and credentials files with only a [default] section.
+	// This reflects the realistic scenario where a user has ~/.aws/config with a
+	// default profile but not the one specified in vals.
+	configFile, err := os.CreateTemp(t.TempDir(), "aws-config-*")
+	if err != nil {
+		t.Fatalf("creating temp AWS config file: %v", err)
+	}
+	if _, err := configFile.WriteString("[default]\n"); err != nil {
+		t.Fatalf("writing temp AWS config file: %v", err)
+	}
+	configFile.Close()
+
+	credFile, err := os.CreateTemp(t.TempDir(), "aws-credentials-*")
+	if err != nil {
+		t.Fatalf("creating temp AWS credentials file: %v", err)
+	}
+	if _, err := credFile.WriteString("[default]\n"); err != nil {
+		t.Fatalf("writing temp AWS credentials file: %v", err)
+	}
+	credFile.Close()
+
+	// Override environment so LoadDefaultConfig only reads the temp files.
+	t.Setenv("AWS_CONFIG_FILE", configFile.Name())
+	t.Setenv("AWS_SHARED_CREDENTIALS_FILE", credFile.Name())
+	t.Setenv("AWS_DEFAULT_REGION", "us-east-1")
+	// Clear variables that could interfere with profile or credential resolution.
+	t.Setenv("AWS_PROFILE", "")
+	t.Setenv("FORCE_AWS_PROFILE", "")
+	t.Setenv("AWS_SDK_LOAD_CONFIG", "")
+	t.Setenv("AWS_ACCESS_KEY_ID", "")
+	t.Setenv("AWS_SECRET_ACCESS_KEY", "")
+	t.Setenv("AWS_SESSION_TOKEN", "")
+
+	ctx := context.Background()
+
+	// First, confirm that loading directly with the non-existent profile does produce
+	// SharedConfigProfileNotExistError — this ensures the fallback is actually exercised.
+	_, directErr := awsconfig.LoadDefaultConfig(ctx,
+		awsconfig.WithSharedConfigFiles([]string{configFile.Name()}),
+		awsconfig.WithSharedCredentialsFiles([]string{credFile.Name()}),
+		awsconfig.WithSharedConfigProfile(nonExistentProfile),
+	)
+	var profileNotExist awsconfig.SharedConfigProfileNotExistError
+	if !errors.As(directErr, &profileNotExist) {
+		t.Fatalf("expected SharedConfigProfileNotExistError from direct load, got: %v", directErr)
+	}
+
+	// Now verify that newConfig falls back rather than propagating that error.
+	_, fallbackErr := newConfig(ctx, "us-east-1", nonExistentProfile, "")
+	if fallbackErr != nil {
+		t.Fatalf("newConfig with non-existent profile should fall back to default credentials, got error: %v", fallbackErr)
+	}
+}
+
+// TestNewConfigProfileNotFoundFallbackWithAWSProfileEnv is a regression test verifying
+// that the fallback works even when AWS_PROFILE in the environment is set to the same
+// missing profile. Without an explicit profile override in the fallback load, the SDK
+// would still honor AWS_PROFILE and fail with the same error.
+//
+// The test simulates a realistic developer setup: ~/.aws/config has a [default] profile,
+// AWS_PROFILE is set to a missing profile (e.g., for terminal use), and vals also
+// references that missing profile via the explicit profile parameter.
+func TestNewConfigProfileNotFoundFallbackWithAWSProfileEnv(t *testing.T) {
+	const nonExistentProfile = "vals-test-profile-does-not-exist-12345"
+
+	configFile, err := os.CreateTemp(t.TempDir(), "aws-config-*")
+	if err != nil {
+		t.Fatalf("creating temp AWS config file: %v", err)
+	}
+	if _, err := configFile.WriteString("[default]\n"); err != nil {
+		t.Fatalf("writing temp AWS config file: %v", err)
+	}
+	configFile.Close()
+
+	credFile, err := os.CreateTemp(t.TempDir(), "aws-credentials-*")
+	if err != nil {
+		t.Fatalf("creating temp AWS credentials file: %v", err)
+	}
+	if _, err := credFile.WriteString("[default]\n"); err != nil {
+		t.Fatalf("writing temp AWS credentials file: %v", err)
+	}
+	credFile.Close()
+
+	t.Setenv("AWS_CONFIG_FILE", configFile.Name())
+	t.Setenv("AWS_SHARED_CREDENTIALS_FILE", credFile.Name())
+	t.Setenv("AWS_DEFAULT_REGION", "us-east-1")
+	// Set AWS_PROFILE to the same missing profile — this is the regression case where
+	// a naive fallback (without explicit profile override) would fail again.
+	t.Setenv("AWS_PROFILE", nonExistentProfile)
+	t.Setenv("FORCE_AWS_PROFILE", "")
+	t.Setenv("AWS_SDK_LOAD_CONFIG", "")
+	t.Setenv("AWS_ACCESS_KEY_ID", "")
+	t.Setenv("AWS_SECRET_ACCESS_KEY", "")
+	t.Setenv("AWS_SESSION_TOKEN", "")
+
+	ctx := context.Background()
+	_, fallbackErr := newConfig(ctx, "us-east-1", nonExistentProfile, "")
+	if fallbackErr != nil {
+		t.Fatalf("newConfig should fall back even when AWS_PROFILE env var points to the missing profile, got error: %v", fallbackErr)
 	}
 }
