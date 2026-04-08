@@ -135,10 +135,10 @@ func NewConfig(ctx context.Context, region string, profile string, roleARN strin
 //
 // If the explicit profile parameter is specified but not found in the shared config, the
 // function falls back to the default credential chain (e.g. EC2 instance profile,
-// environment variables, etc.). During the fallback, the profile is explicitly set to
-// "default" so that any AWS_PROFILE value in the environment is not honored (it might
-// point to the same missing profile). Note: this fallback does not apply when the profile
-// is selected via FORCE_AWS_PROFILE/AWS_PROFILE env vars (without an explicit profile param).
+// environment variables, etc.) without specifying any profile. This allows the fallback to
+// work even when no ~/.aws/config exists at all (e.g., EC2 instances relying on IAM roles).
+// Note: this fallback does not apply when the profile is selected via
+// FORCE_AWS_PROFILE/AWS_PROFILE env vars (without an explicit profile param).
 func newConfig(ctx context.Context, region string, profile string, logLevel string) (aws.Config, error) {
 	// Build base options shared between initial load and fallback
 	baseOpts := buildBaseOpts(region, logLevel)
@@ -159,13 +159,15 @@ func newConfig(ctx context.Context, region string, profile string, logLevel stri
 	if err != nil {
 		// If the explicit profile parameter doesn't exist, fall back to the default
 		// credential chain (e.g. EC2 instance profile, environment variables, etc.).
-		// Explicitly set profile to "default" so that AWS_PROFILE from the environment
-		// is not honored during the fallback (it might be set to the same missing profile
-		// and cause the same error). Using "default" falls through to the standard credential
-		// chain (env vars, EC2 IMDS, etc.) when no credentials are configured in the profile.
+		//
+		// Do NOT use WithSharedConfigProfile("default") here: that still requires the
+		// profile to exist in ~/.aws/config or ~/.aws/credentials. EC2 users may have
+		// no AWS config files at all, relying entirely on the instance's IAM role.
+		// Without an explicit profile option the SDK falls through its default
+		// credential chain (env vars, shared credentials, EC2 IMDS, etc.).
 		var profileNotExist config.SharedConfigProfileNotExistError
 		if profile != "" && errors.As(err, &profileNotExist) {
-			return config.LoadDefaultConfig(ctx, append(baseOpts, config.WithSharedConfigProfile("default"))...)
+			return config.LoadDefaultConfig(ctx, baseOpts...)
 		}
 		return aws.Config{}, err
 	}
