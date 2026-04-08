@@ -5,12 +5,19 @@ import (
 	"errors"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 )
+
+// profileEnvMu guards the temporary clearing of AWS_PROFILE / AWS_DEFAULT_PROFILE
+// that is needed in the profile-not-found fallback path. The AWS SDK v2 reads these
+// environment variables directly via os.Getenv inside LoadDefaultConfig, so we must
+// serialise callers that need to temporarily suppress them.
+var profileEnvMu sync.Mutex
 
 const (
 	// LogModeOff represents no AWS SDK logging (secure default)
@@ -160,6 +167,12 @@ func newConfig(ctx context.Context, region string, profile string, logLevel stri
 		// If the explicit profile parameter doesn't exist, fall back to the default
 		// credential chain (e.g. EC2 instance profile, environment variables, etc.).
 		//
+		// The AWS SDK v2 checks AWS_PROFILE (and AWS_DEFAULT_PROFILE) via os.Getenv
+		// inside LoadDefaultConfig. If either is set to the same missing profile, the
+		// fallback call would also fail with SharedConfigProfileNotExistError. We
+		// therefore temporarily clear both variables under a mutex so that the SDK
+		// uses loadSharedConfigIgnoreNotExist (its lenient path) instead.
+		//
 		// Do NOT use WithSharedConfigProfile("default") here: that still requires the
 		// profile to exist in ~/.aws/config or ~/.aws/credentials. EC2 users may have
 		// no AWS config files at all, relying entirely on the instance's IAM role.
@@ -167,12 +180,53 @@ func newConfig(ctx context.Context, region string, profile string, logLevel stri
 		// credential chain (env vars, shared credentials, EC2 IMDS, etc.).
 		var profileNotExist config.SharedConfigProfileNotExistError
 		if profile != "" && errors.As(err, &profileNotExist) {
-			return config.LoadDefaultConfig(ctx, baseOpts...)
+			return loadDefaultConfigWithoutProfileEnv(ctx, baseOpts)
 		}
 		return aws.Config{}, err
 	}
 
 	return cfg, nil
+}
+
+// loadDefaultConfigWithoutProfileEnv loads the AWS default config while
+// suppressing the AWS_PROFILE and AWS_DEFAULT_PROFILE environment variables.
+//
+// The AWS SDK v2 reads these variables directly inside LoadDefaultConfig
+// (see resolveConfigLoaders in the SDK source). When either is set to a
+// profile that does not exist in the shared config files, the SDK returns
+// SharedConfigProfileNotExistError even when no explicit profile option is
+// passed. Temporarily clearing the variables causes the SDK to use its
+// lenient loader (loadSharedConfigIgnoreNotExist) and fall through to other
+// credential sources (env key/secret, EC2 IMDS, etc.).
+//
+// profileEnvMu serializes concurrent callers so they do not observe each
+// other's temporary env changes. The cleared values are always restored
+// before the function returns.
+func loadDefaultConfigWithoutProfileEnv(ctx context.Context, baseOpts []func(*config.LoadOptions) error) (aws.Config, error) {
+	profileEnvMu.Lock()
+	defer profileEnvMu.Unlock()
+
+	// Save and clear AWS_PROFILE / AWS_DEFAULT_PROFILE.
+	savedProfile := os.Getenv("AWS_PROFILE")
+	savedDefaultProfile := os.Getenv("AWS_DEFAULT_PROFILE")
+	if savedProfile != "" {
+		os.Unsetenv("AWS_PROFILE")
+	}
+	if savedDefaultProfile != "" {
+		os.Unsetenv("AWS_DEFAULT_PROFILE")
+	}
+
+	cfg, err := config.LoadDefaultConfig(ctx, baseOpts...)
+
+	// Restore the original values unconditionally.
+	if savedProfile != "" {
+		os.Setenv("AWS_PROFILE", savedProfile)
+	}
+	if savedDefaultProfile != "" {
+		os.Setenv("AWS_DEFAULT_PROFILE", savedDefaultProfile)
+	}
+
+	return cfg, err
 }
 
 // buildBaseOpts constructs the common AWS config options (region, endpoint, log level)
