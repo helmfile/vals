@@ -1089,7 +1089,12 @@ Examples:
 
 #### Authentication
 
-Vals aquires Yandex Cloud IAM token from the `YC_TOKEN` environment variable. The easiest way to get it is to run `yc iam create-token`. See [Yandex Cloud Lockbox docs](https://yandex.cloud/en/docs/lockbox/api-ref/authentication) for more details on authentication
+Vals uses `YC_TOKEN` for authentication:
+
+- If `YC_TOKEN` is an IAM token string (for example, from `yc iam create-token`), it is used directly.
+- If `YC_TOKEN` contains a JSON service account `authorized_key`, it is automatically used as authorized-key credentials.
+
+See [Yandex Cloud Lockbox docs](https://yandex.cloud/en/docs/lockbox/api-ref/authentication) for more details on authentication.
 
 To override the Yandex Cloud API endpoint used by the Lockbox provider (for example, when using regional endpoints like `api.yandexcloud.kz:443`), set the `YC_LOCKBOX_ENDPOINT` environment variable:
 

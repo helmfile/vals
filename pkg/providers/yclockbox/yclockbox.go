@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/lockbox/v1"
 	sdk "github.com/yandex-cloud/go-sdk"
+	"github.com/yandex-cloud/go-sdk/iamkey"
 
 	"github.com/helmfile/vals/pkg/api"
 	"github.com/helmfile/vals/pkg/log"
@@ -26,13 +28,14 @@ type provider struct {
 }
 
 func New(l *log.Logger, cfg api.StaticConfig) *provider {
-	token, ok := os.LookupEnv(TOKEN_ENV)
-	if !ok {
-		l.Debugf("yclockbox: Missing %s environment variable", TOKEN_ENV)
+	creds, err := getCredentialsFromEnv()
+	if err != nil {
+		l.Debugf("%v", err)
+		return nil
 	}
 
 	config := sdk.Config{
-		Credentials: sdk.NewIAMTokenCredentials(token),
+		Credentials: creds,
 	}
 
 	if endpoint := os.Getenv(ENDPOINT_ENV); endpoint != "" {
@@ -59,6 +62,28 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 	}
 
 	return p
+}
+
+func getCredentialsFromEnv() (sdk.Credentials, error) {
+	token, ok := os.LookupEnv(TOKEN_ENV)
+	if !ok {
+		return nil, fmt.Errorf("yclockbox: missing %s environment variable", TOKEN_ENV)
+	}
+
+	trimmed := strings.TrimSpace(token)
+	if strings.HasPrefix(trimmed, "{") {
+		key, err := iamkey.ReadFromJSONBytes([]byte(trimmed))
+		if err != nil {
+			return nil, fmt.Errorf("yclockbox: invalid authorized key in %s: %w", TOKEN_ENV, err)
+		}
+		creds, err := sdk.ServiceAccountKey(key)
+		if err != nil {
+			return nil, fmt.Errorf("yclockbox: failed to use authorized key from %s: %w", TOKEN_ENV, err)
+		}
+		return creds, nil
+	}
+
+	return sdk.NewIAMTokenCredentials(trimmed), nil
 }
 
 func (p *provider) GetString(key string) (string, error) {
