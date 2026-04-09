@@ -30,7 +30,7 @@ type provider struct {
 func New(l *log.Logger, cfg api.StaticConfig) *provider {
 	creds, err := getCredentialsFromEnv()
 	if err != nil {
-		l.Debugf("yclockbox: %v", err)
+		l.Debugf("%v", err)
 		return nil
 	}
 
@@ -83,7 +83,7 @@ func getCredentialsFromEnv() (sdk.Credentials, error) {
 		return creds, nil
 	}
 
-	return sdk.NewIAMTokenCredentials(token), nil
+	return sdk.NewIAMTokenCredentials(trimmed), nil
 }
 
 func (p *provider) GetString(key string) (string, error) {
