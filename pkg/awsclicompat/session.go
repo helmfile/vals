@@ -139,112 +139,22 @@ func NewConfig(ctx context.Context, region string, profile string, roleARN strin
 //
 // The fourth option of using FORCE_AWS_PROFILE=true and AWS_PROFILE=yourprofile is equivalent to `aws --profile ${AWS_PROFILE}`.
 // See https://github.com/helmfile/vals/issues/19#issuecomment-600437486 for more details and why and when this is needed.
-//
-// If the explicit profile parameter is specified but not found in the shared config, the
-// function falls back to the default credential chain (e.g. EC2 instance profile,
-// environment variables, etc.) without specifying any profile. This allows the fallback to
-// work even when no ~/.aws/config exists at all (e.g., EC2 instances relying on IAM roles).
-// Note: this fallback does not apply when the profile is selected via
-// FORCE_AWS_PROFILE/AWS_PROFILE env vars (without an explicit profile param).
 func newConfig(ctx context.Context, region string, profile string, logLevel string) (aws.Config, error) {
-	// Build base options shared between initial load and fallback
-	baseOpts := buildBaseOpts(region, logLevel)
-
-	// Determine the effective profile: explicit param takes priority, then FORCE_AWS_PROFILE env path.
-	effectiveProfile := profile
-	if effectiveProfile == "" && os.Getenv("FORCE_AWS_PROFILE") == "true" {
-		effectiveProfile = os.Getenv("AWS_PROFILE")
-	}
-
-	// Build full options including profile selection
-	opts := baseOpts
-	if effectiveProfile != "" {
-		opts = append(opts, config.WithSharedConfigProfile(effectiveProfile))
-	}
-
-	cfg, err := config.LoadDefaultConfig(ctx, opts...)
-	if err != nil {
-		// If the explicit profile parameter doesn't exist, fall back to the default
-		// credential chain (e.g. EC2 instance profile, environment variables, etc.).
-		//
-		// The AWS SDK v2 checks AWS_PROFILE (and AWS_DEFAULT_PROFILE) via os.Getenv
-		// inside LoadDefaultConfig. If either is set to the same missing profile, the
-		// fallback call would also fail with SharedConfigProfileNotExistError. We
-		// therefore temporarily clear both variables under a mutex so that the SDK
-		// uses loadSharedConfigIgnoreNotExist (its lenient path) instead.
-		//
-		// Do NOT use WithSharedConfigProfile("default") here: that still requires the
-		// profile to exist in ~/.aws/config or ~/.aws/credentials. EC2 users may have
-		// no AWS config files at all, relying entirely on the instance's IAM role.
-		// Without an explicit profile option the SDK falls through its default
-		// credential chain (env vars, shared credentials, EC2 IMDS, etc.).
-		var profileNotExist config.SharedConfigProfileNotExistError
-		if profile != "" && errors.As(err, &profileNotExist) {
-			return loadDefaultConfigWithoutProfileEnv(ctx, baseOpts)
-		}
-		return aws.Config{}, err
-	}
-
-	return cfg, nil
-}
-
-// loadDefaultConfigWithoutProfileEnv loads the AWS default config while
-// suppressing the AWS_PROFILE and AWS_DEFAULT_PROFILE environment variables.
-//
-// The AWS SDK v2 reads these variables directly inside LoadDefaultConfig
-// (see resolveConfigLoaders in the SDK source). When either is set to a
-// profile that does not exist in the shared config files, the SDK returns
-// SharedConfigProfileNotExistError even when no explicit profile option is
-// passed. Temporarily clearing the variables causes the SDK to use its
-// lenient loader (loadSharedConfigIgnoreNotExist) and fall through to other
-// credential sources (env key/secret, EC2 IMDS, etc.).
-//
-// profileEnvMu serializes concurrent callers so they do not observe each
-// other's temporary env changes. The cleared values are always restored
-// before the function returns.
-func loadDefaultConfigWithoutProfileEnv(ctx context.Context, baseOpts []func(*config.LoadOptions) error) (aws.Config, error) {
-	profileEnvMu.Lock()
-	defer profileEnvMu.Unlock()
-
-	// Save and clear AWS_PROFILE / AWS_DEFAULT_PROFILE.
-	savedProfile := os.Getenv("AWS_PROFILE")
-	savedDefaultProfile := os.Getenv("AWS_DEFAULT_PROFILE")
-	if savedProfile != "" {
-		if err := os.Unsetenv("AWS_PROFILE"); err != nil {
-			return aws.Config{}, err
-		}
-	}
-	if savedDefaultProfile != "" {
-		if err := os.Unsetenv("AWS_DEFAULT_PROFILE"); err != nil {
-			// Best-effort restore before returning.
-			if savedProfile != "" {
-				_ = os.Setenv("AWS_PROFILE", savedProfile)
-			}
-			return aws.Config{}, err
-		}
-	}
-
-	cfg, err := config.LoadDefaultConfig(ctx, baseOpts...)
-
-	// Restore the original values unconditionally.
-	if savedProfile != "" {
-		_ = os.Setenv("AWS_PROFILE", savedProfile)
-	}
-	if savedDefaultProfile != "" {
-		_ = os.Setenv("AWS_DEFAULT_PROFILE", savedDefaultProfile)
-	}
-
-	return cfg, err
-}
-
-// buildBaseOpts constructs the common AWS config options (region, endpoint, log level)
-// that are used both in the initial config load and in the profile-not-found fallback.
-func buildBaseOpts(region string, logLevel string) []func(*config.LoadOptions) error {
 	var opts []func(*config.LoadOptions) error
 
 	// Set region if provided
 	if region != "" {
 		opts = append(opts, config.WithRegion(region))
+	}
+
+	// Handle profile selection
+	switch {
+	case profile != "":
+		opts = append(opts, config.WithSharedConfigProfile(profile))
+	case os.Getenv("FORCE_AWS_PROFILE") == "true":
+		if awsProfile := os.Getenv("AWS_PROFILE"); awsProfile != "" {
+			opts = append(opts, config.WithSharedConfigProfile(awsProfile))
+		}
 	}
 
 	// AWS_ENDPOINT_URL
@@ -274,7 +184,50 @@ func buildBaseOpts(region string, logLevel string) []func(*config.LoadOptions) e
 	// Default to no logging for security (prevents credential leakage)
 	opts = append(opts, config.WithClientLogMode(parseAWSLogLevel(logLevel)))
 
-	return opts
+	cfg, err := config.LoadDefaultConfig(ctx, opts...)
+	if err != nil {
+		// Check if the error is specifically due to a missing profile.
+		// This allows fallback to ambient credentials (EC2 instance profile, ECS task role, etc.)
+		// when a user specifies ref+awssecrets://...?profile=example but the profile doesn't exist.
+		// See https://github.com/helmfile/vals/issues/1094
+		var profileNotExistErr config.SharedConfigProfileNotExistError
+		if profile != "" && errors.As(err, &profileNotExistErr) {
+			// The AWS SDK reads AWS_PROFILE and AWS_DEFAULT_PROFILE directly from the environment.
+			// Temporarily unset both to allow the SDK's default credential chain to work.
+			profileEnvMu.Lock()
+			defer profileEnvMu.Unlock()
+
+			savedProfile := os.Getenv("AWS_PROFILE")
+			savedDefaultProfile := os.Getenv("AWS_DEFAULT_PROFILE")
+
+			if savedProfile != "" {
+				if err := os.Unsetenv("AWS_PROFILE"); err != nil {
+					return aws.Config{}, err
+				}
+			}
+			if savedDefaultProfile != "" {
+				if err := os.Unsetenv("AWS_DEFAULT_PROFILE"); err != nil {
+					return aws.Config{}, err
+				}
+			}
+
+			// Restore environment variables after the recursive call completes
+			defer func() {
+				if savedProfile != "" {
+					_ = os.Setenv("AWS_PROFILE", savedProfile)
+				}
+				if savedDefaultProfile != "" {
+					_ = os.Setenv("AWS_DEFAULT_PROFILE", savedDefaultProfile)
+				}
+			}()
+
+			// Retry with empty profile to use ambient credentials
+			return newConfig(ctx, region, "", logLevel)
+		}
+		return aws.Config{}, err
+	}
+
+	return cfg, nil
 }
 
 // NewSession provides backwards compatibility for existing code
