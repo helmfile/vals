@@ -16,7 +16,7 @@ import (
 // profileEnvMu guards the temporary clearing of AWS_PROFILE / AWS_DEFAULT_PROFILE
 // that is needed in the profile-not-found fallback path. The AWS SDK v2 reads these
 // environment variables directly via os.Getenv inside LoadDefaultConfig, so we must
-// serialise callers that need to temporarily suppress them.
+// serialize callers that need to temporarily suppress them.
 var profileEnvMu sync.Mutex
 
 const (
@@ -210,20 +210,28 @@ func loadDefaultConfigWithoutProfileEnv(ctx context.Context, baseOpts []func(*co
 	savedProfile := os.Getenv("AWS_PROFILE")
 	savedDefaultProfile := os.Getenv("AWS_DEFAULT_PROFILE")
 	if savedProfile != "" {
-		os.Unsetenv("AWS_PROFILE")
+		if err := os.Unsetenv("AWS_PROFILE"); err != nil {
+			return aws.Config{}, err
+		}
 	}
 	if savedDefaultProfile != "" {
-		os.Unsetenv("AWS_DEFAULT_PROFILE")
+		if err := os.Unsetenv("AWS_DEFAULT_PROFILE"); err != nil {
+			// Best-effort restore before returning.
+			if savedProfile != "" {
+				_ = os.Setenv("AWS_PROFILE", savedProfile)
+			}
+			return aws.Config{}, err
+		}
 	}
 
 	cfg, err := config.LoadDefaultConfig(ctx, baseOpts...)
 
 	// Restore the original values unconditionally.
 	if savedProfile != "" {
-		os.Setenv("AWS_PROFILE", savedProfile)
+		_ = os.Setenv("AWS_PROFILE", savedProfile)
 	}
 	if savedDefaultProfile != "" {
-		os.Setenv("AWS_DEFAULT_PROFILE", savedDefaultProfile)
+		_ = os.Setenv("AWS_DEFAULT_PROFILE", savedDefaultProfile)
 	}
 
 	return cfg, err
