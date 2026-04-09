@@ -37,6 +37,7 @@ It supports various backends including:
 ToC:
 
 - [Installation](#installation)
+  - [Building from source](#building-from-source)
 - [Usage](#usage)
   - [CLI](#cli)
   - [Helm](#helm)
@@ -87,6 +88,29 @@ nix profile install nixpkgs#vals
 ```sh
 scoop install vals
 ```
+
+### Building from source
+
+```sh
+go build -o vals ./cmd/vals
+```
+
+#### Custom builds
+
+By default, all providers are compiled into the binary. If you only need specific providers, you can use Go build tags to produce a smaller binary:
+
+```sh
+# Only include Vault, AWS, GCP and Azure providers
+go build -tags "custom_providers,vault,aws,gcp,azure" -o vals ./cmd/vals
+```
+
+The `custom_providers` tag switches to opt-in mode. Without it, all providers are included. Add the tags for the providers you need:
+
+`vault`, `openbao`, `aws`, `gcp`, `azure`, `terraform`, `gitlab`, `sops`, `onepassword`, `doppler`, `k8s`, `hcpvaultsecrets`, `conjur`, `bitwarden`, `scaleway`, `infisical`, `oci`, `httpjson`, `pulumi`, `secretserver`, `servercore`, `keychain`, `yandex`
+
+Utility providers (`echo`, `file`, `envsubst`, `exec`) are always included.
+
+Use `all_providers` to explicitly include everything: `go build -tags all_providers`.
 
 ## Usage
 
