@@ -3,7 +3,7 @@ module github.com/helmfile/vals
 go 1.25.4
 
 require (
-	cloud.google.com/go/kms v1.27.0
+	cloud.google.com/go/kms v1.28.0
 	cloud.google.com/go/secretmanager v1.18.0
 	cloud.google.com/go/storage v1.62.0
 	github.com/1Password/connect-sdk-go v1.5.3
@@ -47,7 +47,7 @@ require (
 	cel.dev/expr v0.25.1 // indirect
 	cloud.google.com/go/auth v0.20.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
-	cloud.google.com/go/longrunning v0.8.0 // indirect
+	cloud.google.com/go/longrunning v0.9.0 // indirect
 	cloud.google.com/go/monitoring v1.24.3 // indirect
 	filippo.io/edwards25519 v1.1.1 // indirect
 	filippo.io/hpke v0.4.0 // indirect
