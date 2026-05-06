@@ -1,6 +1,7 @@
 package openbao
 
 import (
+	"encoding/base64"
 	"fmt"
 	"io"
 	"os"
@@ -41,6 +42,7 @@ type provider struct {
 	PasswordEnv  string
 	PasswordFile string
 	Version      string
+	Encode       string
 }
 
 func New(l *log.Logger, cfg api.StaticConfig) *provider {
@@ -104,6 +106,10 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 		p.PasswordFile = os.Getenv("BAO_PASSWORD_FILE")
 	}
 	p.Version = cfg.String("version")
+	p.Encode = cfg.String("encode")
+	if p.Encode == "" {
+		p.Encode = "raw"
+	}
 
 	return p
 }
@@ -178,7 +184,33 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 		res[k] = v
 	}
 
+	if err := p.applyEncode(res); err != nil {
+		return nil, err
+	}
+
 	return res, nil
+}
+
+func (p *provider) applyEncode(m map[string]interface{}) error {
+	switch p.Encode {
+	case "", "raw":
+		return nil
+	case "base64":
+		for k, v := range m {
+			s, ok := v.(string)
+			if !ok {
+				continue
+			}
+			decoded, err := base64.StdEncoding.DecodeString(s)
+			if err != nil {
+				return fmt.Errorf("openbao: base64 decode failed for key %q: %v", k, err)
+			}
+			m[k] = string(decoded)
+		}
+		return nil
+	default:
+		return fmt.Errorf("openbao: unsupported encode parameter: %q", p.Encode)
+	}
 }
 
 func (p *provider) ensureClient() (*openbao.Client, error) {
