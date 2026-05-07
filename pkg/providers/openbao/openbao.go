@@ -42,7 +42,7 @@ type provider struct {
 	PasswordEnv  string
 	PasswordFile string
 	Version      string
-	Encode       string
+	Decode       string
 }
 
 func New(l *log.Logger, cfg api.StaticConfig) *provider {
@@ -106,9 +106,9 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 		p.PasswordFile = os.Getenv("BAO_PASSWORD_FILE")
 	}
 	p.Version = cfg.String("version")
-	p.Encode = cfg.String("encode")
-	if p.Encode == "" {
-		p.Encode = "raw"
+	p.Decode = cfg.String("decode")
+	if p.Decode == "" {
+		p.Decode = "raw"
 	}
 
 	return p
@@ -184,15 +184,15 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 		res[k] = v
 	}
 
-	if err := p.applyEncode(res); err != nil {
+	if err := p.applyDecode(res); err != nil {
 		return nil, err
 	}
 
 	return res, nil
 }
 
-func (p *provider) applyEncode(m map[string]interface{}) error {
-	switch p.Encode {
+func (p *provider) applyDecode(m map[string]interface{}) error {
+	switch p.Decode {
 	case "", "raw":
 		return nil
 	case "base64":
@@ -203,13 +203,13 @@ func (p *provider) applyEncode(m map[string]interface{}) error {
 			}
 			decoded, err := base64.StdEncoding.DecodeString(s)
 			if err != nil {
-				return fmt.Errorf("openbao: base64 decode failed for key %q: %v", k, err)
+				return fmt.Errorf("openbao: base64 decode failed for key %q: %w", k, err)
 			}
 			m[k] = string(decoded)
 		}
 		return nil
 	default:
-		return fmt.Errorf("openbao: unsupported encode parameter: %q", p.Encode)
+		return fmt.Errorf("openbao: unsupported decode parameter: %q", p.Decode)
 	}
 }
 
