@@ -17,7 +17,7 @@ require (
 	github.com/antchfx/jsonquery v1.3.7
 	github.com/antchfx/xpath v1.3.6
 	github.com/aws/aws-sdk-go v1.55.8
-	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.41.6
+	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.41.7
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.68.6
 	github.com/cyberark/conjur-api-go v0.13.19
 	github.com/fujiwara/tfstate-lookup v1.11.0
