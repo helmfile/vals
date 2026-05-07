@@ -22,7 +22,7 @@ require (
 	github.com/cyberark/conjur-api-go v0.13.19
 	github.com/fujiwara/tfstate-lookup v1.11.0
 	github.com/getsops/sops/v3 v3.12.2
-	github.com/go-openapi/runtime v0.29.4
+	github.com/go-openapi/runtime v0.29.5
 	github.com/google/go-cmp v0.7.0
 	github.com/hashicorp/golang-lru v1.0.2
 	github.com/hashicorp/vault/api v1.23.0
@@ -70,7 +70,7 @@ require (
 	github.com/go-openapi/errors v0.22.7 // indirect
 	github.com/go-openapi/loads v0.23.3 // indirect
 	github.com/go-openapi/spec v0.22.4 // indirect
-	github.com/go-openapi/strfmt v0.26.1 // indirect
+	github.com/go-openapi/strfmt v0.26.2 // indirect
 	github.com/go-openapi/swag/cmdutils v0.24.0 // indirect
 	github.com/go-openapi/swag/conv v0.26.0 // indirect
 	github.com/go-openapi/swag/fileutils v0.26.0 // indirect
