@@ -129,11 +129,27 @@ func (p *provider) GetString(key string) (string, error) {
 
 	for k, v := range secret {
 		if k == key {
-			return fmt.Sprintf("%v", v), nil
+			s := fmt.Sprintf("%v", v)
+			return p.decodeString(key, s)
 		}
 	}
 
 	return "", fmt.Errorf("vault: get string: key %q does not exist in %q", key, path)
+}
+
+func (p *provider) decodeString(key, s string) (string, error) {
+	switch p.Decode {
+	case "", "raw":
+		return s, nil
+	case "base64":
+		decoded, err := base64.StdEncoding.DecodeString(s)
+		if err != nil {
+			return "", fmt.Errorf("vault: base64 decode failed for key %q: %w", key, err)
+		}
+		return string(decoded), nil
+	default:
+		return "", fmt.Errorf("vault: unsupported decode parameter: %q", p.Decode)
+	}
 }
 
 func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
@@ -184,33 +200,7 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 		res[k] = v
 	}
 
-	if err := p.applyDecode(res); err != nil {
-		return nil, err
-	}
-
 	return res, nil
-}
-
-func (p *provider) applyDecode(m map[string]interface{}) error {
-	switch p.Decode {
-	case "", "raw":
-		return nil
-	case "base64":
-		for k, v := range m {
-			s, ok := v.(string)
-			if !ok {
-				continue
-			}
-			decoded, err := base64.StdEncoding.DecodeString(s)
-			if err != nil {
-				return fmt.Errorf("vault: base64 decode failed for key %q: %w", k, err)
-			}
-			m[k] = string(decoded)
-		}
-		return nil
-	default:
-		return fmt.Errorf("vault: unsupported decode parameter: %q", p.Decode)
-	}
 }
 
 func (p *provider) ensureClient() (*vault.Client, error) {
