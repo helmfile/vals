@@ -333,6 +333,7 @@ Please see [pkg/providers](https://github.com/helmfile/vals/tree/master/pkg/prov
 * `role_id` defaults to the value of the `VAULT_ROLE_ID` envvar.
 * `secret_id` defaults to the value of the `VAULT_SECRET_ID` envvar.
 * `version` is the specific version of the secret to be obtained. Used when you want to get a previous content of the secret.
+* `decode` controls how the retrieved value is transformed before being returned. Defaults to `raw` (no transformation). Set to `base64` to base64-decode the stored value (useful when binary data such as certificates is stored as a base64 string).
 
 ### Authentication
 
@@ -367,6 +368,7 @@ Examples:
 * `role_id` defaults to the value of the `BAO_ROLE_ID` envvar.
 * `secret_id` defaults to the value of the `BAO_SECRET_ID` envvar.
 * `version` is the specific version of the secret to be obtained. Used when you want to get a previous content of the secret.
+* `decode` controls how the retrieved value is transformed before being returned. Defaults to `raw` (no transformation). Set to `base64` to base64-decode the stored value (useful when binary data such as certificates is stored as a base64 string).
 
 The `auth_method` or `BAO_AUTH_METHOD` envvar configures how `vals` authenticates to OpenBao. The following methods are supported:
 

@@ -2,9 +2,11 @@ package vals
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -173,6 +175,78 @@ func TestValues_OpenBao_EvalTemplate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestValues_OpenBao_Decode_Base64(t *testing.T) {
+	if os.Getenv("SKIP_TESTS") != "" {
+		t.Skip("Skipping tests")
+	}
+
+	plain := "hello-binary-payload"
+	encoded := base64.StdEncoding.EncodeToString([]byte(plain))
+
+	addr, stop := SetupOpenBaoKV(
+		t,
+		map[string]map[string]interface{}{
+			"mykv/bin": {
+				"cert":  encoded,
+				"plain": "not-base64-value",
+			},
+		},
+	)
+	defer stop()
+
+	t.Run("decode=base64 decodes targeted key", func(t *testing.T) {
+		config := map[string]interface{}{
+			"cert": fmt.Sprintf("ref+openbao://mykv/bin?address=%s&decode=base64#/cert", addr),
+		}
+		got, err := Eval(config)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got["cert"] != plain {
+			t.Errorf("expected decoded value %q, got %q", plain, got["cert"])
+		}
+	})
+
+	t.Run("decode=base64 on non-base64 value returns error", func(t *testing.T) {
+		config := map[string]interface{}{
+			"bad": fmt.Sprintf("ref+openbao://mykv/bin?address=%s&decode=base64#/plain", addr),
+		}
+		_, err := Eval(config)
+		if err == nil {
+			t.Fatalf("expected base64 decode error, got nil")
+		}
+		if !strings.Contains(err.Error(), "base64 decode failed") {
+			t.Errorf("expected base64 decode failure in error, got: %v", err)
+		}
+	})
+
+	t.Run("mixed secret with #/field does not break sibling non-base64 keys", func(t *testing.T) {
+		config := map[string]interface{}{
+			"cert": fmt.Sprintf("ref+openbao://mykv/bin?address=%s&decode=base64#/cert", addr),
+		}
+		got, err := Eval(config)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got["cert"] != plain {
+			t.Errorf("expected decoded value %q, got %q", plain, got["cert"])
+		}
+	})
+
+	t.Run("no decode parameter returns raw value", func(t *testing.T) {
+		config := map[string]interface{}{
+			"raw": fmt.Sprintf("ref+openbao://mykv/bin?address=%s#/cert", addr),
+		}
+		got, err := Eval(config)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got["raw"] != encoded {
+			t.Errorf("expected raw value %q, got %q", encoded, got["raw"])
+		}
+	})
 }
 
 func TestValues_OpenBao_String(t *testing.T) {
