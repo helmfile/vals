@@ -1,6 +1,7 @@
 package openbao
 
 import (
+	"encoding/base64"
 	"fmt"
 	"io"
 	"os"
@@ -41,6 +42,7 @@ type provider struct {
 	PasswordEnv  string
 	PasswordFile string
 	Version      string
+	Decode       string
 }
 
 func New(l *log.Logger, cfg api.StaticConfig) *provider {
@@ -104,6 +106,10 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 		p.PasswordFile = os.Getenv("BAO_PASSWORD_FILE")
 	}
 	p.Version = cfg.String("version")
+	p.Decode = cfg.String("decode")
+	if p.Decode == "" {
+		p.Decode = "raw"
+	}
 
 	return p
 }
@@ -123,11 +129,27 @@ func (p *provider) GetString(key string) (string, error) {
 
 	for k, v := range secret {
 		if k == key {
-			return fmt.Sprintf("%v", v), nil
+			s := fmt.Sprintf("%v", v)
+			return p.decodeString(key, s)
 		}
 	}
 
 	return "", fmt.Errorf("openbao: get string: key %q does not exist in %q", key, path)
+}
+
+func (p *provider) decodeString(key, s string) (string, error) {
+	switch p.Decode {
+	case "", "raw":
+		return s, nil
+	case "base64":
+		decoded, err := base64.StdEncoding.DecodeString(s)
+		if err != nil {
+			return "", fmt.Errorf("openbao: base64 decode failed for key %q: %w", key, err)
+		}
+		return string(decoded), nil
+	default:
+		return "", fmt.Errorf("openbao: unsupported decode parameter: %q", p.Decode)
+	}
 }
 
 func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
