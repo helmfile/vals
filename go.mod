@@ -20,7 +20,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.41.9
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.69.3
 	github.com/cyberark/conjur-api-go v0.14.1
-	github.com/fujiwara/tfstate-lookup v1.11.0
+	github.com/fujiwara/tfstate-lookup v1.12.1
 	github.com/getsops/sops/v3 v3.13.1
 	github.com/go-openapi/runtime v0.29.5
 	github.com/google/go-cmp v0.7.0
@@ -199,7 +199,7 @@ require (
 	github.com/hashicorp/go-secure-stdlib/strutil v0.1.2 // indirect
 	github.com/hashicorp/go-slug v0.16.8 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.7 // indirect
-	github.com/hashicorp/go-tfe v1.99.0 // indirect
+	github.com/hashicorp/go-tfe v1.103.0 // indirect
 	github.com/hashicorp/hcl v1.0.1-vault-7 // indirect
 	github.com/hashicorp/hcp-sdk-go v0.173.0
 	github.com/hashicorp/jsonapi v1.4.3-0.20250220162346-81a76b606f3e // indirect
