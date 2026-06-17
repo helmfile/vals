@@ -25,8 +25,8 @@ cloud.google.com/go/monitoring v1.27.0 h1:BhYwMqao+e5Nn7JtWMM9m6zRtKtVUK6kJWMizX
 cloud.google.com/go/monitoring v1.27.0/go.mod h1:72NOVjJXHY/HBfoLT0+qlCZBT059+9VXLeAnL2PeeVM=
 cloud.google.com/go/secretmanager v1.20.0 h1:GjE3NoyFXo7ipRPy26PMmg4oRX1Ra8fswH45r16rWV0=
 cloud.google.com/go/secretmanager v1.20.0/go.mod h1:9OmSuOeiiUicANglrbdKWSnT3gYkRcXuUQDk7dDW0zU=
-cloud.google.com/go/storage v1.62.1 h1:Os0G3XbUbjZumkpDUf2Y0rLoXJTCF1kU2kWUujKYXD8=
-cloud.google.com/go/storage v1.62.1/go.mod h1:cpYz/kRVZ+UQAF1uHeea10/9ewcRbxGoGNKsS9daSXA=
+cloud.google.com/go/storage v1.62.3 h1:SZq1t23NCI+e96dH77Dg3PEfsNNEjqO8zE5AnD8gVD0=
+cloud.google.com/go/storage v1.62.3/go.mod h1:cpYz/kRVZ+UQAF1uHeea10/9ewcRbxGoGNKsS9daSXA=
 cloud.google.com/go/trace v1.14.0 h1:jUtnmOrNcu5XJNk4Gz0fv+v5sM0weaOa3z5MPQUjRXs=
 cloud.google.com/go/trace v1.14.0/go.mod h1:r+bdAn16dKLSV1G2D5v3e58IlQlizfxWrUfjx7kM7X0=
 dario.cat/mergo v1.0.2 h1:85+piFYR1tMbRrLcDwR18y4UKJ3aH1Tbzi24VRW1TK8=
