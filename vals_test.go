@@ -414,6 +414,13 @@ func TestEvalNodesTypes(t *testing.T) {
 bool: true
 int: 42
 string: "It's a string"
+float: 3.14
+nested:
+  a: 1
+  b: two
+list:
+  - xx
+  - yy
 `
 	secretsFile := createTmpFile(t, tmpDir, "secrets.yaml", secretYaml)
 
@@ -422,11 +429,24 @@ string: "It's a string"
 bool_value: {file-ref}#/bool
 int_value: {file-ref}#/int
 string_value: {file-ref}#/string
+float_value: {file-ref}#/float
+nested_value: {file-ref}#/nested
+list_value: {file-ref}#/list
 `)
 	inputFile := createTmpFile(t, tmpDir, "input.yaml", inputYaml)
 
+	// EvalNodes re-encodes the document as a map, so top-level keys are emitted
+	// in sorted order. Non-string values (float, nested map, list) are preserved
+	// with their native YAML types.
 	expected := `bool_value: true
+float_value: 3.14
 int_value: 42
+list_value:
+  - xx
+  - yy
+nested_value:
+  a: 1
+  b: two
 string_value: It's a string
 `
 
