@@ -1,6 +1,8 @@
 package vals
 
 import (
+	"crypto/md5"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -98,5 +100,59 @@ func TestFragment_NestedObjectAndArray(t *testing.T) {
 		res, err := Eval(map[string]interface{}{"v": ref + "#/obj/a"}, Options{})
 		require.NoError(t, err)
 		require.Equal(t, 1, res["v"])
+	})
+}
+
+// TestFragment_IntermediateInterfaceMap covers descending through an intermediate
+// map[interface{}]interface{} (which some providers produce, unlike the yaml.v3
+// file provider). A mock provider supplies that shape.
+func TestFragment_IntermediateInterfaceMap(t *testing.T) {
+	r, err := New(Options{})
+	require.NoError(t, err)
+
+	hash := fmt.Sprintf("%x", md5.Sum([]byte("echo")))
+	r.providers[hash] = &mockProvider{
+		getStringMapFunc: func(key string) (map[string]interface{}, error) {
+			return map[string]interface{}{
+				"outer": map[interface{}]interface{}{
+					"inner": "deep",
+				},
+			}, nil
+		},
+	}
+
+	res, err := r.Get("ref+echo://mykey#/outer/inner")
+	require.NoError(t, err)
+	require.Equal(t, "deep", res)
+}
+
+// TestFragment_MissingKeyAndNil checks that an absent key honors
+// FailOnMissingKeyInMap while a present null value returns nil without error.
+func TestFragment_MissingKeyAndNil(t *testing.T) {
+	dir := t.TempDir()
+	f := filepath.Join(dir, "data.yaml")
+	require.NoError(t, os.WriteFile(f, []byte(
+		"present: value\n"+
+			"empty: null\n"+
+			"obj:\n"+
+			"  a: 1\n"), 0o600))
+	ref := "ref+file://" + f
+
+	t.Run("absent-key-fails", func(t *testing.T) {
+		_, err := Eval(map[string]interface{}{"v": ref + "#/absent"}, Options{FailOnMissingKeyInMap: true})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "no value found for key")
+	})
+	t.Run("absent-nested-key-fails", func(t *testing.T) {
+		// A key missing deeper in the path errors cleanly ("no value found"),
+		// not with the confusing "unsupported type" of the pre-fix code.
+		_, err := Eval(map[string]interface{}{"v": ref + "#/obj/missing"}, Options{FailOnMissingKeyInMap: true})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "no value found for key")
+	})
+	t.Run("present-null-is-nil", func(t *testing.T) {
+		res, err := Eval(map[string]interface{}{"v": ref + "#/empty"}, Options{FailOnMissingKeyInMap: true})
+		require.NoError(t, err)
+		require.Nil(t, res["v"])
 	})
 }

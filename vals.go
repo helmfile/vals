@@ -480,7 +480,14 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 
 				keys := strings.Split(frag, "/")
 				for i, k := range keys {
-					t := obj[k]
+					// comma-ok keeps an absent key distinct from a present null value.
+					t, found := obj[k]
+					if !found {
+						if r.Options.FailOnMissingKeyInMap {
+							return nil, fmt.Errorf("no value found for key %s", frag)
+						}
+						return nil, nil
+					}
 					// The value at the final fragment key is the result, whatever its type.
 					if i == len(keys)-1 {
 						if isTerminalValue(t) {
@@ -488,21 +495,11 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 						}
 						return t, nil
 					}
-					switch t := t.(type) {
-					case map[string]interface{}:
-						obj = t
-					case map[interface{}]interface{}:
-						obj := map[string]interface{}{}
-						for k, v := range t {
-							obj[fmt.Sprintf("%v", k)] = v
-						}
-					default:
-						return nil, fmt.Errorf("unsupported type for key at %d=%s in %v: %v(%T)", i, k, keys, t, t)
+					m, ok := asStringKeyedMap(t)
+					if !ok {
+						return nil, fmt.Errorf("unexpected type of value for key at %d=%s in %v: expected a map, got %v(%T)", i, k, keys, t, t)
 					}
-				}
-
-				if r.Options.FailOnMissingKeyInMap {
-					return nil, fmt.Errorf("no value found for key %s", frag)
+					obj = m
 				}
 
 				return nil, nil
@@ -522,6 +519,23 @@ func isTerminalValue(v any) bool {
 		return true
 	default:
 		return false
+	}
+}
+
+// asStringKeyedMap normalizes a map[interface{}]interface{} (which some providers
+// produce) into a map[string]interface{}; the bool reports whether v was a map.
+func asStringKeyedMap(v any) (map[string]interface{}, bool) {
+	switch t := v.(type) {
+	case map[string]interface{}:
+		return t, true
+	case map[interface{}]interface{}:
+		m := make(map[string]interface{}, len(t))
+		for k, val := range t {
+			m[fmt.Sprintf("%v", k)] = val
+		}
+		return m, true
+	default:
+		return nil, false
 	}
 }
 
