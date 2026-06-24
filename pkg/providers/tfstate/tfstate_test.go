@@ -8,39 +8,34 @@ import (
 	"github.com/helmfile/vals/pkg/config"
 )
 
-func TestNewGitLabProvider(t *testing.T) {
+func TestNew(t *testing.T) {
 	tests := []struct {
-		cfg      map[string]interface{}
-		expected *provider
-		name     string
-		backend  string
+		name        string
+		cfg         map[string]interface{}
+		backend     string
+		wantBackend string
+		wantUser    string
+		wantToken   string
 	}{
 		{
-			cfg: map[string]interface{}{},
-			expected: &provider{
-				backend: "gitlab",
-			},
-			name:    "default config",
-			backend: "gitlab",
+			name:        "gitlab default config",
+			cfg:         map[string]interface{}{},
+			backend:     "gitlab",
+			wantBackend: "gitlab",
 		},
 		{
-			cfg: map[string]interface{}{
-				"gitlab_user":  "testuser",
-				"gitlab_token": "testtoken",
-			},
-			expected: &provider{
-				backend: "gitlab",
-			},
-			name:    "with gitlab_user and gitlab_token",
-			backend: "gitlab",
+			name:        "gitlab with credentials from config",
+			cfg:         map[string]interface{}{"gitlab_user": "alice", "gitlab_token": "cfgtoken"},
+			backend:     "gitlab",
+			wantBackend: "gitlab",
+			wantUser:    "alice",
+			wantToken:   "cfgtoken",
 		},
 		{
-			cfg: map[string]interface{}{},
-			expected: &provider{
-				backend: "s3",
-			},
-			name:    "s3 backend",
-			backend: "s3",
+			name:        "s3 backend reads aws_profile",
+			cfg:         map[string]interface{}{"aws_profile": "prof", "az_subscription_id": "sub"},
+			backend:     "s3",
+			wantBackend: "s3",
 		},
 	}
 
@@ -49,7 +44,63 @@ func TestNewGitLabProvider(t *testing.T) {
 			cfg := config.MapConfig{M: tt.cfg}
 			p := New(cfg, tt.backend)
 
-			assert.Equal(t, tt.expected.backend, p.backend)
+			assert.Equal(t, tt.wantBackend, p.backend)
+			assert.Equal(t, tt.wantUser, p.gitlabUser)
+			assert.Equal(t, tt.wantToken, p.gitlabToken)
+		})
+	}
+}
+
+func TestBuildGitLabURL(t *testing.T) {
+	tests := []struct {
+		name      string
+		cfg       map[string]interface{}
+		envUser   string
+		envToken  string
+		hostPath  string
+		wantCreds string
+	}{
+		{
+			name:     "no credentials yields unauthenticated url",
+			hostPath: "gitlab.com/api/v4/projects/123/terraform/state/my-state",
+		},
+		{
+			name:      "credentials from config",
+			cfg:       map[string]interface{}{"gitlab_user": "alice", "gitlab_token": "cfgtoken"},
+			hostPath:  "my-gitlab.com/api/v4/projects/9/terraform/state/web",
+			wantCreds: "alice:cfgtoken@",
+		},
+		{
+			name:      "credentials from env vars",
+			envUser:   "bob",
+			envToken:  "envtoken",
+			hostPath:  "gitlab.example.com/api/v4/projects/1/terraform/state/db",
+			wantCreds: "bob:envtoken@",
+		},
+		{
+			name:      "config takes precedence over env",
+			cfg:       map[string]interface{}{"gitlab_user": "alice", "gitlab_token": "cfgtoken"},
+			envUser:   "bob",
+			envToken:  "envtoken",
+			hostPath:  "gitlab.com/api/v4/projects/2/terraform/state/vpc",
+			wantCreds: "alice:cfgtoken@",
+		},
+		{
+			name:     "token alone does not authenticate (both required)",
+			envToken: "onlytoken",
+			hostPath: "onprem-gitlab.local/api/v4/projects/7/terraform/state/net",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv("GITLAB_USER", tt.envUser)
+			t.Setenv("GITLAB_TOKEN", tt.envToken)
+
+			p := New(config.MapConfig{M: tt.cfg}, "gitlab")
+			got, err := p.buildGitLabURL(tt.hostPath)
+			assert.NoError(t, err)
+			assert.Equal(t, "https://"+tt.wantCreds+tt.hostPath, got)
 		})
 	}
 }

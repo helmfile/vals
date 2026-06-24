@@ -17,6 +17,8 @@ type provider struct {
 	backend          string
 	awsProfile       string
 	azSubscriptionId string
+	gitlabUser       string
+	gitlabToken      string
 }
 
 func New(cfg api.StaticConfig, backend string) *provider {
@@ -24,6 +26,8 @@ func New(cfg api.StaticConfig, backend string) *provider {
 	p.backend = backend
 	p.awsProfile = cfg.String("aws_profile")
 	p.azSubscriptionId = cfg.String("az_subscription_id")
+	p.gitlabUser = cfg.String("gitlab_user")
+	p.gitlabToken = cfg.String("gitlab_token")
 	return p
 }
 
@@ -96,26 +100,12 @@ func (p *provider) ReadTFState(f, k string) (*tfstate.TFState, error) {
 		}
 		return state, nil
 	case "gitlab":
-		stateURL := f
-		if !strings.HasPrefix(stateURL, "http://") && !strings.HasPrefix(stateURL, "https://") {
-			stateURL = "https://" + f
-		}
-
-		user := os.Getenv("GITLAB_USER")
-		token := os.Getenv("GITLAB_TOKEN")
-
-		parsedURL, err := url.Parse(stateURL)
+		stateURL, err := p.buildGitLabURL(f)
 		if err != nil {
-			return nil, fmt.Errorf("parsing GitLab URL: %w", err)
+			return nil, err
 		}
 
-		if user != "" && token != "" {
-			parsedURL.User = url.UserPassword(user, token)
-		} else if token != "" {
-			parsedURL.User = url.UserPassword(token, "")
-		}
-
-		state, err := tfstate.ReadURL(context.TODO(), parsedURL.String())
+		state, err := tfstate.ReadURL(context.TODO(), stateURL)
 		if err != nil {
 			return nil, fmt.Errorf("reading tfstate for %s: %w", k, err)
 		}
@@ -132,4 +122,35 @@ func (p *provider) ReadTFState(f, k string) (*tfstate.TFState, error) {
 
 func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 	return nil, fmt.Errorf("path fragment is not supported for tfstate provider")
+}
+
+// buildGitLabURL builds an authenticated GitLab Terraform state URL for f, which
+// is the bare host/path portion (e.g. "gitlab.com/api/v4/projects/123/terraform/state/my-state").
+//
+// Credentials are read from the provider config (gitlab_user / gitlab_token, which
+// can be supplied via vals config or ref+ URL query parameters) and fall back to
+// the GITLAB_USER / GITLAB_TOKEN environment variables.
+//
+// GitLab authenticates the Terraform state backend via HTTP Basic Auth requiring
+// both a username and a token, so credentials are only embedded when both are set.
+func (p *provider) buildGitLabURL(f string) (string, error) {
+	user := p.gitlabUser
+	if user == "" {
+		user = os.Getenv("GITLAB_USER")
+	}
+	token := p.gitlabToken
+	if token == "" {
+		token = os.Getenv("GITLAB_TOKEN")
+	}
+
+	parsedURL, err := url.Parse("https://" + f)
+	if err != nil {
+		return "", fmt.Errorf("parsing GitLab URL: %w", err)
+	}
+
+	if user != "" && token != "" {
+		parsedURL.User = url.UserPassword(user, token)
+	}
+
+	return parsedURL.String(), nil
 }

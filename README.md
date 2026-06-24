@@ -743,6 +743,8 @@ $ echo 'foo: ref+tfstateremote://app.terraform.io/myorg/myworkspace/output.virtu
 * `gitlab_user` defaults to value of `GITLAB_USER` envvar.
 * `gitlab_token` defaults to value of `GITLAB_TOKEN` envvar.
 
+GitLab authenticates the Terraform state backend via HTTP Basic Auth, so **both `gitlab_user` and `gitlab_token` are required** for authentication. If only one is set, the request is sent unauthenticated. Credentials may be provided via URL query parameters, via the `providers` config, or via environment variables (in that order of precedence).
+
 Examples:
 
 - `ref+tfstategitlab://gitlab.com/api/v4/projects/123/terraform/state/my-state/aws_vpc.main.id`
