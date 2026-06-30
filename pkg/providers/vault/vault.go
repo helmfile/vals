@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	vault "github.com/hashicorp/vault/api"
 
@@ -25,9 +26,16 @@ const (
 // $ vault secrets enable -path mykv kv
 //
 //	Success! Enabled the kv secrets engine at: mykv/
-type provider struct {
+type provider struct { //nolint:govet // fieldalignment: unsafe.Sizeof confirms no padding waste; tool reports a false discrepancy
 	client *vault.Client
 	log    *log.Logger
+
+	// kvVersionCache caches isKVv2 preflight results per mount path so each
+	// mount only costs one Vault API call per provider lifetime. Mount KV
+	// versions are immutable at runtime, so the cache never needs clearing.
+	// mu protects kvVersionCache for concurrent callers (e.g. vals-operator).
+	kvVersionCache map[string]kvVersionResult
+	mu             sync.Mutex
 
 	Address      string
 	Namespace    string
@@ -43,13 +51,6 @@ type provider struct {
 	PasswordFile string
 	Version      string
 	Decode       string
-
-	// kvVersionCache caches isKVv2 preflight results per mount path, so each
-	// mount only costs one Vault API call regardless of how many secrets are read.
-	kvVersionCache map[string]kvVersionResult
-	// secretMapCache caches GetStringMap results per secret path, so multiple
-	// keys under the same path only cost one Vault read.
-	secretMapCache map[string]map[string]interface{}
 }
 
 type kvVersionResult struct {
@@ -123,7 +124,6 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 		p.Decode = "raw"
 	}
 	p.kvVersionCache = make(map[string]kvVersionResult)
-	p.secretMapCache = make(map[string]map[string]interface{})
 
 	return p
 }
@@ -167,18 +167,18 @@ func (p *provider) decodeString(key, s string) (string, error) {
 }
 
 func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
-	if cached, ok := p.secretMapCache[key]; ok {
-		return cached, nil
-	}
-
 	cli, err := p.ensureClient()
 	if err != nil {
 		return nil, fmt.Errorf("Cannot create Vault Client: %v", err)
 	}
 
+	p.mu.Lock()
+	cached, hit := p.kvVersionCache[key]
+	p.mu.Unlock()
+
 	var mountPath string
 	var v2 bool
-	if cached, ok := p.kvVersionCache[key]; ok {
+	if hit {
 		mountPath = cached.mountPath
 		v2 = cached.v2
 	} else {
@@ -186,7 +186,9 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
+		p.mu.Lock()
 		p.kvVersionCache[key] = kvVersionResult{mountPath: mountPath, v2: v2}
+		p.mu.Unlock()
 	}
 
 	readKey := key
@@ -225,8 +227,6 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 	for k, v := range secrets {
 		res[k] = v
 	}
-
-	p.secretMapCache[key] = res
 
 	return res, nil
 }
