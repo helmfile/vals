@@ -161,14 +161,14 @@ func TestLookupKVVersion_SiblingMountPrefix(t *testing.T) {
 
 	cases := []struct {
 		key      string
+		describe string
 		wantOK   bool
 		wantV2   bool
-		describe string
 	}{
-		{"secret/app", true, true, "child of mount"},
-		{"secret", true, true, "mount root"},
-		{"secretv2/app", false, false, "distinct mount sharing textual prefix"},
-		{"other/app", false, false, "unrelated mount"},
+		{"secret/app", "child of mount", true, true},
+		{"secret", "mount root", true, true},
+		{"secretv2/app", "distinct mount sharing textual prefix", false, false},
+		{"other/app", "unrelated mount", false, false},
 	}
 	for _, tc := range cases {
 		res, ok := p.lookupKVVersion(tc.key)
