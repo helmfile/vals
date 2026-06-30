@@ -33,8 +33,11 @@ type provider struct { //nolint:govet // fieldalignment: unsafe.Sizeof confirms 
 	// kvVersionCache caches isKVv2 preflight results per mount path so each
 	// mount only costs one Vault API call per provider lifetime. Mount KV
 	// versions are immutable at runtime, so the cache never needs clearing.
-	// mu protects kvVersionCache for concurrent callers (e.g. vals-operator).
+	// secretMapCache caches GetStringMap results so multiple keys under the
+	// same path cost only one Vault read per provider lifetime.
+	// mu protects both caches for concurrent callers (e.g. vals-operator).
 	kvVersionCache map[string]kvVersionResult
+	secretMapCache map[string]map[string]interface{}
 	mu             sync.Mutex
 
 	Address      string
@@ -124,6 +127,7 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 		p.Decode = "raw"
 	}
 	p.kvVersionCache = make(map[string]kvVersionResult)
+	p.secretMapCache = make(map[string]map[string]interface{})
 
 	return p
 }
@@ -167,20 +171,24 @@ func (p *provider) decodeString(key, s string) (string, error) {
 }
 
 func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
+	p.mu.Lock()
+	if cachedMap, ok := p.secretMapCache[key]; ok {
+		p.mu.Unlock()
+		return cachedMap, nil
+	}
+	cachedVer, verHit := p.kvVersionCache[key]
+	p.mu.Unlock()
+
 	cli, err := p.ensureClient()
 	if err != nil {
 		return nil, fmt.Errorf("Cannot create Vault Client: %v", err)
 	}
 
-	p.mu.Lock()
-	cached, hit := p.kvVersionCache[key]
-	p.mu.Unlock()
-
 	var mountPath string
 	var v2 bool
-	if hit {
-		mountPath = cached.mountPath
-		v2 = cached.v2
+	if verHit {
+		mountPath = cachedVer.mountPath
+		v2 = cachedVer.v2
 	} else {
 		mountPath, v2, err = isKVv2(key, cli)
 		if err != nil {
@@ -227,6 +235,10 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 	for k, v := range secrets {
 		res[k] = v
 	}
+
+	p.mu.Lock()
+	p.secretMapCache[key] = res
+	p.mu.Unlock()
 
 	return res, nil
 }
