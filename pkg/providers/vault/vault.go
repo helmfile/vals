@@ -7,8 +7,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	vault "github.com/hashicorp/vault/api"
+	"golang.org/x/sync/singleflight"
 
 	"github.com/helmfile/vals/pkg/api"
 	"github.com/helmfile/vals/pkg/log"
@@ -29,6 +31,21 @@ type provider struct {
 	client *vault.Client
 	log    *log.Logger
 
+	// kvVersionCache caches isKVv2 preflight results keyed by mount path. Mount
+	// KV versions are immutable at runtime, so the cache never needs clearing
+	// and every secret under a mount shares a single preflight.
+	kvVersionCache map[string]kvVersionResult
+	// sfVersion dedupes concurrent isKVv2 preflights for the same path so a
+	// burst of first-time callers triggers a single Vault request. Note it is
+	// keyed by full path, so a concurrent first-burst of *distinct* sibling
+	// paths under one mount is not deduped (each runs one preflight); the mount
+	// cache then serves every later call. Sequential and same-path-concurrent
+	// access are both deduped to one preflight per mount.
+	sfVersion singleflight.Group
+	// sfRead dedupes concurrent secret reads for the same path so N concurrent
+	// callers cost one Vault read (one token use) instead of N.
+	sfRead singleflight.Group
+
 	Address      string
 	Namespace    string
 	Proto        string
@@ -43,6 +60,17 @@ type provider struct {
 	PasswordFile string
 	Version      string
 	Decode       string
+
+	// mu protects kvVersionCache for concurrent callers (e.g. vals-operator).
+	mu sync.Mutex
+	// clientMu serializes lazy client creation/authentication so concurrent
+	// first callers don't race while building p.client.
+	clientMu sync.Mutex
+}
+
+type kvVersionResult struct {
+	mountPath string
+	v2        bool
 }
 
 func New(l *log.Logger, cfg api.StaticConfig) *provider {
@@ -110,6 +138,7 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 	if p.Decode == "" {
 		p.Decode = "raw"
 	}
+	p.kvVersionCache = make(map[string]kvVersionResult)
 
 	return p
 }
@@ -153,30 +182,56 @@ func (p *provider) decodeString(key, s string) (string, error) {
 }
 
 func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
+	// singleflight collapses a burst of concurrent reads for the same path into
+	// a single Vault read, so vals-operator's parallel callers spend one token
+	// use instead of one per goroutine (#1204). Reads are not cached between
+	// calls, so rotated secrets are always picked up on the next read.
+	v, err, _ := p.sfRead.Do(key, func() (interface{}, error) {
+		return p.readSecretMap(key)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// The singleflight result is shared by reference among all callers in the
+	// flight; return a per-caller copy so a caller mutating the map can't
+	// corrupt another caller's view. The copy is shallow — nested map/slice
+	// values are still shared — which is fine for the typical string-valued KV
+	// secret.
+	secrets := v.(map[string]interface{})
+	res := make(map[string]interface{}, len(secrets))
+	for k, val := range secrets {
+		res[k] = val
+	}
+
+	return res, nil
+}
+
+// readSecretMap performs a single, uncached Vault read for key.
+func (p *provider) readSecretMap(key string) (map[string]interface{}, error) {
 	cli, err := p.ensureClient()
 	if err != nil {
 		return nil, fmt.Errorf("Cannot create Vault Client: %v", err)
 	}
 
-	mountPath, v2, err := isKVv2(key, cli)
+	mountPath, v2, err := p.resolveKVVersion(key, cli)
 	if err != nil {
 		return nil, err
 	}
 
+	readKey := key
 	if v2 {
-		key = addPrefixToVKVPath(key, mountPath, "data")
+		readKey = addPrefixToVKVPath(key, mountPath, "data")
 	}
-
-	res := map[string]interface{}{}
 
 	data := map[string][]string{}
 	if p.Version != "" {
 		data["version"] = []string{p.Version}
 	}
 
-	secret, err := cli.Logical().ReadWithData(key, data)
+	secret, err := cli.Logical().ReadWithData(readKey, data)
 	if err != nil {
-		p.log.Debugf("vault: read: key=%q", key)
+		p.log.Debugf("vault: read: key=%q", readKey)
 		return nil, err
 	}
 
@@ -196,14 +251,90 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 		}
 	}
 
-	for k, v := range secrets {
-		res[k] = v
+	// Return the map directly: GetStringMap owns the per-caller copy, so a
+	// second copy here would be redundant.
+	return secrets, nil
+}
+
+// resolveKVVersion returns the mount path and KV-v2 flag for key, reusing a
+// cached preflight result for the key's mount when available and otherwise
+// running (and deduping) a single isKVv2 preflight per mount.
+func (p *provider) resolveKVVersion(key string, cli *vault.Client) (string, bool, error) {
+	if res, ok := p.lookupKVVersion(key); ok {
+		return res.mountPath, res.v2, nil
 	}
 
-	return res, nil
+	v, err, _ := p.sfVersion.Do(key, func() (interface{}, error) {
+		// Another flight may have populated the cache while this one waited.
+		if res, ok := p.lookupKVVersion(key); ok {
+			return res, nil
+		}
+
+		mountPath, v2, err := isKVv2(key, cli)
+		if err != nil {
+			return kvVersionResult{}, err
+		}
+		res := kvVersionResult{mountPath: mountPath, v2: v2}
+
+		// Cache by mount path so sibling secrets under the same mount reuse this
+		// preflight. Normalize to a trailing slash so the prefix match in
+		// lookupKVVersion is segment-safe (e.g. mount "secret/" never matches
+		// path "secretv2/x"). Fall back to the full key when Vault reports no
+		// mount (e.g. older servers); that entry is matched exactly, never by
+		// prefix, so it still avoids repeat preflights for that path.
+		cacheKey := mountPath
+		if cacheKey == "" {
+			cacheKey = key
+		} else if !strings.HasSuffix(cacheKey, "/") {
+			cacheKey += "/"
+		}
+		p.mu.Lock()
+		p.kvVersionCache[cacheKey] = res
+		p.mu.Unlock()
+
+		return res, nil
+	})
+	if err != nil {
+		return "", false, err
+	}
+
+	res := v.(kvVersionResult)
+	return res.mountPath, res.v2, nil
+}
+
+// lookupKVVersion returns a cached preflight result whose mount covers key.
+func (p *provider) lookupKVVersion(key string) (kvVersionResult, bool) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	// Exact match (also covers the empty-mount fallback keyed by full path).
+	if res, ok := p.kvVersionCache[key]; ok {
+		return res, true
+	}
+
+	// Otherwise reuse any cached mount that covers this path so sibling secrets
+	// under the same mount skip the preflight. Only trailing-slash mount entries
+	// are prefix-matched; empty-mount fallbacks are full secret paths and only
+	// ever match exactly above. Comparing key+"/" against the slash-terminated
+	// mount keeps the match segment-safe ("secret/" matches "secret" and
+	// "secret/foo" but not "secretv2/x").
+	for mount, res := range p.kvVersionCache {
+		if !strings.HasSuffix(mount, "/") {
+			continue
+		}
+		if strings.HasPrefix(key+"/", mount) {
+			return res, true
+		}
+	}
+
+	return kvVersionResult{}, false
 }
 
 func (p *provider) ensureClient() (*vault.Client, error) {
+	// Serialize creation/auth so concurrent first callers don't race building
+	// the client or double-run the login flow (cli.SetToken).
+	p.clientMu.Lock()
+	defer p.clientMu.Unlock()
 	if p.client == nil {
 		cfg := vault.DefaultConfig()
 		if p.Address != "" {
