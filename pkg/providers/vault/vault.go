@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	vault "github.com/hashicorp/vault/api"
+	"golang.org/x/sync/singleflight"
 
 	"github.com/helmfile/vals/pkg/api"
 	"github.com/helmfile/vals/pkg/log"
@@ -26,19 +27,20 @@ const (
 // $ vault secrets enable -path mykv kv
 //
 //	Success! Enabled the kv secrets engine at: mykv/
-type provider struct { //nolint:govet // fieldalignment: unsafe.Sizeof confirms no padding waste; tool reports a false discrepancy
+type provider struct {
 	client *vault.Client
 	log    *log.Logger
 
-	// kvVersionCache caches isKVv2 preflight results per mount path so each
-	// mount only costs one Vault API call per provider lifetime. Mount KV
-	// versions are immutable at runtime, so the cache never needs clearing.
-	// secretMapCache caches GetStringMap results so multiple keys under the
-	// same path cost only one Vault read per provider lifetime.
-	// mu protects both caches for concurrent callers (e.g. vals-operator).
+	// kvVersionCache caches isKVv2 preflight results keyed by mount path. Mount
+	// KV versions are immutable at runtime, so the cache never needs clearing
+	// and every secret under a mount shares a single preflight.
 	kvVersionCache map[string]kvVersionResult
-	secretMapCache map[string]map[string]interface{}
-	mu             sync.Mutex
+	// sfVersion dedupes concurrent isKVv2 preflights for the same path so a
+	// burst of first-time callers triggers a single Vault request.
+	sfVersion singleflight.Group
+	// sfRead dedupes concurrent secret reads for the same path so N concurrent
+	// callers cost one Vault read (one token use) instead of N.
+	sfRead singleflight.Group
 
 	Address      string
 	Namespace    string
@@ -54,6 +56,12 @@ type provider struct { //nolint:govet // fieldalignment: unsafe.Sizeof confirms 
 	PasswordFile string
 	Version      string
 	Decode       string
+
+	// mu protects kvVersionCache for concurrent callers (e.g. vals-operator).
+	mu sync.Mutex
+	// clientMu serializes lazy client creation/authentication so concurrent
+	// first callers don't race while building p.client.
+	clientMu sync.Mutex
 }
 
 type kvVersionResult struct {
@@ -127,7 +135,6 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 		p.Decode = "raw"
 	}
 	p.kvVersionCache = make(map[string]kvVersionResult)
-	p.secretMapCache = make(map[string]map[string]interface{})
 
 	return p
 }
@@ -171,32 +178,39 @@ func (p *provider) decodeString(key, s string) (string, error) {
 }
 
 func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
-	p.mu.Lock()
-	if cachedMap, ok := p.secretMapCache[key]; ok {
-		p.mu.Unlock()
-		return cachedMap, nil
+	// singleflight collapses a burst of concurrent reads for the same path into
+	// a single Vault read, so vals-operator's parallel callers spend one token
+	// use instead of one per goroutine (#1204). Reads are not cached between
+	// calls, so rotated secrets are always picked up on the next read.
+	v, err, _ := p.sfRead.Do(key, func() (interface{}, error) {
+		return p.readSecretMap(key)
+	})
+	if err != nil {
+		return nil, err
 	}
-	cachedVer, verHit := p.kvVersionCache[key]
-	p.mu.Unlock()
 
+	// The singleflight result is shared by reference among all callers in the
+	// flight; return a per-caller copy so a caller mutating the map can't
+	// corrupt another caller's view.
+	secrets := v.(map[string]interface{})
+	res := make(map[string]interface{}, len(secrets))
+	for k, val := range secrets {
+		res[k] = val
+	}
+
+	return res, nil
+}
+
+// readSecretMap performs a single, uncached Vault read for key.
+func (p *provider) readSecretMap(key string) (map[string]interface{}, error) {
 	cli, err := p.ensureClient()
 	if err != nil {
 		return nil, fmt.Errorf("Cannot create Vault Client: %v", err)
 	}
 
-	var mountPath string
-	var v2 bool
-	if verHit {
-		mountPath = cachedVer.mountPath
-		v2 = cachedVer.v2
-	} else {
-		mountPath, v2, err = isKVv2(key, cli)
-		if err != nil {
-			return nil, err
-		}
-		p.mu.Lock()
-		p.kvVersionCache[key] = kvVersionResult{mountPath: mountPath, v2: v2}
-		p.mu.Unlock()
+	mountPath, v2, err := p.resolveKVVersion(key, cli)
+	if err != nil {
+		return nil, err
 	}
 
 	readKey := key
@@ -236,14 +250,79 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 		res[k] = v
 	}
 
-	p.mu.Lock()
-	p.secretMapCache[key] = res
-	p.mu.Unlock()
-
 	return res, nil
 }
 
+// resolveKVVersion returns the mount path and KV-v2 flag for key, reusing a
+// cached preflight result for the key's mount when available and otherwise
+// running (and deduping) a single isKVv2 preflight per mount.
+func (p *provider) resolveKVVersion(key string, cli *vault.Client) (string, bool, error) {
+	if res, ok := p.lookupKVVersion(key); ok {
+		return res.mountPath, res.v2, nil
+	}
+
+	v, err, _ := p.sfVersion.Do(key, func() (interface{}, error) {
+		// Another flight may have populated the cache while this one waited.
+		if res, ok := p.lookupKVVersion(key); ok {
+			return res, nil
+		}
+
+		mountPath, v2, err := isKVv2(key, cli)
+		if err != nil {
+			return kvVersionResult{}, err
+		}
+		res := kvVersionResult{mountPath: mountPath, v2: v2}
+
+		// Cache by mount path so sibling secrets under the same mount reuse this
+		// preflight. Fall back to the full key when Vault reports no mount (e.g.
+		// older servers), which still avoids repeat preflights for that path.
+		cacheKey := mountPath
+		if cacheKey == "" {
+			cacheKey = key
+		}
+		p.mu.Lock()
+		p.kvVersionCache[cacheKey] = res
+		p.mu.Unlock()
+
+		return res, nil
+	})
+	if err != nil {
+		return "", false, err
+	}
+
+	res := v.(kvVersionResult)
+	return res.mountPath, res.v2, nil
+}
+
+// lookupKVVersion returns a cached preflight result whose mount covers key.
+func (p *provider) lookupKVVersion(key string) (kvVersionResult, bool) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	// Exact match (also covers the empty-mount fallback keyed by full path).
+	if res, ok := p.kvVersionCache[key]; ok {
+		return res, true
+	}
+
+	// Otherwise reuse any cached mount that is a prefix of this path so sibling
+	// secrets under the same mount skip the preflight.
+	for mount, res := range p.kvVersionCache {
+		if mount == "" {
+			continue
+		}
+		if key == strings.TrimSuffix(mount, "/") || strings.HasPrefix(key, mount) {
+			return res, true
+		}
+	}
+
+	return kvVersionResult{}, false
+}
+
 func (p *provider) ensureClient() (*vault.Client, error) {
+	// Serialize creation/auth so concurrent first callers don't race building
+	// the client or double-run the login flow (cli.SetToken).
+	p.clientMu.Lock()
+	defer p.clientMu.Unlock()
 	if p.client == nil {
 		cfg := vault.DefaultConfig()
 		if p.Address != "" {
