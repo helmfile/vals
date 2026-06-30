@@ -152,6 +152,55 @@ func TestPreflightCachedPerMount(t *testing.T) {
 	}
 }
 
+// TestLookupKVVersion_SiblingMountPrefix locks in the segment-safe prefix match:
+// a cached mount must serve its own children and root but never a textually
+// prefixed but distinct mount (secret/ vs secretv2/).
+func TestLookupKVVersion_SiblingMountPrefix(t *testing.T) {
+	p := newTestProvider(t, "http://127.0.0.1:8200")
+	p.kvVersionCache["secret/"] = kvVersionResult{mountPath: "secret/", v2: true}
+
+	cases := []struct {
+		key      string
+		wantOK   bool
+		wantV2   bool
+		describe string
+	}{
+		{"secret/app", true, true, "child of mount"},
+		{"secret", true, true, "mount root"},
+		{"secretv2/app", false, false, "distinct mount sharing textual prefix"},
+		{"other/app", false, false, "unrelated mount"},
+	}
+	for _, tc := range cases {
+		res, ok := p.lookupKVVersion(tc.key)
+		if ok != tc.wantOK {
+			t.Errorf("%s: lookupKVVersion(%q) ok = %v, want %v", tc.describe, tc.key, ok, tc.wantOK)
+			continue
+		}
+		if ok && res.v2 != tc.wantV2 {
+			t.Errorf("%s: lookupKVVersion(%q) v2 = %v, want %v", tc.describe, tc.key, res.v2, tc.wantV2)
+		}
+	}
+}
+
+// TestPreflightNormalizesMountWithoutSlash proves the cache key is normalized to
+// a trailing slash on insert: a mount reported without one still lets sibling
+// secrets reuse a single preflight via the segment-safe prefix match.
+func TestPreflightNormalizesMountWithoutSlash(t *testing.T) {
+	fv := newFakeVault(t, "secret", "2", map[string]interface{}{"foo": "bar"})
+	p := newTestProvider(t, fv.server.URL)
+
+	if _, err := p.GetStringMap("secret/app1"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := p.GetStringMap("secret/app2"); err != nil {
+		t.Fatal(err)
+	}
+
+	if got := fv.preflights.Load(); got != 1 {
+		t.Errorf("preflights = %d, want 1 (mount normalized to trailing slash)", got)
+	}
+}
+
 func TestGetString(t *testing.T) {
 	fv := newFakeVault(t, "secret/", "2", map[string]interface{}{"username": "alice"})
 	p := newTestProvider(t, fv.server.URL)
