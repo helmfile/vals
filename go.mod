@@ -18,7 +18,7 @@ require (
 	github.com/antchfx/xpath v1.3.6
 	github.com/aws/aws-sdk-go v1.55.8
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.42.5
-	github.com/aws/aws-sdk-go-v2/service/ssm v1.69.5
+	github.com/aws/aws-sdk-go-v2/service/ssm v1.70.0
 	github.com/cyberark/conjur-api-go v0.15.0
 	github.com/fujiwara/tfstate-lookup v1.12.1
 	github.com/getsops/sops/v3 v3.13.2
