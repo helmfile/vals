@@ -35,7 +35,7 @@ require (
 	github.com/yandex-cloud/go-genproto v0.91.0
 	github.com/yandex-cloud/go-sdk v0.31.0
 	golang.org/x/oauth2 v0.36.0
-	google.golang.org/api v0.287.0
+	google.golang.org/api v0.288.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.36.2
 	k8s.io/client-go v0.36.2
@@ -251,8 +251,8 @@ require (
 	golang.org/x/time v0.15.0 // indirect
 	google.golang.org/genproto v0.0.0-20260622175928-b703f567277d // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260622175928-b703f567277d // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260622175928-b703f567277d // indirect
-	google.golang.org/grpc v1.81.1 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260630182238-925bb5da69e7 // indirect
+	google.golang.org/grpc v1.82.0 // indirect
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // indirect
 	gopkg.in/gookit/color.v1 v1.1.6 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
