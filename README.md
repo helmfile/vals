@@ -720,7 +720,7 @@ $ echo 'foo: ref+tfstateazurerm://my_rg/my_storage_account/terraform-backend/uni
 
 ### Terraform in Terraform Cloud / Terraform Enterprise (tfstateremote)
 
-- `ref+tfstateremote://app.terraform.io/{org}/{myworkspace}/RESOURCE_NAME[?tfe_token=TFE_TOKEN&tfe_credentials_file=PATH]`
+- `ref+tfstateremote://app.terraform.io/{org}/{myworkspace}/RESOURCE_NAME[?tfe_token=TFE_TOKEN or tfe_credentials_file=PATH]`
 
 Examples:
 
@@ -746,7 +746,7 @@ The API token is resolved in the following order of precedence:
 2. the `TFE_TOKEN` environment variable
 3. the token stored by `terraform login` / `tofu login` in `credentials.tfrc.json`
 
-The credentials file is the one written when you authenticate with `terraform login` or `tofu login`, so no extra setup is needed once you are logged in. It is looked up at `$HOME/.terraform.d/credentials.tfrc.json` (used by both Terraform and OpenTofu) and then at `$XDG_CONFIG_HOME/opentofu/credentials.tfrc.json` (used by OpenTofu when `XDG_CONFIG_HOME` is set). The token stored for the requested host (e.g. `app.terraform.io`) is used. A non-default location can be pointed at with the `tfe_credentials_file` option; a configured file that cannot be read or parsed fails with an error.
+The credentials file is read from `$HOME/.terraform.d/credentials.tfrc.json`, then from `$XDG_CONFIG_HOME/opentofu/credentials.tfrc.json`, using the token stored for the requested host (e.g. `app.terraform.io`). A non-default location can be set with the `tfe_credentials_file` option.
 
 ### Terraform in GitLab (tfstategitlab)
 
