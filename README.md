@@ -720,7 +720,8 @@ $ echo 'foo: ref+tfstateazurerm://my_rg/my_storage_account/terraform-backend/uni
 
 ### Terraform in Terraform Cloud / Terraform Enterprise (tfstateremote)
 
-- `ref+tfstateremote://app.terraform.io/{org}/{myworkspace}/RESOURCE_NAME[?tfe_token=TFE_TOKEN or tfe_credentials_file=PATH]`
+- `ref+tfstateremote://app.terraform.io/{org}/{myworkspace}/RESOURCE_NAME[?tfe_token=TOKEN]`
+- `ref+tfstateremote://app.terraform.io/{org}/{myworkspace}/RESOURCE_NAME[?tfe_credentials_file=PATH]`
 
 Examples:
 
