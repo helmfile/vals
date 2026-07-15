@@ -738,6 +738,19 @@ which is equivalent to the following input for `vals`:
 $ echo 'foo: ref+tfstateremote://app.terraform.io/myorg/myworkspace/output.virtual_network.name' | vals eval -f -
 ```
 
+The API token is resolved in the following order of precedence:
+
+1. the `tfe_token` option (via the `providers` config or a `ref+` URL query parameter)
+2. the `TFE_TOKEN` environment variable
+3. the token stored by `terraform login` / `tofu login` in `credentials.tfrc.json`
+
+The credentials file is the one written when you authenticate with `terraform login` or `tofu login`, so no extra setup is needed once you are logged in. It is looked up at `$HOME/.terraform.d/credentials.tfrc.json` (used by both Terraform and OpenTofu) and, when that directory does not exist, at `$XDG_CONFIG_HOME/opentofu/credentials.tfrc.json` (OpenTofu). The token stored for the requested host (e.g. `app.terraform.io`) is used. A non-default location can be pointed at with the `tfe_credentials_file` option.
+
+Examples:
+
+- `ref+tfstateremote://app.terraform.io/myorg/myworkspace/output.virtual_network.name?tfe_token=xxxx`
+- `ref+tfstateremote://tfe.example.com/myorg/myworkspace/output.virtual_network.name?tfe_credentials_file=/custom/path/credentials.tfrc.json`
+
 ### Terraform in GitLab (tfstategitlab)
 
 - `ref+tfstategitlab://{gitlab_host}/api/v4/projects/{project_id}/terraform/state/{state_name}/RESOURCE_NAME[?gitlab_user=GITLAB_USER&gitlab_token=GITLAB_TOKEN]`
