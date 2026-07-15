@@ -2,8 +2,10 @@ package tfstate
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // terraformCredentials mirrors the structure of the credentials file written by
@@ -21,8 +23,8 @@ type terraformCredentials struct {
 // defaults:
 //
 //   - $HOME/.terraform.d/credentials.tfrc.json (Terraform and OpenTofu default)
-//   - $XDG_CONFIG_HOME/opentofu/credentials.tfrc.json (OpenTofu when the legacy
-//     ~/.terraform.d directory is absent)
+//   - $XDG_CONFIG_HOME/opentofu/credentials.tfrc.json (OpenTofu when
+//     XDG_CONFIG_HOME is set and the legacy ~/.terraform.d directory is absent)
 func credentialsFileCandidates() []string {
 	const fileName = "credentials.tfrc.json"
 
@@ -36,17 +38,29 @@ func credentialsFileCandidates() []string {
 	return candidates
 }
 
-// tokenFromCredentialsFile reads the API token for hostname from the first
-// readable Terraform / OpenTofu credentials file (credentials.tfrc.json). When
-// path is non-empty it is used instead of the default candidate locations. It
-// returns an empty string when no file is found or the host has no stored token.
-func tokenFromCredentialsFile(path, hostname string) string {
-	candidates := []string{path}
-	if path == "" {
-		candidates = credentialsFileCandidates()
+// tokenFromCredentialsFile reads the API token for hostname from a Terraform /
+// OpenTofu credentials file (credentials.tfrc.json). The hostname is lowercased
+// before the lookup, matching the normalized form terraform login stores in the
+// file. When path is non-empty it is used instead of the default candidate
+// locations and must be readable and valid JSON; a default location that is
+// missing or unreadable is silently skipped. It returns an empty string when no
+// file is found or the host has no stored token.
+func tokenFromCredentialsFile(path, hostname string) (string, error) {
+	hostname = strings.ToLower(hostname)
+
+	if path != "" {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return "", fmt.Errorf("reading tfe_credentials_file: %w", err)
+		}
+		var creds terraformCredentials
+		if err := json.Unmarshal(data, &creds); err != nil {
+			return "", fmt.Errorf("parsing tfe_credentials_file %s: %w", path, err)
+		}
+		return creds.Credentials[hostname].Token, nil
 	}
 
-	for _, c := range candidates {
+	for _, c := range credentialsFileCandidates() {
 		data, err := os.ReadFile(c)
 		if err != nil {
 			continue
@@ -56,10 +70,10 @@ func tokenFromCredentialsFile(path, hostname string) string {
 			continue
 		}
 		if entry, ok := creds.Credentials[hostname]; ok && entry.Token != "" {
-			return entry.Token
+			return entry.Token, nil
 		}
 	}
-	return ""
+	return "", nil
 }
 
 // resolveTFEToken resolves the Terraform Cloud / Enterprise API token for
@@ -69,12 +83,12 @@ func tokenFromCredentialsFile(path, hostname string) string {
 //  2. the TFE_TOKEN environment variable
 //  3. the token stored by `terraform login` / `tofu login` in
 //     credentials.tfrc.json
-func (p *provider) resolveTFEToken(hostname string) string {
+func (p *provider) resolveTFEToken(hostname string) (string, error) {
 	if p.tfeToken != "" {
-		return p.tfeToken
+		return p.tfeToken, nil
 	}
 	if token := os.Getenv("TFE_TOKEN"); token != "" {
-		return token
+		return token, nil
 	}
 	return tokenFromCredentialsFile(p.tfeCredentialsFile, hostname)
 }

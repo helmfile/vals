@@ -115,11 +115,12 @@ func (p *provider) ReadTFState(f, k string) (*tfstate.TFState, error) {
 	// back to the credentials file written by `terraform login` / `tofu login`)
 	// and export it around the read, restoring the previous value afterwards.
 	if p.backend == "remote" {
-		hostname := f
-		if idx := strings.Index(f, "/"); idx >= 0 {
-			hostname = f[:idx]
+		hostname, _, _ := strings.Cut(f, "/")
+		token, err := p.resolveTFEToken(hostname)
+		if err != nil {
+			return nil, err
 		}
-		if token := p.resolveTFEToken(hostname); token != "" {
+		if token != "" {
 			v, wasSet := os.LookupEnv("TFE_TOKEN")
 			if err := os.Setenv("TFE_TOKEN", token); err != nil {
 				return nil, fmt.Errorf("setting TFE_TOKEN envvar: %w", err)

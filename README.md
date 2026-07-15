@@ -720,11 +720,13 @@ $ echo 'foo: ref+tfstateazurerm://my_rg/my_storage_account/terraform-backend/uni
 
 ### Terraform in Terraform Cloud / Terraform Enterprise (tfstateremote)
 
-- `ref+tfstateremote://app.terraform.io/{org}/{myworkspace}/RESOURCE_NAME`
+- `ref+tfstateremote://app.terraform.io/{org}/{myworkspace}/RESOURCE_NAME[?tfe_token=TFE_TOKEN&tfe_credentials_file=PATH]`
 
 Examples:
 
 - `ref+tfstateremote://app.terraform.io/myorg/myworkspace/output.virtual_network.name`
+- `ref+tfstateremote://app.terraform.io/myorg/myworkspace/output.virtual_network.name?tfe_token=xxxx`
+- `ref+tfstateremote://tfe.example.com/myorg/myworkspace/output.virtual_network.name?tfe_credentials_file=/custom/path/credentials.tfrc.json`
 
 It allows to use Terraform state stored in Terraform Cloud / Terraform Enterprise given the resource group, the organization and the workspace. You can try to read the state with command (with exported variable `TFE_TOKEN`):
 
@@ -744,12 +746,7 @@ The API token is resolved in the following order of precedence:
 2. the `TFE_TOKEN` environment variable
 3. the token stored by `terraform login` / `tofu login` in `credentials.tfrc.json`
 
-The credentials file is the one written when you authenticate with `terraform login` or `tofu login`, so no extra setup is needed once you are logged in. It is looked up at `$HOME/.terraform.d/credentials.tfrc.json` (used by both Terraform and OpenTofu) and, when that directory does not exist, at `$XDG_CONFIG_HOME/opentofu/credentials.tfrc.json` (OpenTofu). The token stored for the requested host (e.g. `app.terraform.io`) is used. A non-default location can be pointed at with the `tfe_credentials_file` option.
-
-Examples:
-
-- `ref+tfstateremote://app.terraform.io/myorg/myworkspace/output.virtual_network.name?tfe_token=xxxx`
-- `ref+tfstateremote://tfe.example.com/myorg/myworkspace/output.virtual_network.name?tfe_credentials_file=/custom/path/credentials.tfrc.json`
+The credentials file is the one written when you authenticate with `terraform login` or `tofu login`, so no extra setup is needed once you are logged in. It is looked up at `$HOME/.terraform.d/credentials.tfrc.json` (used by both Terraform and OpenTofu) and then at `$XDG_CONFIG_HOME/opentofu/credentials.tfrc.json` (used by OpenTofu when `XDG_CONFIG_HOME` is set). The token stored for the requested host (e.g. `app.terraform.io`) is used. A non-default location can be pointed at with the `tfe_credentials_file` option; a configured file that cannot be read or parsed fails with an error.
 
 ### Terraform in GitLab (tfstategitlab)
 
