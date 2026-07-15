@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -115,7 +116,9 @@ func (p *provider) ReadTFState(f, k string) (*tfstate.TFState, error) {
 	// back to the credentials file written by `terraform login` / `tofu login`)
 	// and export it around the read, restoring the previous value afterwards.
 	if p.backend == "remote" {
-		hostname, _, _ := strings.Cut(f, "/")
+		// f is joined with os.PathSeparator in GetString, so normalize it to
+		// forward slashes before extracting the hostname.
+		hostname, _, _ := strings.Cut(filepath.ToSlash(f), "/")
 		token, err := p.resolveTFEToken(hostname)
 		if err != nil {
 			return nil, err
