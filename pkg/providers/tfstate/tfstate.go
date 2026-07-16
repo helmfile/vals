@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -22,12 +23,14 @@ import (
 const gitlabStateHTTPTimeout = 30 * time.Second
 
 type provider struct {
-	backend          string
-	awsProfile       string
-	azSubscriptionId string
-	gitlabUser       string
-	gitlabToken      string
-	gitlabScheme     string
+	backend            string
+	awsProfile         string
+	azSubscriptionId   string
+	gitlabUser         string
+	gitlabToken        string
+	gitlabScheme       string
+	tfeToken           string
+	tfeCredentialsFile string
 }
 
 func New(cfg api.StaticConfig, backend string) *provider {
@@ -38,6 +41,8 @@ func New(cfg api.StaticConfig, backend string) *provider {
 	p.gitlabUser = cfg.String("gitlab_user")
 	p.gitlabToken = cfg.String("gitlab_token")
 	p.gitlabScheme = cfg.String("gitlab_scheme")
+	p.tfeToken = cfg.String("tfe_token")
+	p.tfeCredentialsFile = cfg.String("tfe_credentials_file")
 	return p
 }
 
@@ -104,6 +109,33 @@ func (p *provider) ReadTFState(f, k string) (*tfstate.TFState, error) {
 		defer func() {
 			_ = os.Setenv("AZURE_SUBSCRIPTION_ID", v)
 		}()
+	}
+
+	// tfstate-lookup's "remote" backend reads the Terraform Cloud / Enterprise
+	// token exclusively from the TFE_TOKEN envvar. Resolve the token (falling
+	// back to the credentials file written by `terraform login` / `tofu login`)
+	// and export it around the read, restoring the previous value afterwards.
+	if p.backend == "remote" {
+		// f is joined with os.PathSeparator in GetString, so normalize it to
+		// forward slashes before extracting the hostname.
+		hostname, _, _ := strings.Cut(filepath.ToSlash(f), "/")
+		token, err := p.resolveTFEToken(hostname)
+		if err != nil {
+			return nil, err
+		}
+		if token != "" {
+			v, wasSet := os.LookupEnv("TFE_TOKEN")
+			if err := os.Setenv("TFE_TOKEN", token); err != nil {
+				return nil, fmt.Errorf("setting TFE_TOKEN envvar: %w", err)
+			}
+			defer func() {
+				if wasSet {
+					_ = os.Setenv("TFE_TOKEN", v)
+				} else {
+					_ = os.Unsetenv("TFE_TOKEN")
+				}
+			}()
+		}
 	}
 
 	switch p.backend {

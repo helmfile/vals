@@ -720,11 +720,14 @@ $ echo 'foo: ref+tfstateazurerm://my_rg/my_storage_account/terraform-backend/uni
 
 ### Terraform in Terraform Cloud / Terraform Enterprise (tfstateremote)
 
-- `ref+tfstateremote://app.terraform.io/{org}/{myworkspace}/RESOURCE_NAME`
+- `ref+tfstateremote://app.terraform.io/{org}/{myworkspace}/RESOURCE_NAME[?tfe_token=TOKEN]`
+- `ref+tfstateremote://app.terraform.io/{org}/{myworkspace}/RESOURCE_NAME[?tfe_credentials_file=PATH]`
 
 Examples:
 
 - `ref+tfstateremote://app.terraform.io/myorg/myworkspace/output.virtual_network.name`
+- `ref+tfstateremote://app.terraform.io/myorg/myworkspace/output.virtual_network.name?tfe_token=xxxx`
+- `ref+tfstateremote://tfe.example.com/myorg/myworkspace/output.virtual_network.name?tfe_credentials_file=/custom/path/credentials.tfrc.json`
 
 It allows to use Terraform state stored in Terraform Cloud / Terraform Enterprise given the resource group, the organization and the workspace. You can try to read the state with command (with exported variable `TFE_TOKEN`):
 
@@ -737,6 +740,14 @@ which is equivalent to the following input for `vals`:
 ```
 $ echo 'foo: ref+tfstateremote://app.terraform.io/myorg/myworkspace/output.virtual_network.name' | vals eval -f -
 ```
+
+The API token is resolved in the following order of precedence:
+
+1. the `tfe_token` option (via the `providers` config or a `ref+` URL query parameter)
+2. the `TFE_TOKEN` environment variable
+3. the token stored by `terraform login` / `tofu login` in `credentials.tfrc.json`
+
+The credentials file is read from `$HOME/.terraform.d/credentials.tfrc.json`, then from `$XDG_CONFIG_HOME/opentofu/credentials.tfrc.json`, using the token stored for the requested host (e.g. `app.terraform.io`). A non-default location can be set with the `tfe_credentials_file` option.
 
 ### Terraform in GitLab (tfstategitlab)
 
