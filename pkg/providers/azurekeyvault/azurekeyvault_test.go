@@ -2,10 +2,37 @@ package azurekeyvault
 
 import (
 	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 )
+
+func Test_getClientForKeyVault_concurrent(t *testing.T) {
+	// Use the managed identity credential constructor because it doesn't
+	// require external tooling (e.g., Azure CLI) and the test never fetches
+	// a token.
+	t.Setenv("AZKV_AUTH", "managed")
+
+	p := New(nil)
+
+	var wg sync.WaitGroup
+	for i := 0; i < 100; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			vaultBaseURL := fmt.Sprintf("https://test-vault-%d.vault.azure.net", i%10)
+			if _, err := p.getClientForKeyVault(vaultBaseURL); err != nil {
+				t.Errorf("getClientForKeyVault(%q): %v", vaultBaseURL, err)
+			}
+		}(i)
+	}
+	wg.Wait()
+
+	if len(p.clients) != 10 {
+		t.Errorf("expected 10 cached clients, got %d", len(p.clients))
+	}
+}
 
 func Test_parseKey(t *testing.T) {
 	testcases := []struct {
