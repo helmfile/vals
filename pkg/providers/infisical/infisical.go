@@ -83,9 +83,37 @@ func auth(p *provider) error {
 	case util.GCP_ID_TOKEN:
 		// reads INFISICAL_GCP_AUTH_IDENTITY_ID from env
 		_, err = p.client.Auth().GcpIdTokenAuthLogin("")
+	case util.OIDC_AUTH:
+		// reads INFISICAL_OIDC_AUTH_IDENTITY_ID from env; JWT from INFISICAL_AUTH_JWT / INFISICAL_JWT
+		var jwt string
+		jwt, err = oidcJWTFromEnv()
+		if err != nil {
+			return err
+		}
+		_, err = p.client.Auth().OidcAuthLogin("", jwt)
 	}
 
 	return err
+}
+
+// oidcJWTFromEnv resolves the OIDC JWT using Infisical Terraform/CLI conventions.
+// Token env name defaults to INFISICAL_AUTH_JWT, overridable via INFISICAL_OIDC_AUTH_TOKEN_KEY_NAME.
+// Falls back to INFISICAL_JWT for CLI compatibility.
+func oidcJWTFromEnv() (string, error) {
+	tokenEnv := os.Getenv("INFISICAL_OIDC_AUTH_TOKEN_KEY_NAME")
+	if tokenEnv == "" {
+		tokenEnv = "INFISICAL_AUTH_JWT"
+	}
+
+	jwt := os.Getenv(tokenEnv)
+	if jwt == "" && tokenEnv != "INFISICAL_JWT" {
+		jwt = os.Getenv("INFISICAL_JWT")
+	}
+	if jwt == "" {
+		return "", fmt.Errorf("OIDC_AUTH requires an OIDC JWT: set %s (or INFISICAL_JWT)", tokenEnv)
+	}
+
+	return jwt, nil
 }
 
 func parseAuthMethod(s string) (util.AuthMethod, error) {
@@ -98,7 +126,8 @@ func parseAuthMethod(s string) (util.AuthMethod, error) {
 		util.GCP_IAM,
 		util.AWS_IAM,
 		util.KUBERNETES,
-		util.AZURE:
+		util.AZURE,
+		util.OIDC_AUTH:
 		return authMethod, nil
 	default:
 		return "", fmt.Errorf("invalid value of INFISICAL_AUTH_METHOD: %q", s)

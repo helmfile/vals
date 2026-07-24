@@ -1274,7 +1274,7 @@ This provider allows retrieval of secrets from [Infisical](https://infisical.com
 Environment variables:
 
 - `INFISICAL_URL`: the Infisical instance URL, defaults to the SaaS (`https://app.infisical.com`).
-- `INFISICAL_AUTH_METHOD` (required): the authentication method, one of: `UNIVERSAL_AUTH`, `KUBERNETES`, `AWS_IAM`, `AZURE`, `GCP_IAM`, `GCP_ID_TOKEN`.
+- `INFISICAL_AUTH_METHOD` (required): the authentication method, one of: `UNIVERSAL_AUTH`, `KUBERNETES`, `AWS_IAM`, `AZURE`, `GCP_IAM`, `GCP_ID_TOKEN`, `OIDC_AUTH`.
 
 Parameters:
 
@@ -1310,6 +1310,42 @@ Depending on which one is chosen with the `INFISICAL_AUTH_METHOD` environment va
   - `INFISICAL_GCP_IAM_SERVICE_ACCOUNT_KEY_FILE_PATH`: the path to your GCP service account key file.
 - **GCP ID Token**: `GCP_ID_TOKEN`
   - `INFISICAL_GCP_AUTH_IDENTITY_ID`: your Infisical Machine Identity ID.
+- **OIDC Auth**: `OIDC_AUTH`
+  - `INFISICAL_OIDC_AUTH_IDENTITY_ID`: your Infisical Machine Identity ID.
+  - `INFISICAL_AUTH_JWT` (or `INFISICAL_JWT`): the OIDC JWT from your identity provider. Obtaining the JWT is the caller's responsibility (any OIDC IdP). Optionally set `INFISICAL_OIDC_AUTH_TOKEN_KEY_NAME` to read the JWT from a different environment variable (defaults to `INFISICAL_AUTH_JWT`).
+
+##### GitHub Actions (OIDC)
+
+Configure a machine identity with [OIDC Auth for GitHub](https://infisical.com/docs/documentation/platform/identities/oidc-auth/github) (discovery URL / issuer `https://token.actions.githubusercontent.com`, plus your bound subject/audiences/claims). The workflow must request an ID token, export it as `INFISICAL_AUTH_JWT`, then run `vals`:
+
+```yaml
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Request OIDC token
+        run: |
+          TOKEN=$(curl -sS -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=https://github.com/${{ github.repository_owner }}" \
+            | jq -r '.value')
+          echo "::add-mask::$TOKEN"
+          echo "INFISICAL_AUTH_JWT=$TOKEN" >> "$GITHUB_ENV"
+
+      - name: Resolve secrets with vals
+        env:
+          INFISICAL_AUTH_METHOD: OIDC_AUTH
+          INFISICAL_OIDC_AUTH_IDENTITY_ID: ${{ vars.INFISICAL_OIDC_AUTH_IDENTITY_ID }}
+          # Optional: INFISICAL_URL for self-hosted / EU
+        run: vals eval -f refs.yaml
+```
+
+Match the `audience` query parameter to the audiences configured on the Infisical machine identity. `INFISICAL_OIDC_AUTH_IDENTITY_ID` is not secret and can live in repository variables.
 
 ### SecretServer
 
