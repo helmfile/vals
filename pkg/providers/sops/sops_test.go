@@ -238,6 +238,30 @@ func TestNewProviderDefaultKeyType(t *testing.T) {
 	}
 }
 
+func TestNewProviderDefaultEncode(t *testing.T) {
+	cfg := config.MapConfig{M: map[string]interface{}{}}
+
+	p := New(log.New(log.Config{}), cfg, "")
+
+	if p.Encode != "raw" {
+		t.Errorf("Encode = %q, want %q (default)", p.Encode, "raw")
+	}
+}
+
+func TestNewProviderReadsEncodeBase64(t *testing.T) {
+	cfg := config.MapConfig{
+		M: map[string]interface{}{
+			"encode": "base64",
+		},
+	}
+
+	p := New(log.New(log.Config{}), cfg, "")
+
+	if p.Encode != "base64" {
+		t.Errorf("Encode = %q, want %q", p.Encode, "base64")
+	}
+}
+
 // staticCredProvider is a no-op aws.CredentialsProvider used in tests.
 type staticCredProvider struct{}
 

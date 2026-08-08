@@ -24,6 +24,7 @@ import (
 type provider struct {
 	log *log.Logger
 
+	Encode string
 	// KeyType is either "filepath"(default) or "base64".
 	KeyType string
 	// Format is --input-type of sops
@@ -38,6 +39,10 @@ type provider struct {
 func New(l *log.Logger, cfg api.StaticConfig, awsLogLevel string) *provider {
 	p := &provider{
 		log: l,
+	}
+	p.Encode = cfg.String("encode")
+	if p.Encode == "" {
+		p.Encode = "raw"
 	}
 	p.Format = cfg.String("format")
 	p.KeyType = cfg.String("key_type")
@@ -60,7 +65,14 @@ func (p *provider) GetString(key string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return string(cleartext), nil
+	switch p.Encode {
+	case "raw":
+		return string(cleartext), nil
+	case "base64":
+		return base64.StdEncoding.EncodeToString(cleartext), nil
+	default:
+		return "", fmt.Errorf("Unsupported encode parameter: '%s'.", p.Encode)
+	}
 }
 
 func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
