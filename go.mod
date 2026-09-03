@@ -32,7 +32,7 @@ require (
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.36
 	github.com/stretchr/testify v1.11.1
 	github.com/tidwall/gjson v1.19.0
-	github.com/yandex-cloud/go-genproto v0.115.0
+	github.com/yandex-cloud/go-genproto v0.116.0
 	github.com/yandex-cloud/go-sdk v0.33.0
 	golang.org/x/oauth2 v0.36.0
 	google.golang.org/api v0.293.0
