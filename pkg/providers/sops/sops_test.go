@@ -2,9 +2,22 @@ package sops
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 
+	filippoage "filippo.io/age"
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/getsops/sops/v3"
+	"github.com/getsops/sops/v3/aes"
+	sopsage "github.com/getsops/sops/v3/age"
+	"github.com/getsops/sops/v3/cmd/sops/common"
+	"github.com/getsops/sops/v3/cmd/sops/formats"
+	sopsconfig "github.com/getsops/sops/v3/config"
 	"github.com/getsops/sops/v3/keyservice"
 
 	"github.com/helmfile/vals/pkg/config"
@@ -259,6 +272,104 @@ func TestNewProviderReadsEncodeBase64(t *testing.T) {
 
 	if p.Encode != "base64" {
 		t.Errorf("Encode = %q, want %q", p.Encode, "base64")
+	}
+}
+
+// newAgeEncryptedSOPSFile encrypts branches with a fresh age key and writes
+// the resulting SOPS file to path. The SOPS_AGE_KEY env var is set so that the
+// provider's key service can decrypt it in-process.
+func newAgeEncryptedSOPSFile(t *testing.T, path string, branches sops.TreeBranches) {
+	t.Helper()
+
+	identity, err := filippoage.GenerateX25519Identity()
+	if err != nil {
+		t.Fatalf("failed to generate age identity: %v", err)
+	}
+	t.Setenv("SOPS_AGE_KEY", identity.String())
+
+	dataKey := make([]byte, 32)
+	if _, err := rand.Read(dataKey); err != nil {
+		t.Fatalf("failed to generate data key: %v", err)
+	}
+
+	masterKey := &sopsage.MasterKey{Recipient: identity.Recipient().String()}
+	if err := masterKey.Encrypt(dataKey); err != nil {
+		t.Fatalf("failed to encrypt data key with age: %v", err)
+	}
+
+	tree := sops.Tree{
+		Branches: branches,
+		Metadata: sops.Metadata{
+			KeyGroups: []sops.KeyGroup{{masterKey}},
+			Version:   "3.13.2",
+		},
+		FilePath: path,
+	}
+
+	cipher := aes.NewCipher()
+	mac, err := tree.Encrypt(dataKey, cipher)
+	if err != nil {
+		t.Fatalf("failed to encrypt tree: %v", err)
+	}
+	tree.Metadata.LastModified = time.Now().UTC()
+	tree.Metadata.MessageAuthenticationCode, err = cipher.Encrypt(mac, dataKey, tree.Metadata.LastModified.Format(time.RFC3339))
+	if err != nil {
+		t.Fatalf("failed to encrypt MAC: %v", err)
+	}
+
+	store := common.StoreForFormat(formats.FormatForPath(path), sopsconfig.NewStoresConfig())
+	encrypted, err := store.EmitEncryptedFile(tree)
+	if err != nil {
+		t.Fatalf("failed to emit encrypted file: %v", err)
+	}
+	if err := os.WriteFile(path, encrypted, 0o600); err != nil {
+		t.Fatalf("failed to write encrypted file: %v", err)
+	}
+}
+
+// TestGetStringEncode verifies the encode config option end to end: a real
+// age-encrypted SOPS file is decrypted by the provider and returned either as
+// raw text (default) or as a base64-encoded string.
+func TestGetStringEncode(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "secret.yaml")
+
+	newAgeEncryptedSOPSFile(t, path, sops.TreeBranches{
+		sops.TreeBranch{
+			{Key: "foo", Value: "bar"},
+		},
+	})
+
+	newProvider := func(encode string) *provider {
+		var cfg config.MapConfig
+		if encode == "" {
+			cfg = config.MapConfig{M: map[string]interface{}{}}
+		} else {
+			cfg = config.MapConfig{M: map[string]interface{}{"encode": encode}}
+		}
+		return New(log.New(log.Config{}), cfg, "")
+	}
+
+	raw, err := newProvider("").GetString(path)
+	if err != nil {
+		t.Fatalf("GetString with default encode failed: %v", err)
+	}
+	if !strings.Contains(raw, "foo: bar") {
+		t.Errorf("raw output = %q, want it to contain %q", raw, "foo: bar")
+	}
+
+	got, err := newProvider("base64").GetString(path)
+	if err != nil {
+		t.Fatalf("GetString with encode=base64 failed: %v", err)
+	}
+	if want := base64.StdEncoding.EncodeToString([]byte(raw)); got != want {
+		t.Errorf("GetString with encode=base64 = %q, want %q", got, want)
+	}
+
+	if _, err := newProvider("bogus").GetString(path); err == nil {
+		t.Error("GetString with encode=bogus: expected error, got nil")
+	} else if !strings.Contains(err.Error(), "Unsupported encode parameter") {
+		t.Errorf("GetString with encode=bogus: unexpected error: %v", err)
 	}
 }
 
