@@ -751,7 +751,7 @@ Examples:
 - `ref+sops://<base64>?key_type=base64` reads `<base64>` as the base64-encoded data to be decrypted by sops as `binary`
 - `ref+sops://path/to/file#/foo/bar` reads `path/to/file` as a `yaml` file and returns the value at `foo.bar`.
 - `ref+sops://path/to/file?format=json#/foo/bar` reads `path/to/file` as a `json` file and returns the value at `foo.bar`.
-- `ref+sops://path/to/file?encode=base64` reads `path/to/file`, decrypts it, and returns its whole content encoded as a base64 string (useful for e.g. `config.env` files consumed by Helm charts)
+- `ref+sops://path/to/file?encode=base64` reads `path/to/file` and returns the decrypted content encoded as a base64 string
 
 ### Keychain
 

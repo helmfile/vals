@@ -24,6 +24,8 @@ import (
 type provider struct {
 	log *log.Logger
 
+	// Encode is the output encoding of the decrypted content: "raw" (default) or "base64".
+	// It applies only to GetString (whole-content reads), not to GetStringMap (fragment reads).
 	Encode string
 	// KeyType is either "filepath"(default) or "base64".
 	KeyType string
