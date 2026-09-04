@@ -18,7 +18,7 @@ require (
 	github.com/antchfx/xpath v1.3.8
 	github.com/aws/aws-sdk-go v1.55.8
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.47.0
-	github.com/aws/aws-sdk-go-v2/service/ssm v1.73.0
+	github.com/aws/aws-sdk-go-v2/service/ssm v1.76.0
 	github.com/cyberark/conjur-api-go v0.15.5
 	github.com/fujiwara/tfstate-lookup v1.12.1
 	github.com/getsops/sops/v3 v3.13.2
@@ -130,7 +130,7 @@ require (
 	cloud.google.com/go v0.123.0 // indirect
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	cloud.google.com/go/iam v1.12.0 // indirect
-	filippo.io/age v1.3.1 // indirect
+	filippo.io/age v1.3.1
 	github.com/AlecAivazis/survey/v2 v2.3.6 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.12.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage v1.8.1 // indirect
