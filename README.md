@@ -808,7 +808,7 @@ $ echo 'foo: ref+tfstategitlab://my-gitlab.com/api/v4/projects/xx/terraform/stat
 
 ### SOPS
 
-- The whole content of a SOPS-encrypted file: `ref+sops://base64_data_or_path_to_file?key_type=[filepath|base64]&format=[binary|dotenv|yaml]`
+- The whole content of a SOPS-encrypted file: `ref+sops://base64_data_or_path_to_file?key_type=[filepath|base64]&format=[binary|dotenv|yaml]&encode=[raw|base64]`
 - The value for the specific path in an encrypted YAML/JSON document: `ref+sops://base64_data_or_path_to_file#/json_or_yaml_key/in/the_encrypted_doc`
 
 Note: When using an inline base64-encoded sops "file", be sure to use URL-safe Base64 encoding.
@@ -822,6 +822,7 @@ Examples:
 - `ref+sops://<base64>?key_type=base64` reads `<base64>` as the base64-encoded data to be decrypted by sops as `binary`
 - `ref+sops://path/to/file#/foo/bar` reads `path/to/file` as a `yaml` file and returns the value at `foo.bar`.
 - `ref+sops://path/to/file?format=json#/foo/bar` reads `path/to/file` as a `json` file and returns the value at `foo.bar`.
+- `ref+sops://path/to/file?encode=base64` reads `path/to/file` and returns the decrypted content encoded as a base64 string
 
 ### Keychain
 
