@@ -8,7 +8,7 @@ require (
 	cloud.google.com/go/storage v1.64.0
 	github.com/1Password/connect-sdk-go v1.5.3
 	github.com/1password/onepassword-sdk-go v0.3.1
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.22.0
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.23.1
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.14.0
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets v1.5.0
 	github.com/DelineaXPM/tss-sdk-go/v3 v3.0.2
@@ -30,7 +30,7 @@ require (
 	github.com/openbao/openbao/api/v2 v2.6.0
 	github.com/opencontainers/image-spec v1.1.1
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.36
-	github.com/stretchr/testify v1.11.1
+	github.com/stretchr/testify v1.12.1
 	github.com/tidwall/gjson v1.19.0
 	github.com/yandex-cloud/go-genproto v0.116.0
 	github.com/yandex-cloud/go-sdk v0.33.0
@@ -130,7 +130,7 @@ require (
 	cloud.google.com/go v0.123.0 // indirect
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	cloud.google.com/go/iam v1.12.0 // indirect
-	filippo.io/age v1.3.1 // indirect
+	filippo.io/age v1.3.1
 	github.com/AlecAivazis/survey/v2 v2.3.6 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.12.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage v1.8.1 // indirect
@@ -225,7 +225,6 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.9.4 // indirect
