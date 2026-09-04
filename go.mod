@@ -29,7 +29,7 @@ require (
 	github.com/infisical/go-sdk v0.8.0
 	github.com/openbao/openbao/api/v2 v2.6.0
 	github.com/opencontainers/image-spec v1.1.1
-	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.36
+	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.37
 	github.com/stretchr/testify v1.12.1
 	github.com/tidwall/gjson v1.19.0
 	github.com/yandex-cloud/go-genproto v0.116.0
