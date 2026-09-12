@@ -960,9 +960,9 @@ Examples:
 
 ### 1Password
 
-For this provider to work a working [service account token](https://developer.1password.com/docs/service-accounts/get-started/) is required.
-The following env var has to be configured:
-- `OP_SERVICE_ACCOUNT_TOKEN`
+When `OP_SERVICE_ACCOUNT_TOKEN` is set to a nonempty value, this provider uses the 1Password SDK with that service account token. If the variable is unset or empty, vals instead runs `op read --no-newline` with the installed [1Password CLI](https://developer.1password.com/docs/cli/get-started/), using its existing authentication (including the desktop app integration).
+
+For headless automation, set `OP_SERVICE_ACCOUNT_TOKEN`. For local CLI use, authenticate before running vals. Set `OP_ACCOUNT` when you need to select a specific account; otherwise, the CLI uses its current account. The `op` executable is resolved from `PATH`, invoked directly without a shell, and limited to 30 seconds per uncached secret.
 
 1Password is organized in vaults and items.
 An item can have multiple fields with or without a section. Labels can be set on fields and sections.
