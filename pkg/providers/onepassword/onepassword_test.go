@@ -79,6 +79,32 @@ func TestGetStringDoesNotFallBackWhenSDKResolveFails(t *testing.T) {
 	}
 }
 
+func TestGetStringReusesSDKClientAcrossCalls(t *testing.T) {
+	t.Setenv("OP_SERVICE_ACCOUNT_TOKEN", "test-service-account-token")
+
+	factoryCalls := 0
+	p := New(config.MapConfig{})
+	p.sdkClientFactory = func(context.Context, string) (secretResolver, error) {
+		factoryCalls++
+		return func(context.Context, string) (string, error) {
+			return "sdk value", nil
+		}, nil
+	}
+
+	for i := 1; i <= 2; i++ {
+		got, err := p.GetString("vault/item/password")
+		if err != nil {
+			t.Fatalf("GetString() call %d error = %v", i, err)
+		}
+		if got != "sdk value" {
+			t.Fatalf("GetString() call %d = %q, want %q", i, got, "sdk value")
+		}
+	}
+	if factoryCalls != 1 {
+		t.Fatalf("sdkClientFactory called %d times, want 1", factoryCalls)
+	}
+}
+
 func TestGetStringUsesCLIWithoutServiceAccountToken(t *testing.T) {
 	t.Setenv("OP_SERVICE_ACCOUNT_TOKEN", "")
 

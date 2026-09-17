@@ -14,7 +14,10 @@ import (
 	"github.com/helmfile/vals/pkg/api"
 )
 
-const defaultCLITimeout = 30 * time.Second
+const (
+	defaultCLITimeout   = 30 * time.Second
+	defaultCLIWaitDelay = 5 * time.Second
+)
 
 type secretResolver func(ctx context.Context, reference string) (string, error)
 type sdkClientFactory func(ctx context.Context, token string) (secretResolver, error)
@@ -51,6 +54,10 @@ func defaultSDKClientFactory(ctx context.Context, token string) (secretResolver,
 
 func defaultCommandExecutor(ctx context.Context, name string, args []string) ([]byte, []byte, error) {
 	cmd := exec.CommandContext(ctx, name, args...)
+	// Bound the time the I/O pipes may stay open after the process exits or
+	// the context is canceled, so a grandchild process inheriting them cannot
+	// make Run block forever and defeat the CLI timeout.
+	cmd.WaitDelay = defaultCLIWaitDelay
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
