@@ -94,7 +94,7 @@ func (p *provider) getStringWithCLI(reference string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), p.cliTimeout)
 	defer cancel()
 
-	stdout, _, err := p.executor(ctx, "op", []string{"read", "--no-newline", "--force", reference})
+	stdout, stderr, err := p.executor(ctx, "op", []string{"read", "--no-newline", "--force", reference})
 	if err == nil {
 		return string(stdout), nil
 	}
@@ -104,6 +104,9 @@ func (p *provider) getStringWithCLI(reference string) (string, error) {
 	}
 	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 		return "", fmt.Errorf("1Password CLI timed out after %s; authenticate with the desktop app or run %q before vals", p.cliTimeout, "op signin")
+	}
+	if stderr = bytes.TrimSpace(stderr); len(stderr) > 0 {
+		return "", fmt.Errorf("1Password CLI command failed: %w (stderr: %s)", err, stderr)
 	}
 
 	return "", fmt.Errorf("1Password CLI command failed: %w; authenticate with the desktop app, run %q, or set OP_SERVICE_ACCOUNT_TOKEN for headless use", err, "op signin")

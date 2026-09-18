@@ -150,14 +150,14 @@ func TestGetStringCLIMissingExecutable(t *testing.T) {
 	}
 }
 
-func TestGetStringCLIFailureDoesNotLeakOutput(t *testing.T) {
+func TestGetStringCLIFailureIncludesStderrWithoutLeakingStdout(t *testing.T) {
 	t.Setenv("OP_SERVICE_ACCOUNT_TOKEN", "")
 
 	const stdoutSecret = "secret stdout that must not leak"
-	const stderrSecret = "sensitive stderr that must not leak"
+	const stderrDiagnostic = "  vault permission denied\n"
 	p := New(config.MapConfig{})
 	p.executor = func(context.Context, string, []string) ([]byte, []byte, error) {
-		return []byte(stdoutSecret), []byte(stderrSecret), errors.New("exit status 1")
+		return []byte(stdoutSecret), []byte(stderrDiagnostic), errors.New("exit status 1")
 	}
 
 	_, err := p.GetString("vault/item/password")
@@ -165,8 +165,30 @@ func TestGetStringCLIFailureDoesNotLeakOutput(t *testing.T) {
 		t.Fatal("GetString() error = nil, want command error")
 	}
 	got := err.Error()
-	if strings.Contains(got, stdoutSecret) || strings.Contains(got, stderrSecret) {
-		t.Fatalf("GetString() error leaked command output: %q", got)
+	if strings.Contains(got, stdoutSecret) {
+		t.Fatalf("GetString() error leaked stdout: %q", got)
+	}
+	if !strings.Contains(got, "(stderr: "+strings.TrimSpace(stderrDiagnostic)+")") {
+		t.Fatalf("GetString() error = %q, want trimmed stderr diagnostic", got)
+	}
+}
+
+func TestGetStringCLIFailureWithoutStderrProvidesGuidance(t *testing.T) {
+	t.Setenv("OP_SERVICE_ACCOUNT_TOKEN", "")
+
+	const stdoutSecret = "secret stdout that must not leak"
+	p := New(config.MapConfig{})
+	p.executor = func(context.Context, string, []string) ([]byte, []byte, error) {
+		return []byte(stdoutSecret), []byte(" \n"), errors.New("exit status 1")
+	}
+
+	_, err := p.GetString("vault/item/password")
+	if err == nil {
+		t.Fatal("GetString() error = nil, want command error")
+	}
+	got := err.Error()
+	if strings.Contains(got, stdoutSecret) {
+		t.Fatalf("GetString() error leaked stdout: %q", got)
 	}
 	if !strings.Contains(got, `run "op signin"`) || !strings.Contains(got, "OP_SERVICE_ACCOUNT_TOKEN") {
 		t.Fatalf("GetString() error = %q, want actionable authentication guidance", got)
