@@ -27,7 +27,7 @@ require (
 	github.com/hashicorp/golang-lru v1.0.2
 	github.com/hashicorp/vault/api v1.23.0
 	github.com/infisical/go-sdk v0.8.0
-	github.com/openbao/openbao/api/v2 v2.6.0
+	github.com/openbao/openbao/api/v2 v2.7.0
 	github.com/opencontainers/image-spec v1.1.1
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.37
 	github.com/stretchr/testify v1.12.1
@@ -214,7 +214,7 @@ require (
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/lib/pq v1.12.3 // indirect
 	github.com/mattn/go-colorable v0.1.15 // indirect
-	github.com/mattn/go-isatty v0.0.22 // indirect
+	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
