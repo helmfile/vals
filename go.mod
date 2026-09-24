@@ -35,7 +35,7 @@ require (
 	github.com/yandex-cloud/go-genproto v0.121.0
 	github.com/yandex-cloud/go-sdk v0.35.0
 	golang.org/x/oauth2 v0.37.0
-	google.golang.org/api v0.296.0
+	google.golang.org/api v0.298.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.37.0
 	k8s.io/client-go v0.37.0
