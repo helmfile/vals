@@ -4,7 +4,7 @@ go 1.26.6
 
 require (
 	cloud.google.com/go/kms v1.34.0
-	cloud.google.com/go/secretmanager v1.21.0
+	cloud.google.com/go/secretmanager v1.22.0
 	cloud.google.com/go/storage v1.68.0
 	github.com/1Password/connect-sdk-go v1.5.3
 	github.com/1password/onepassword-sdk-go v0.4.1
