@@ -393,6 +393,8 @@ Examples:
 * `role_id` defaults to the value of the `BAO_ROLE_ID` envvar.
 * `secret_id` defaults to the value of the `BAO_SECRET_ID` envvar.
 * `version` is the specific version of the secret to be obtained. Used when you want to get a previous content of the secret.
+* `kv_version` (alias `engine_version`) forces the KV secrets engine version, either `1` or `2`. It can also be set via the `BAO_KV_VERSION` envvar. When unset, the KV v2 data path is tried first and the KV v1 path is used as a fallback.
+* `mount_path` (alias `mount`) explicitly sets the KV mount path boundary, e.g. `mount_path=custom/mount`. When unset, the first path segment of the reference is treated as the mount.
 * `decode` controls how the retrieved value is transformed before being returned. Defaults to `raw` (no transformation). Set to `base64` to base64-decode the stored value (useful when binary data such as certificates is stored as a base64 string).
 
 The `auth_method` or `BAO_AUTH_METHOD` envvar configures how `vals` authenticates to OpenBao. The following methods are supported:

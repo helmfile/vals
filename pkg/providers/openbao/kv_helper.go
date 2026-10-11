@@ -12,42 +12,27 @@ import (
 // If the key already contains the "/data/" segment (e.g. "<mount>/data/<path>"),
 // it is returned as-is to avoid duplicate data prefixes.
 //
-// If mountPath is provided, it is used as the mount boundary; otherwise, the first path
-// segment is treated as the mount path. Leading and trailing slashes are trimmed.
+// If mountPath is provided, it is used as the mount boundary and the remainder of
+// the key becomes the subpath. Otherwise, the first path segment is treated as
+// the mount. Leading and trailing slashes are trimmed.
 func resolveKVDataPath(key, mountPath string) (dataPath string, v1Path string) {
 	cleanKey := strings.Trim(key, "/")
 	cleanMount := strings.Trim(mountPath, "/")
 
 	var mount, subpath string
-	if cleanMount != "" {
-		mount = cleanMount
-		prefix := cleanMount + "/"
-		if strings.HasPrefix(cleanKey, prefix) {
-			subpath = strings.TrimPrefix(cleanKey, prefix)
-		} else if cleanKey == cleanMount {
-			subpath = ""
-		} else {
-			subpath = cleanKey
-		}
+	if cleanMount == "" {
+		mount, subpath, _ = strings.Cut(cleanKey, "/")
+	} else if trimmed := strings.TrimPrefix(cleanKey, cleanMount+"/"); trimmed != cleanKey {
+		mount, subpath = cleanMount, trimmed
+	} else if cleanMount == cleanKey {
+		mount, subpath = cleanMount, ""
 	} else {
-		parts := strings.Split(cleanKey, "/")
-		mount = parts[0]
-		if len(parts) > 1 {
-			subpath = strings.Join(parts[1:], "/")
-		}
+		mount, subpath = cleanMount, cleanKey
 	}
 
-	// KV v1 path
-	if subpath == "" {
-		v1Path = mount
-	} else {
-		v1Path = path.Join(mount, subpath)
-	}
+	v1Path = path.Join(mount, subpath)
 
-	// KV v2 path: standard data path is <mount>/data/<subpath>
 	switch {
-	case subpath == "":
-		dataPath = path.Join(mount, "data")
 	case subpath == "data" || strings.HasPrefix(subpath, "data/"):
 		dataPath = path.Join(mount, subpath)
 	default:

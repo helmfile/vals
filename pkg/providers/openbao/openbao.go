@@ -28,10 +28,9 @@ const (
 //
 //	Success! Enabled the kv secrets engine at: mykv/
 type provider struct {
-	client   *openbao.Client
-	log      *log.Logger
-	clientMu sync.Mutex
-	sfRead   singleflight.Group
+	client *openbao.Client
+	log    *log.Logger
+	sfRead singleflight.Group
 
 	Address      string
 	Namespace    string
@@ -49,6 +48,8 @@ type provider struct {
 	Decode       string
 	MountPath    string
 	KVVersion    string
+
+	clientMu sync.Mutex
 }
 
 func New(l *log.Logger, cfg api.StaticConfig) *provider {
@@ -199,69 +200,53 @@ func (p *provider) readSecretMap(key string) (map[string]interface{}, error) {
 		data["version"] = []string{p.Version}
 	}
 
-	var secret *openbao.Secret
-	var isV2 bool
-
-	switch p.KVVersion {
-	case "1":
-		secret, err = cli.Logical().ReadWithData(v1Path, data)
-		if err != nil {
-			p.log.Debugf("openbao: read: key=%q", v1Path)
-			return nil, err
-		}
+	// An explicit kv_version=1 reads the KV v1 path directly; anything else
+	// (kv_version=2 or unspecified) reads the standard KV v2 data path first.
+	readPath := dataPath
+	isV2 := true
+	if p.KVVersion == "1" {
+		readPath = v1Path
 		isV2 = false
-	case "2":
-		secret, err = cli.Logical().ReadWithData(dataPath, data)
-		if err != nil {
-			p.log.Debugf("openbao: read: key=%q", dataPath)
-			return nil, err
-		}
-		isV2 = true
-	default:
-		// Default: access standard KV v2 secret data path
-		secret, err = cli.Logical().ReadWithData(dataPath, data)
-		if err != nil {
-			p.log.Debugf("openbao: read: key=%q", dataPath)
-			return nil, err
-		}
-		if secret != nil {
-			isV2 = true
-		} else if v1Path != dataPath {
-			// Fallback to KV v1 path when KV v2 returns not found
-			secretV1, errV1 := cli.Logical().ReadWithData(v1Path, data)
-			if errV1 != nil {
-				p.log.Debugf("openbao: read: key=%q", v1Path)
-				return nil, errV1
-			}
-			if secretV1 != nil {
-				secret = secretV1
-				isV2 = false
-			}
-		}
+	}
+
+	secret, err := p.readSecret(cli, readPath, data)
+	if err != nil {
+		return nil, err
+	}
+
+	// With an unspecified engine version, fall back to the KV v1 path when the
+	// KV v2 data path misses and the two paths differ.
+	if p.KVVersion == "" && secret == nil && v1Path != dataPath {
+		secret, err = p.readSecret(cli, v1Path, data)
+		isV2 = false
+	}
+
+	if err != nil {
+		return nil, err
 	}
 
 	if secret == nil {
 		return nil, fmt.Errorf("no secret found for path %q", key)
 	}
 
-	// OpenBao KV Version 1
+	// KV v2 responses nest the secret data under the "data" key.
 	secrets := secret.Data
-
-	// OpenBao KV Version 2
-	if isV2 {
-		if _, ok := secret.Data["data"]; ok {
-			if m, ok := secret.Data["data"].(map[string]interface{}); ok {
-				secrets = m
-			}
-		}
+	if m, ok := secret.Data["data"].(map[string]interface{}); isV2 && ok {
+		secrets = m
 	}
 
-	res := make(map[string]interface{}, len(secrets))
-	for k, v := range secrets {
-		res[k] = v
+	return secrets, nil
+}
+
+// readSecret reads the secret at secretPath, logging the attempted path on failure.
+func (p *provider) readSecret(cli *openbao.Client, secretPath string, data map[string][]string) (*openbao.Secret, error) {
+	secret, err := cli.Logical().ReadWithData(secretPath, data)
+	if err != nil {
+		p.log.Debugf("openbao: read: key=%q", secretPath)
+		return nil, err
 	}
 
-	return res, nil
+	return secret, nil
 }
 
 func (p *provider) ensureClient() (*openbao.Client, error) {
@@ -350,20 +335,13 @@ func (p *provider) ensureClient() (*openbao.Client, error) {
 
 		cli.SetToken(resp.Auth.ClientToken)
 	case "kubernetes":
-		fd, err := os.Open(kubernetesJwtTokenPath)
-		defer func() {
-			_ = fd.Close()
-		}()
+		jwt, err := readKubernetesJwtToken()
 		if err != nil {
-			return nil, fmt.Errorf("unable to read file containing service account token: %w", err)
-		}
-		jwt, err := io.ReadAll(fd)
-		if err != nil {
-			return nil, fmt.Errorf("unable to read file containing service account token: %w", err)
+			return nil, err
 		}
 
 		data := map[string]interface{}{
-			"jwt":  string(jwt),
+			"jwt":  jwt,
 			"role": p.RoleId,
 		}
 		mountPoint, ok := os.LookupEnv("BAO_KUBERNETES_MOUNT_POINT")
@@ -426,6 +404,24 @@ func (p *provider) ensureClient() (*openbao.Client, error) {
 	}
 	p.client = cli
 	return p.client, nil
+}
+
+// readKubernetesJwtToken reads the service account JWT token mounted in the pod.
+func readKubernetesJwtToken() (string, error) {
+	fd, err := os.Open(kubernetesJwtTokenPath)
+	if err != nil {
+		return "", fmt.Errorf("unable to read file containing service account token: %w", err)
+	}
+	defer func() {
+		_ = fd.Close()
+	}()
+
+	jwt, err := io.ReadAll(fd)
+	if err != nil {
+		return "", fmt.Errorf("unable to read file containing service account token: %w", err)
+	}
+
+	return string(jwt), nil
 }
 
 func (p *provider) readFile(path string) (string, error) {

@@ -14,20 +14,21 @@ import (
 	"github.com/helmfile/vals/pkg/log"
 )
 
+const testBar = "bar"
+
 // fakeOpenBao is a minimal OpenBao HTTP stub that records received request URLs
 // and verifies that requests target the standard secret data path rather than
 // the internal UI mounts endpoint.
 type fakeOpenBao struct {
-	server *httptest.Server
-	data   map[string]interface{}
-
+	server  *httptest.Server
+	data    map[string]interface{}
 	version string // "1" or "2"
 
-	mu       sync.Mutex
-	requests []string
-
+	requests        []string
 	uiMountRequests atomic.Int64
 	dataReads       atomic.Int64
+
+	mu sync.Mutex
 }
 
 func newFakeOpenBao(t *testing.T, version string, data map[string]interface{}) *fakeOpenBao {
@@ -167,14 +168,14 @@ func TestIssue1293_OpenBao_TargetPathNotUIMounts(t *testing.T) {
 // TestGetStringMap_AlreadyContainsDataSegment guards against duplicating the data segment
 // when a user provides a path that already includes "data".
 func TestGetStringMap_AlreadyContainsDataSegment(t *testing.T) {
-	fb := newFakeOpenBao(t, "2", map[string]interface{}{"foo": "bar"})
+	fb := newFakeOpenBao(t, "2", map[string]interface{}{"foo": testBar})
 	p := newTestProvider(t, fb.server.URL, nil)
 
 	res, err := p.GetStringMap("mykv/data/myapp")
 	if err != nil {
 		t.Fatalf("GetStringMap failed: %v", err)
 	}
-	if res["foo"] != "bar" {
+	if res["foo"] != testBar {
 		t.Errorf("res[foo] = %v, want bar", res["foo"])
 	}
 
@@ -232,7 +233,7 @@ func TestGetStringMap_CustomMountPath(t *testing.T) {
 
 // TestGetStringMap_KVv2_WithVersion tests version query parameter propagation.
 func TestGetStringMap_KVv2_WithVersion(t *testing.T) {
-	fb := newFakeOpenBao(t, "2", map[string]interface{}{"foo": "bar"})
+	fb := newFakeOpenBao(t, "2", map[string]interface{}{"foo": testBar})
 	p := newTestProvider(t, fb.server.URL, map[string]interface{}{
 		"version": "2",
 	})
@@ -241,7 +242,7 @@ func TestGetStringMap_KVv2_WithVersion(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetStringMap failed: %v", err)
 	}
-	if res["foo"] != "bar" {
+	if res["foo"] != testBar {
 		t.Errorf("res[foo] = %v, want bar", res["foo"])
 	}
 
@@ -254,7 +255,7 @@ func TestGetStringMap_KVv2_WithVersion(t *testing.T) {
 
 // TestGetStringMap_KVv1_Explicit tests explicit KV v1 configuration.
 func TestGetStringMap_KVv1_Explicit(t *testing.T) {
-	fb := newFakeOpenBao(t, "1", map[string]interface{}{"foo": "bar"})
+	fb := newFakeOpenBao(t, "1", map[string]interface{}{"foo": testBar})
 	p := newTestProvider(t, fb.server.URL, map[string]interface{}{
 		"kv_version": "1",
 	})
@@ -263,7 +264,7 @@ func TestGetStringMap_KVv1_Explicit(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetStringMap failed: %v", err)
 	}
-	if res["foo"] != "bar" {
+	if res["foo"] != testBar {
 		t.Errorf("res[foo] = %v, want bar", res["foo"])
 	}
 
@@ -276,14 +277,14 @@ func TestGetStringMap_KVv1_Explicit(t *testing.T) {
 
 // TestGetStringMap_KVv1_Fallback tests falling back to KV v1 when KV v2 data path returns 404.
 func TestGetStringMap_KVv1_Fallback(t *testing.T) {
-	fb := newFakeOpenBao(t, "1", map[string]interface{}{"foo": "bar"})
+	fb := newFakeOpenBao(t, "1", map[string]interface{}{"foo": testBar})
 	p := newTestProvider(t, fb.server.URL, nil)
 
 	res, err := p.GetStringMap("kv/myapp")
 	if err != nil {
 		t.Fatalf("GetStringMap failed: %v", err)
 	}
-	if res["foo"] != "bar" {
+	if res["foo"] != testBar {
 		t.Errorf("res[foo] = %v, want bar", res["foo"])
 	}
 
@@ -302,7 +303,7 @@ func TestGetStringMap_KVv1_Fallback(t *testing.T) {
 // TestGetStringMap_ConcurrentDedup ensures concurrent callers for the same key collapse
 // into a single API read.
 func TestGetStringMap_ConcurrentDedup(t *testing.T) {
-	fb := newFakeOpenBao(t, "2", map[string]interface{}{"foo": "bar"})
+	fb := newFakeOpenBao(t, "2", map[string]interface{}{"foo": testBar})
 	p := newTestProvider(t, fb.server.URL, nil)
 
 	const n = 20
@@ -322,7 +323,7 @@ func TestGetStringMap_ConcurrentDedup(t *testing.T) {
 		if err != nil {
 			t.Fatalf("caller %d failed: %v", i, err)
 		}
-		if results[i]["foo"] != "bar" {
+		if results[i]["foo"] != testBar {
 			t.Fatalf("caller %d got %v, want foo=bar", i, results[i])
 		}
 	}
@@ -334,7 +335,7 @@ func TestGetStringMap_ConcurrentDedup(t *testing.T) {
 
 // TestGetStringMap_ReturnsIndependentCopies guards against mutation leakage.
 func TestGetStringMap_ReturnsIndependentCopies(t *testing.T) {
-	fb := newFakeOpenBao(t, "2", map[string]interface{}{"foo": "bar"})
+	fb := newFakeOpenBao(t, "2", map[string]interface{}{"foo": testBar})
 	p := newTestProvider(t, fb.server.URL, nil)
 
 	first, err := p.GetStringMap("secret/myapp")
@@ -347,7 +348,7 @@ func TestGetStringMap_ReturnsIndependentCopies(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if second["foo"] != "bar" {
+	if second["foo"] != testBar {
 		t.Errorf("second read returned mutated value %q, want bar", second["foo"])
 	}
 }
@@ -419,6 +420,27 @@ func TestResolveKVDataPath_Unit(t *testing.T) {
 			mountPath:    "",
 			wantDataPath: "secret/data",
 			wantV1Path:   "secret",
+		},
+		{
+			name:         "trailing slashes trimmed",
+			key:          "secret/app/",
+			mountPath:    "",
+			wantDataPath: "secret/data/app",
+			wantV1Path:   "secret/app",
+		},
+		{
+			name:         "key equals explicit mount path",
+			key:          "custom/mount",
+			mountPath:    "custom/mount",
+			wantDataPath: "custom/mount/data",
+			wantV1Path:   "custom/mount",
+		},
+		{
+			name:         "key without mount prefix treated as subpath",
+			key:          "app/secret",
+			mountPath:    "custom/mount",
+			wantDataPath: "custom/mount/data/app/secret",
+			wantV1Path:   "custom/mount/app/secret",
 		},
 	}
 
