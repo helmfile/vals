@@ -12,32 +12,33 @@ import (
 // If the key already contains the "/data/" segment (e.g. "<mount>/data/<path>"),
 // it is returned as-is to avoid duplicate data prefixes.
 //
-// If mountPath is provided, it is used as the mount boundary and the remainder of
-// the key becomes the subpath. Otherwise, the first path segment is treated as
-// the mount. Leading and trailing slashes are trimmed.
+// Leading and trailing slashes are trimmed.
 func resolveKVDataPath(key, mountPath string) (dataPath string, v1Path string) {
-	cleanKey := strings.Trim(key, "/")
-	cleanMount := strings.Trim(mountPath, "/")
-
-	var mount, subpath string
-	if cleanMount == "" {
-		mount, subpath, _ = strings.Cut(cleanKey, "/")
-	} else if trimmed := strings.TrimPrefix(cleanKey, cleanMount+"/"); trimmed != cleanKey {
-		mount, subpath = cleanMount, trimmed
-	} else if cleanMount == cleanKey {
-		mount, subpath = cleanMount, ""
-	} else {
-		mount, subpath = cleanMount, cleanKey
-	}
+	mount, subpath := splitMountPath(strings.Trim(key, "/"), strings.Trim(mountPath, "/"))
 
 	v1Path = path.Join(mount, subpath)
 
-	switch {
-	case subpath == "data" || strings.HasPrefix(subpath, "data/"):
+	dataPath = path.Join(mount, "data", subpath)
+	if subpath == "data" || strings.HasPrefix(subpath, "data/") {
 		dataPath = path.Join(mount, subpath)
-	default:
-		dataPath = path.Join(mount, "data", subpath)
 	}
 
 	return dataPath, v1Path
+}
+
+// splitMountPath splits key into its mount and subpath components.
+//
+// When mountPath is empty, the first path segment of key is the mount and the
+// rest is the subpath. Otherwise mountPath is the mount and the subpath is key
+// with the "mountPath/" prefix stripped — or the whole key when it does not
+// carry the prefix.
+func splitMountPath(key, mountPath string) (mount, subpath string) {
+	if mountPath == "" {
+		mount, subpath, _ = strings.Cut(key, "/")
+		return mount, subpath
+	}
+	if key == mountPath {
+		return mountPath, ""
+	}
+	return mountPath, strings.TrimPrefix(key, mountPath+"/")
 }
