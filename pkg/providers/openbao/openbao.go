@@ -7,8 +7,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	openbao "github.com/openbao/openbao/api/v2"
+	"golang.org/x/sync/singleflight"
 
 	"github.com/helmfile/vals/pkg/api"
 	"github.com/helmfile/vals/pkg/log"
@@ -26,8 +28,10 @@ const (
 //
 //	Success! Enabled the kv secrets engine at: mykv/
 type provider struct {
-	client *openbao.Client
-	log    *log.Logger
+	client   *openbao.Client
+	log      *log.Logger
+	clientMu sync.Mutex
+	sfRead   singleflight.Group
 
 	Address      string
 	Namespace    string
@@ -43,6 +47,8 @@ type provider struct {
 	PasswordFile string
 	Version      string
 	Decode       string
+	MountPath    string
+	KVVersion    string
 }
 
 func New(l *log.Logger, cfg api.StaticConfig) *provider {
@@ -110,6 +116,17 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 	if p.Decode == "" {
 		p.Decode = "raw"
 	}
+	p.MountPath = cfg.String("mount_path")
+	if p.MountPath == "" {
+		p.MountPath = cfg.String("mount")
+	}
+	p.KVVersion = cfg.String("kv_version")
+	if p.KVVersion == "" {
+		p.KVVersion = cfg.String("engine_version")
+	}
+	if p.KVVersion == "" {
+		p.KVVersion = os.Getenv("BAO_KV_VERSION")
+	}
 
 	return p
 }
@@ -153,31 +170,74 @@ func (p *provider) decodeString(key, s string) (string, error) {
 }
 
 func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
+	v, err, _ := p.sfRead.Do(key, func() (interface{}, error) {
+		return p.readSecretMap(key)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	secrets := v.(map[string]interface{})
+	res := make(map[string]interface{}, len(secrets))
+	for k, val := range secrets {
+		res[k] = val
+	}
+
+	return res, nil
+}
+
+func (p *provider) readSecretMap(key string) (map[string]interface{}, error) {
 	cli, err := p.ensureClient()
 	if err != nil {
 		return nil, fmt.Errorf("Cannot create OpenBao Client: %v", err)
 	}
 
-	mountPath, v2, err := isKVv2(key, cli)
-	if err != nil {
-		return nil, err
-	}
-
-	if v2 {
-		key = addPrefixToVKVPath(key, mountPath, "data")
-	}
-
-	res := map[string]interface{}{}
+	dataPath, v1Path := resolveKVDataPath(key, p.MountPath)
 
 	data := map[string][]string{}
 	if p.Version != "" {
 		data["version"] = []string{p.Version}
 	}
 
-	secret, err := cli.Logical().ReadWithData(key, data)
-	if err != nil {
-		p.log.Debugf("openbao: read: key=%q", key)
-		return nil, err
+	var secret *openbao.Secret
+	var isV2 bool
+
+	switch p.KVVersion {
+	case "1":
+		secret, err = cli.Logical().ReadWithData(v1Path, data)
+		if err != nil {
+			p.log.Debugf("openbao: read: key=%q", v1Path)
+			return nil, err
+		}
+		isV2 = false
+	case "2":
+		secret, err = cli.Logical().ReadWithData(dataPath, data)
+		if err != nil {
+			p.log.Debugf("openbao: read: key=%q", dataPath)
+			return nil, err
+		}
+		isV2 = true
+	default:
+		// Default: access standard KV v2 secret data path
+		secret, err = cli.Logical().ReadWithData(dataPath, data)
+		if err != nil {
+			p.log.Debugf("openbao: read: key=%q", dataPath)
+			return nil, err
+		}
+		if secret != nil {
+			isV2 = true
+		} else if v1Path != dataPath {
+			// Fallback to KV v1 path when KV v2 returns not found
+			secretV1, errV1 := cli.Logical().ReadWithData(v1Path, data)
+			if errV1 != nil {
+				p.log.Debugf("openbao: read: key=%q", v1Path)
+				return nil, errV1
+			}
+			if secretV1 != nil {
+				secret = secretV1
+				isV2 = false
+			}
+		}
 	}
 
 	if secret == nil {
@@ -188,7 +248,7 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 	secrets := secret.Data
 
 	// OpenBao KV Version 2
-	if v2 {
+	if isV2 {
 		if _, ok := secret.Data["data"]; ok {
 			if m, ok := secret.Data["data"].(map[string]interface{}); ok {
 				secrets = m
@@ -196,6 +256,7 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 		}
 	}
 
+	res := make(map[string]interface{}, len(secrets))
 	for k, v := range secrets {
 		res[k] = v
 	}
@@ -204,161 +265,166 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 }
 
 func (p *provider) ensureClient() (*openbao.Client, error) {
-	if p.client == nil {
-		cfg := openbao.DefaultConfig()
-		if p.Address != "" {
-			cfg.Address = p.Address
-		}
-		if strings.Contains(p.Address, "127.0.0.1") {
-			if err := cfg.ConfigureTLS(&openbao.TLSConfig{Insecure: true}); err != nil {
-				return nil, err
-			}
-		}
-		cli, err := openbao.NewClient(cfg)
-		if err != nil {
-			p.log.Debugf("OpenBao connection failed")
-			return nil, fmt.Errorf("Cannot create OpenBao Client: %v", err)
-		}
-		if p.Namespace != "" {
-			cli.SetNamespace(p.Namespace)
-		}
+	p.clientMu.Lock()
+	defer p.clientMu.Unlock()
 
-		switch p.AuthMethod {
-		case "token":
-			if p.TokenEnv != "" {
-				token := os.Getenv(p.TokenEnv)
-				if token == "" {
-					return nil, fmt.Errorf("token_env configured to read openbao token from envvar %q, but it isn't set", p.TokenEnv)
-				}
-				cli.SetToken(token)
-			}
-
-			if p.TokenFile != "" {
-				token, err := p.readFile(p.TokenFile)
-				if err != nil {
-					return nil, err
-				}
-				cli.SetToken(token)
-			}
-
-			// By default OpenBao token is set from BAO_TOKEN env var by NewClient()
-			// But if BAO_TOKEN isn't set, token can be retrieved from BAO_TOKEN_FILE env or ~/.bao-token file
-			if cli.Token() == "" {
-				tokenFile := os.Getenv("BAO_TOKEN_FILE")
-				// if BAO_TOKEN_FILE env is not set, use default ~/.bao-token
-				if tokenFile == "" {
-					homeDir := os.Getenv("HOME")
-					if homeDir != "" {
-						tokenFile = filepath.Join(homeDir, ".bao-token")
-					}
-				}
-				if tokenFile != "" {
-					token, _ := p.readFile(tokenFile)
-					if token != "" {
-						cli.SetToken(token)
-					}
-				}
-			}
-		case "approle":
-			data := map[string]interface{}{
-				"role_id":   p.RoleId,
-				"secret_id": p.SecretId,
-			}
-
-			mountPoint, ok := os.LookupEnv("BAO_LOGIN_MOUNT_POINT")
-			if !ok {
-				mountPoint = "/approle"
-			}
-
-			authPath := filepath.Join("auth", mountPoint, "login")
-
-			resp, err := cli.Logical().Write(authPath, data)
-			if err != nil {
-				return nil, err
-			}
-
-			if resp.Auth == nil {
-				return nil, fmt.Errorf("no auth info returned")
-			}
-
-			cli.SetToken(resp.Auth.ClientToken)
-		case "kubernetes":
-			fd, err := os.Open(kubernetesJwtTokenPath)
-			defer func() {
-				_ = fd.Close()
-			}()
-			if err != nil {
-				return nil, fmt.Errorf("unable to read file containing service account token: %w", err)
-			}
-			jwt, err := io.ReadAll(fd)
-			if err != nil {
-				return nil, fmt.Errorf("unable to read file containing service account token: %w", err)
-			}
-
-			data := map[string]interface{}{
-				"jwt":  string(jwt),
-				"role": p.RoleId,
-			}
-			mountPoint, ok := os.LookupEnv("BAO_KUBERNETES_MOUNT_POINT")
-			if !ok {
-				mountPoint = "/kubernetes"
-			}
-
-			authPath := filepath.Join("auth", mountPoint, "login")
-
-			resp, err := cli.Logical().Write(authPath, data)
-			if err != nil {
-				return nil, err
-			}
-
-			if resp.Auth == nil {
-				return nil, fmt.Errorf("no auth info returned")
-			}
-
-			cli.SetToken(resp.Auth.ClientToken)
-		case "userpass":
-			var password = ""
-
-			if p.PasswordEnv != "" {
-				password = os.Getenv(p.PasswordEnv)
-				if password == "" {
-					return nil, fmt.Errorf("password_env configured to read openbao password from envvar %q, but it isn't set", p.PasswordEnv)
-				}
-			} else if p.PasswordFile != "" {
-				password, err = p.readFile(p.PasswordFile)
-				if err != nil {
-					return nil, err
-				}
-			}
-
-			if password == "" {
-				return nil, fmt.Errorf("password missing for userpass authentication")
-			}
-
-			data := map[string]interface{}{
-				"password": password,
-			}
-
-			mountPoint, ok := os.LookupEnv("BAO_LOGIN_MOUNT_POINT")
-			if !ok {
-				mountPoint = "userpass"
-			}
-
-			authPath := filepath.Join("auth", mountPoint, "login", p.Username)
-
-			resp, err := cli.Logical().Write(authPath, data)
-			if err != nil {
-				return nil, err
-			}
-
-			if resp.Auth == nil {
-				return nil, fmt.Errorf("no auth info returned")
-			}
-
-			cli.SetToken(resp.Auth.ClientToken)
-		}
-		p.client = cli
+	if p.client != nil {
+		return p.client, nil
 	}
+
+	cfg := openbao.DefaultConfig()
+	if p.Address != "" {
+		cfg.Address = p.Address
+	}
+	if strings.Contains(p.Address, "127.0.0.1") {
+		if err := cfg.ConfigureTLS(&openbao.TLSConfig{Insecure: true}); err != nil {
+			return nil, err
+		}
+	}
+	cli, err := openbao.NewClient(cfg)
+	if err != nil {
+		p.log.Debugf("OpenBao connection failed")
+		return nil, fmt.Errorf("Cannot create OpenBao Client: %v", err)
+	}
+	if p.Namespace != "" {
+		cli.SetNamespace(p.Namespace)
+	}
+
+	switch p.AuthMethod {
+	case "token":
+		if p.TokenEnv != "" {
+			token := os.Getenv(p.TokenEnv)
+			if token == "" {
+				return nil, fmt.Errorf("token_env configured to read openbao token from envvar %q, but it isn't set", p.TokenEnv)
+			}
+			cli.SetToken(token)
+		}
+
+		if p.TokenFile != "" {
+			token, err := p.readFile(p.TokenFile)
+			if err != nil {
+				return nil, err
+			}
+			cli.SetToken(token)
+		}
+
+		// By default OpenBao token is set from BAO_TOKEN env var by NewClient()
+		// But if BAO_TOKEN isn't set, token can be retrieved from BAO_TOKEN_FILE env or ~/.bao-token file
+		if cli.Token() == "" {
+			tokenFile := os.Getenv("BAO_TOKEN_FILE")
+			// if BAO_TOKEN_FILE env is not set, use default ~/.bao-token
+			if tokenFile == "" {
+				homeDir := os.Getenv("HOME")
+				if homeDir != "" {
+					tokenFile = filepath.Join(homeDir, ".bao-token")
+				}
+			}
+			if tokenFile != "" {
+				token, _ := p.readFile(tokenFile)
+				if token != "" {
+					cli.SetToken(token)
+				}
+			}
+		}
+	case "approle":
+		data := map[string]interface{}{
+			"role_id":   p.RoleId,
+			"secret_id": p.SecretId,
+		}
+
+		mountPoint, ok := os.LookupEnv("BAO_LOGIN_MOUNT_POINT")
+		if !ok {
+			mountPoint = "/approle"
+		}
+
+		authPath := filepath.Join("auth", mountPoint, "login")
+
+		resp, err := cli.Logical().Write(authPath, data)
+		if err != nil {
+			return nil, err
+		}
+
+		if resp.Auth == nil {
+			return nil, fmt.Errorf("no auth info returned")
+		}
+
+		cli.SetToken(resp.Auth.ClientToken)
+	case "kubernetes":
+		fd, err := os.Open(kubernetesJwtTokenPath)
+		defer func() {
+			_ = fd.Close()
+		}()
+		if err != nil {
+			return nil, fmt.Errorf("unable to read file containing service account token: %w", err)
+		}
+		jwt, err := io.ReadAll(fd)
+		if err != nil {
+			return nil, fmt.Errorf("unable to read file containing service account token: %w", err)
+		}
+
+		data := map[string]interface{}{
+			"jwt":  string(jwt),
+			"role": p.RoleId,
+		}
+		mountPoint, ok := os.LookupEnv("BAO_KUBERNETES_MOUNT_POINT")
+		if !ok {
+			mountPoint = "/kubernetes"
+		}
+
+		authPath := filepath.Join("auth", mountPoint, "login")
+
+		resp, err := cli.Logical().Write(authPath, data)
+		if err != nil {
+			return nil, err
+		}
+
+		if resp.Auth == nil {
+			return nil, fmt.Errorf("no auth info returned")
+		}
+
+		cli.SetToken(resp.Auth.ClientToken)
+	case "userpass":
+		var password = ""
+
+		if p.PasswordEnv != "" {
+			password = os.Getenv(p.PasswordEnv)
+			if password == "" {
+				return nil, fmt.Errorf("password_env configured to read openbao password from envvar %q, but it isn't set", p.PasswordEnv)
+			}
+		} else if p.PasswordFile != "" {
+			password, err = p.readFile(p.PasswordFile)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if password == "" {
+			return nil, fmt.Errorf("password missing for userpass authentication")
+		}
+
+		data := map[string]interface{}{
+			"password": password,
+		}
+
+		mountPoint, ok := os.LookupEnv("BAO_LOGIN_MOUNT_POINT")
+		if !ok {
+			mountPoint = "userpass"
+		}
+
+		authPath := filepath.Join("auth", mountPoint, "login", p.Username)
+
+		resp, err := cli.Logical().Write(authPath, data)
+		if err != nil {
+			return nil, err
+		}
+
+		if resp.Auth == nil {
+			return nil, fmt.Errorf("no auth info returned")
+		}
+
+		cli.SetToken(resp.Auth.ClientToken)
+	}
+	p.client = cli
 	return p.client, nil
 }
 
