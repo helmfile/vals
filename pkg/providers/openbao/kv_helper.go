@@ -1,88 +1,44 @@
 package openbao
 
 import (
-	"errors"
-	"net/http"
 	"path"
 	"strings"
-
-	api "github.com/openbao/openbao/api/v2"
 )
 
-// Taken from https://github.com/hashicorp/vault/blob/master/command/kv_helpers.go
-// Adapted for OpenBao
-func kvPreflightVersionRequest(client *api.Client, path string) (string, int, error) {
-	// We don't want to use a wrapping call here so save any custom value and
-	// restore after
-	currentWrappingLookupFunc := client.CurrentWrappingLookupFunc()
-	client.SetWrappingLookupFunc(nil)
-	defer client.SetWrappingLookupFunc(currentWrappingLookupFunc)
-	currentOutputCurlString := client.OutputCurlString()
-	client.SetOutputCurlString(false)
-	defer client.SetOutputCurlString(currentOutputCurlString)
+// resolveKVDataPath resolves a secret key into its standard KV v2 secret data path
+// ("/v1/<mount>/data/<path>") and KV v1 secret path ("/v1/<mount>/<path>").
+//
+// For KV v2, the standard secret engine data path is "<mount>/data/<path>".
+// If the key already contains the "/data/" segment (e.g. "<mount>/data/<path>"),
+// it is returned as-is to avoid duplicate data prefixes.
+//
+// Leading and trailing slashes are trimmed.
+func resolveKVDataPath(key, mountPath string) (dataPath string, v1Path string) {
+	mount, subpath := splitMountPath(strings.Trim(key, "/"), strings.Trim(mountPath, "/"))
 
-	r := client.NewRequest("GET", "/v1/sys/internal/ui/mounts/"+path)
-	resp, err := client.RawRequest(r)
-	if resp != nil {
-		defer func() {
-			_ = resp.Body.Close()
-		}()
-	}
-	if err != nil {
-		// If we get a 404 we are using an older version of openbao, default to
-		// version 1
-		if resp != nil && resp.StatusCode == http.StatusNotFound {
-			return "", 1, nil
-		}
+	v1Path = path.Join(mount, subpath)
 
-		return "", 0, err
+	dataPath = path.Join(mount, "data", subpath)
+	if subpath == "data" || strings.HasPrefix(subpath, "data/") {
+		dataPath = path.Join(mount, subpath)
 	}
 
-	secret, err := api.ParseSecret(resp.Body)
-	if err != nil {
-		return "", 0, err
-	}
-	if secret == nil {
-		return "", 0, errors.New("nil response from pre-flight request")
-	}
-	var mountPath string
-	if mountPathRaw, ok := secret.Data["path"]; ok {
-		mountPath = mountPathRaw.(string)
-	}
-	options := secret.Data["options"]
-	if options == nil {
-		return mountPath, 1, nil
-	}
-	versionRaw := options.(map[string]interface{})["version"]
-	if versionRaw == nil {
-		return mountPath, 1, nil
-	}
-	version := versionRaw.(string)
-	switch version {
-	case "", "1":
-		return mountPath, 1, nil
-	case "2":
-		return mountPath, 2, nil
-	}
-
-	return mountPath, 1, nil
+	return dataPath, v1Path
 }
 
-func isKVv2(path string, client *api.Client) (string, bool, error) {
-	mountPath, version, err := kvPreflightVersionRequest(client, path)
-	if err != nil {
-		return "", false, err
+// splitMountPath splits key into its mount and subpath components.
+//
+// When mountPath is empty, the first path segment of key is the mount and the
+// rest is the subpath. Otherwise mountPath is the mount and the subpath is key
+// with the "mountPath/" prefix stripped — or the whole key when it does not
+// carry the prefix.
+func splitMountPath(key, mountPath string) (mount, subpath string) {
+	if mountPath == "" {
+		mount, subpath, _ = strings.Cut(key, "/")
+		return mount, subpath
 	}
-
-	return mountPath, version == 2, nil
-}
-
-func addPrefixToVKVPath(p, mountPath, apiPrefix string) string {
-	switch {
-	case p == mountPath, p == strings.TrimSuffix(mountPath, "/"):
-		return path.Join(mountPath, apiPrefix)
-	default:
-		p = strings.TrimPrefix(p, mountPath)
-		return path.Join(mountPath, apiPrefix, p)
+	if key == mountPath {
+		return mountPath, ""
 	}
+	return mountPath, strings.TrimPrefix(key, mountPath+"/")
 }
