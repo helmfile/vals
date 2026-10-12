@@ -29,6 +29,7 @@ It supports various backends including:
 - Scaleway
 - [Delinea SecretServer](https://delinea.com/products/secret-server)
 - Infisical
+- [IBM Cloud Secrets Manager](#ibm-cloud-secrets-manager)
 
 - Use `vals eval -f refs.yaml` to replace all the `ref`s in the file to actual values and secrets.
 - Use `vals exec -f env.yaml -- <COMMAND>` to populate envvars and execute the command.
@@ -337,6 +338,7 @@ Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/
       - [Fetch string value](#fetch-string-value)
       - [Fetch integer value](#fetch-integer-value)
     - [Delinea Secret Server](#secretserver)
+    - [IBM Cloud Secrets Manager](#ibm-cloud-secrets-manager)
   - [Advanced Usages](#advanced-usages)
     - [Discriminating config and secrets](#discriminating-config-and-secrets)
   - [Non-Goals](#non-goals)
@@ -1349,6 +1351,62 @@ jobs:
 ```
 
 Match the `audience` query parameter to the audiences configured on the Infisical machine identity. `INFISICAL_OIDC_AUTH_IDENTITY_ID` is not secret and can live in repository variables.
+
+### IBM Cloud Secrets Manager
+
+This provider retrieves secrets from [IBM Cloud Secrets Manager](https://cloud.ibm.com/docs/secrets-manager) using the [IBM Secrets Manager Go SDK](https://github.com/IBM/secrets-manager-go-sdk).
+
+Three secret types are supported: `arbitrary`, `kv`, and `service_credentials`.
+
+#### Authentication
+
+| Environment variable | Config key | Description |
+|---|---|---|
+| `IBMCLOUD_API_KEY` | `api_key` | IBM Cloud IAM API key (required) |
+| `IBMCLOUD_SM_SERVICE_URL` | `service_url` | Full service endpoint URL of your Secrets Manager instance (required) |
+
+The service endpoint URL has the form:
+```
+https://<instance-id>.<region>.secrets-manager.appdomain.cloud
+```
+
+Config keys take precedence over environment variables.
+
+#### URI format
+
+```
+ref+ibmsecrets://secret_groups/<group>/secret_types/<type>/secrets/<name>[#/<jsonpath>]
+```
+
+- `<group>` — the secret group name (use `default` for the default group)
+- `<type>` — one of `arbitrary`, `kv`, or `service_credentials`
+- `<name>` — the secret name
+- `#/<jsonpath>` — optional slash-delimited path into the secret payload (required for `kv` and `service_credentials`; not applicable to `arbitrary`)
+
+#### Secret type behaviour
+
+| Type | Payload source | Fragment (`#/`) |
+|---|---|---|
+| `arbitrary` | `secret.payload` — returned as a plain string | Not used |
+| `kv` | `secret.data` — a JSON object | Path into the object, e.g. `#/database/password` |
+| `service_credentials` | `secret.credentials` — a JSON object | Path into the credentials, e.g. `#/apikey` |
+
+When no fragment is given for `kv` or `service_credentials`, the entire JSON object is returned as a string.
+
+#### Examples
+
+```yaml
+# Retrieve an arbitrary secret
+db_password: ref+ibmsecrets://secret_groups/prod/secret_types/arbitrary/secrets/db-password
+
+# Retrieve a specific key from a kv secret
+db_host: ref+ibmsecrets://secret_groups/prod/secret_types/kv/secrets/db-config#/host
+
+# Retrieve the IAM API key from a service_credentials secret
+cos_apikey: ref+ibmsecrets://secret_groups/prod/secret_types/service_credentials/secrets/cos-binding#/apikey
+
+
+```
 
 ### SecretServer
 

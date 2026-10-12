@@ -91,6 +91,7 @@ const (
 	ProviderSecretserver       = "tss"
 	ProviderInfisical          = "infisical"
 	ProviderServercore         = "servercore"
+	ProviderIBMSecrets         = "ibmsecrets"
 )
 
 var EnvFallbackPrefix = "VALS_"
