@@ -12,9 +12,9 @@ import (
 )
 
 type provider struct {
-	log         *log.Logger
-	APIKey      string
-	ServiceURL  string
+	log        *log.Logger
+	APIKey     string
+	ServiceURL string
 }
 
 func New(l *log.Logger, cfg api.StaticConfig) *provider {
@@ -46,9 +46,9 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 //
 //	secret_groups/<group>/secret_types/<type>/secrets/<name>[#/<jsonpath>]
 type secretSpec struct {
-	groupName   string
-	secretType  string
-	secretName  string
+	groupName    string
+	secretType   string
+	secretName   string
 	fragmentPath string
 }
 

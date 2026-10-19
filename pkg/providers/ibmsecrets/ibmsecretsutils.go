@@ -79,7 +79,7 @@ func (p *provider) fetchSecret(spec secretSpec) (string, error) {
 }
 
 // getValueByPath walks obj using a slash-delimited path.
-// An empty path returns the JSON-serialised form of obj.
+// An empty path returns the JSON-serialized form of obj.
 // Numeric path segments are treated as array indices.
 // Mirrors the Node.js getValueByPath implementation.
 func getValueByPath(obj map[string]interface{}, path string) (string, error) {
