@@ -65,14 +65,11 @@ func (p *provider) GetStringMap(path string) (map[string]interface{}, error) {
 
 func (p *provider) ensureClient() (*conjurapi.Client, error) {
 	if p.client == nil {
-		config, err := conjurapi.LoadConfig()
-		if err != nil {
-			p.log.Debugf("conjur: cannot get conjur config")
-			return nil, err
+		config := conjurapi.Config{
+			ApplianceURL:      p.Address,
+			Account:           p.Account,
+			CredentialStorage: conjurapi.CredentialStorageNone,
 		}
-
-		config.ApplianceURL = p.Address
-		config.Account = p.Account
 
 		cli, err := conjurapi.NewClientFromKey(config,
 			authn.LoginPair{

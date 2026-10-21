@@ -124,7 +124,7 @@ func Test_HttpJson(t *testing.T) {
 		expected := "chartify"
 		actual := vals["value"]
 		if actual != expected {
-			t.Errorf("unepected value for key %q: expected=%q, got=%q", "value", expected, actual)
+			t.Errorf("unexpected value for key %q: expected=%q, got=%q", "value", expected, actual)
 		}
 	})
 
@@ -137,7 +137,7 @@ func Test_HttpJson(t *testing.T) {
 		expected := "go-yaml"
 		actual := vals["value"]
 		if actual != expected {
-			t.Errorf("unepected value for key %q: expected=%q, got=%q", "value", expected, actual)
+			t.Errorf("unexpected value for key %q: expected=%q, got=%q", "value", expected, actual)
 		}
 	})
 
@@ -145,10 +145,10 @@ func Test_HttpJson(t *testing.T) {
 		config := createProvider("httpjson://boom.github.com/users/helmfile/repos?insecure=true#", "//owner", "false")
 		_, err := Load(config)
 		if err != nil {
-			expected := "error fetching json document at http://boom.github.com/users/helmfile/repos: invalid character '<' looking for beginning of value"
+			expected := "error fetching json document at http://boom.github.com/users/helmfile/repos: Get \"http://boom.github.com/users/helmfile/repos\": dial tcp: lookup boom.github.com: no such host"
 			actual := err.Error()
 			if actual != expected {
-				t.Errorf("unepected value for key %q: expected=%q, got=%q", "value", expected, actual)
+				t.Errorf("unexpected value for key %q: expected=%q, got=%q", "value", expected, actual)
 			}
 		}
 	})
@@ -161,7 +161,7 @@ func Test_HttpJson(t *testing.T) {
 			expected := "unable to query doc for value with xpath query using " + uri + "//boom"
 			actual := err.Error()
 			if actual != expected {
-				t.Errorf("unepected value for key %q: expected=%q, got=%q", "value", expected, actual)
+				t.Errorf("unexpected value for key %q: expected=%q, got=%q", "value", expected, actual)
 			}
 		}
 	})
@@ -174,19 +174,19 @@ func Test_HttpJson(t *testing.T) {
 			expected := "unable to query doc for value with xpath query using " + uri + "//boom"
 			actual := err.Error()
 			if actual != expected {
-				t.Errorf("unepected value for key %q: expected=%q, got=%q", "value", expected, actual)
+				t.Errorf("unexpected value for key %q: expected=%q, got=%q", "value", expected, actual)
 			}
 		}
 	})
 
 	t.Run("Get Avatar URL with child nodes causing error", func(t *testing.T) {
-		config := createProvider(prefixAndPath+"?insecure=true&mode=singleparam#", "//owner", "false")
+		config := createProvider(prefixAndPath+"?insecure=true#", "//owner", "false")
 		_, err := Load(config)
 		if err != nil {
 			expected := "location //owner has child nodes at " + server.URL + ", please use a more granular query"
 			actual := err.Error()
 			if actual != expected {
-				t.Errorf("unepected value for key %q: expected=%q, got=%q", "value", expected, actual)
+				t.Errorf("unexpected value for key %q: expected=%q, got=%q", "value", expected, actual)
 			}
 		}
 	})
@@ -200,7 +200,7 @@ func Test_HttpJson(t *testing.T) {
 		expected := "251296379"
 		actual := vals["value"]
 		if actual != expected {
-			t.Errorf("unepected value for key %q: expected=%q, got=%q", "value", expected, actual)
+			t.Errorf("unexpected value for key %q: expected=%q, got=%q", "value", expected, actual)
 		}
 	})
 
@@ -211,7 +211,7 @@ func Test_HttpJson(t *testing.T) {
 			expected := "unable to convert possible float to int for value: chartify"
 			actual := err.Error()
 			if actual != expected {
-				t.Errorf("unepected value for key %q: expected=%q, got=%q", "value", expected, actual)
+				t.Errorf("unexpected value for key %q: expected=%q, got=%q", "value", expected, actual)
 			}
 		}
 	})
@@ -225,7 +225,7 @@ func Test_HttpJson(t *testing.T) {
 		expected := "chartify.database1.io,chartify.database2.io,chartify.database3.io,chartify.database4.io,chartify.database5.io"
 		actual := vals["value"]
 		if actual != expected {
-			t.Errorf("unepected value for key %q: expected=%q, got=%q", "value", expected, actual)
+			t.Errorf("unexpected value for key %q: expected=%q, got=%q", "value", expected, actual)
 		}
 	})
 }
@@ -243,7 +243,7 @@ func Test_HttpJson_UnitTests(t *testing.T) {
 		}
 		expected := "http://boom.com/path"
 		if returnValue != expected {
-			t.Errorf("unepected value for key %q: expected=%q, got=%q", "value", expected, returnValue)
+			t.Errorf("unexpected value for key %q: expected=%q, got=%q", "value", expected, returnValue)
 		}
 	})
 	t.Run("GetUrlFromUri: valid (https)", func(t *testing.T) {
@@ -253,37 +253,64 @@ func Test_HttpJson_UnitTests(t *testing.T) {
 		}
 		expected := "https://boom.com/path"
 		if returnValue != expected {
-			t.Errorf("unepected value for key %q: expected=%q, got=%q", "value", expected, returnValue)
+			t.Errorf("unexpected value for key %q: expected=%q, got=%q", "value", expected, returnValue)
 		}
 	})
 	t.Run("GetUrlFromUri: invalid character in host name (https)", func(t *testing.T) {
 		_, err := httpjson.GetUrlFromUri("httpjson://supsupsup^boom#///*[1]/name", "https")
-		if err != nil {
-			expected := "invalid domain: parse \"https://supsupsup^boom\": invalid character \"^\" in host name"
-			actual := err.Error()
-			if actual != expected {
-				t.Errorf("unepected value for key %q: expected=%q, got=%q", "value", expected, actual)
-			}
+		expected := "invalid URL: https://supsupsup^boom, error: parse \"https://supsupsup^boom\": invalid character \"^\" in host name"
+
+		if err == nil {
+			t.Fatalf("expected an error %q, got nil", expected)
+		}
+
+		actual := err.Error()
+		if actual != expected {
+			t.Errorf("unexpected value for key %q: expected=%q, got=%q", "value", expected, actual)
 		}
 	})
 	t.Run("GetUrlFromUri: no domain provided (http)", func(t *testing.T) {
 		_, err := httpjson.GetUrlFromUri("httpjson://?insecure=true#///*[1]/name", "http")
-		if err != nil {
-			expected := "no domain found in uri: httpjson://?insecure=true#///*[1]/name"
-			actual := err.Error()
-			if actual != expected {
-				t.Errorf("unepected value for key %q: expected=%q, got=%q", "value", expected, actual)
-			}
+
+		expected := "no domain found in uri: httpjson://?insecure=true#///*[1]/name"
+
+		if err == nil {
+			t.Fatalf("expected an error %q, got nil", expected)
+		}
+
+		actual := err.Error()
+		if actual != expected {
+			t.Errorf("unexpected value for key %q: expected=%q, got=%q", "value", expected, actual)
 		}
 	})
 	t.Run("GetUrlFromUri: no domain provided (https)", func(t *testing.T) {
 		_, err := httpjson.GetUrlFromUri("httpjson://#///*[1]/name", "https")
-		if err != nil {
-			expected := "no domain found in uri: httpjson://#///*[1]/name"
-			actual := err.Error()
-			if actual != expected {
-				t.Errorf("unepected value for key %q: expected=%q, got=%q", "value", expected, actual)
-			}
+
+		expected := "no domain found in uri: httpjson://#///*[1]/name"
+
+		if err == nil {
+			t.Fatalf("expected an error %q, got nil", expected)
+		}
+
+		actual := err.Error()
+		if actual != expected {
+			t.Errorf("unexpected value for key %q: expected=%q, got=%q", "value", expected, actual)
+		}
+	})
+	t.Run("GetUrlFromUri: query params are preserved", func(t *testing.T) {
+		url, _ := httpjson.GetUrlFromUri("httpjson://domain.com/path/?param=value#///*[1]/name", "https")
+
+		expected := "https://domain.com/path/?param=value"
+		if expected != url {
+			t.Errorf("unexpected url: expected=%q, got=%q", expected, url)
+		}
+	})
+	t.Run("GetUrlFromUri: special query params are removed", func(t *testing.T) {
+		url, _ := httpjson.GetUrlFromUri("httpjson://domain.com/path/?insecure=true&floatAsInt=false&param=value#///*[1]/name", "http")
+
+		expected := "http://domain.com/path/?param=value"
+		if expected != url {
+			t.Errorf("unexpected url: expected=%q, got=%q", expected, url)
 		}
 	})
 
@@ -295,7 +322,7 @@ func Test_HttpJson_UnitTests(t *testing.T) {
 		}
 		expected := "//*[1]/name"
 		if returnValue != expected {
-			t.Errorf("unepected value for key %q: expected=%q, got=%q", "value", expected, returnValue)
+			t.Errorf("unexpected value for key %q: expected=%q, got=%q", "value", expected, returnValue)
 		}
 	})
 	t.Run("GetXpathFromUri: valid (https)", func(t *testing.T) {
@@ -305,7 +332,7 @@ func Test_HttpJson_UnitTests(t *testing.T) {
 		}
 		expected := "//*[1]/name"
 		if returnValue != expected {
-			t.Errorf("unepected value for key %q: expected=%q, got=%q", "value", expected, returnValue)
+			t.Errorf("unexpected value for key %q: expected=%q, got=%q", "value", expected, returnValue)
 		}
 	})
 	t.Run("GetXpathFromUri: no xpath provided (http)", func(t *testing.T) {
@@ -314,7 +341,7 @@ func Test_HttpJson_UnitTests(t *testing.T) {
 			expected := "no xpath expression found in uri: httpjson://blah.blah/blah?insecure=true"
 			actual := err.Error()
 			if actual != expected {
-				t.Errorf("unepected value for key %q: expected=%q, got=%q", "value", expected, actual)
+				t.Errorf("unexpected value for key %q: expected=%q, got=%q", "value", expected, actual)
 			}
 		}
 	})
@@ -324,7 +351,7 @@ func Test_HttpJson_UnitTests(t *testing.T) {
 			expected := "no xpath expression found in uri: httpjson://blah.blah/blah"
 			actual := err.Error()
 			if actual != expected {
-				t.Errorf("unepected value for key %q: expected=%q, got=%q", "value", expected, actual)
+				t.Errorf("unexpected value for key %q: expected=%q, got=%q", "value", expected, actual)
 			}
 		}
 	})
@@ -334,7 +361,7 @@ func Test_HttpJson_UnitTests(t *testing.T) {
 			expected := "unable to compile xpath expression '' from uri: httpjson://blah.blah/blah?insecure=true#/"
 			actual := err.Error()
 			if actual != expected {
-				t.Errorf("unepected value for key %q: expected=%q, got=%q", "value", expected, actual)
+				t.Errorf("unexpected value for key %q: expected=%q, got=%q", "value", expected, actual)
 			}
 		}
 	})
@@ -344,7 +371,7 @@ func Test_HttpJson_UnitTests(t *testing.T) {
 			expected := "unable to compile xpath expression '' from uri: httpjson://blah.blah/blah#/"
 			actual := err.Error()
 			if actual != expected {
-				t.Errorf("unepected value for key %q: expected=%q, got=%q", "value", expected, actual)
+				t.Errorf("unexpected value for key %q: expected=%q, got=%q", "value", expected, actual)
 			}
 		}
 	})
@@ -354,7 +381,7 @@ func Test_HttpJson_UnitTests(t *testing.T) {
 			expected := "unable to compile xpath expression '' from uri: httpjson://blah.blah/blah?insecure=true#/hello^sup"
 			actual := err.Error()
 			if actual != expected {
-				t.Errorf("unepected value for key %q: expected=%q, got=%q", "value", expected, actual)
+				t.Errorf("unexpected value for key %q: expected=%q, got=%q", "value", expected, actual)
 			}
 		}
 	})
@@ -364,7 +391,7 @@ func Test_HttpJson_UnitTests(t *testing.T) {
 			expected := "unable to compile xpath expression '' from uri: httpjson://blah.blah/blah#/hello^sup"
 			actual := err.Error()
 			if actual != expected {
-				t.Errorf("unepected value for key %q: expected=%q, got=%q", "value", expected, actual)
+				t.Errorf("unexpected value for key %q: expected=%q, got=%q", "value", expected, actual)
 			}
 		}
 	})

@@ -2,8 +2,11 @@ package azurekeyvault
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"os"
 	"strings"
+	"sync"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
@@ -16,6 +19,10 @@ import (
 type provider struct {
 	// azure key vault client
 	clients map[string]*azsecrets.Client
+	// clientsMu guards the clients map so concurrent callers don't race
+	// while reading or writing it. It is not held during credential and
+	// client creation, so different vaults can initialize in parallel.
+	clientsMu sync.Mutex
 }
 
 func New(cfg api.StaticConfig) *provider {
@@ -57,8 +64,11 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 }
 
 func (p *provider) getClientForKeyVault(vaultBaseURL string) (*azsecrets.Client, error) {
-	if val, ok := p.clients[vaultBaseURL]; val != nil || ok {
-		return p.clients[vaultBaseURL], nil
+	p.clientsMu.Lock()
+	client, ok := p.clients[vaultBaseURL]
+	p.clientsMu.Unlock()
+	if ok && client != nil {
+		return client, nil
 	}
 
 	cred, err := getTokenCredential()
@@ -66,16 +76,63 @@ func (p *provider) getClientForKeyVault(vaultBaseURL string) (*azsecrets.Client,
 		return nil, err
 	}
 
-	p.clients[vaultBaseURL], err = azsecrets.NewClient(vaultBaseURL, cred, nil)
+	client, err = azsecrets.NewClient(vaultBaseURL, cred, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return p.clients[vaultBaseURL], nil
+	// Concurrent callers may have created a client for the same vault in
+	// the meantime, so keep the first stored one as the canonical client.
+	p.clientsMu.Lock()
+	defer p.clientsMu.Unlock()
+	if cached, ok := p.clients[vaultBaseURL]; ok && cached != nil {
+		return cached, nil
+	}
+	p.clients[vaultBaseURL] = client
+
+	return client, nil
 }
 
 func getTokenCredential() (azcore.TokenCredential, error) {
-	cred, err := azidentity.NewDefaultAzureCredential(nil)
+	authEnvVar := os.Getenv("AZKV_AUTH")
+	var chain []azcore.TokenCredential
+
+	switch authEnvVar {
+	case "", "default":
+		cred, err := azidentity.NewDefaultAzureCredential(nil)
+		if err != nil {
+			return nil, err
+		}
+		chain = append(chain, cred)
+	case "workload":
+		cred, err := azidentity.NewWorkloadIdentityCredential(nil)
+		if err != nil {
+			return nil, err
+		}
+		chain = append(chain, cred)
+	case "managed":
+		cred, err := azidentity.NewManagedIdentityCredential(nil)
+		if err != nil {
+			return nil, err
+		}
+		chain = append(chain, cred)
+	case "cli":
+		cred, err := azidentity.NewAzureCLICredential(nil)
+		if err != nil {
+			return nil, err
+		}
+		chain = append(chain, cred)
+	case "devcli":
+		cred, err := azidentity.NewAzureDeveloperCLICredential(nil)
+		if err != nil {
+			return nil, err
+		}
+		chain = append(chain, cred)
+	default:
+		return nil, errors.New("Environment variable 'AZKV_AUTH' is set to an unsupported value!")
+	}
+
+	cred, err := azidentity.NewChainedTokenCredential(chain, nil)
 	if err != nil {
 		return nil, err
 	}

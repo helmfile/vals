@@ -70,7 +70,7 @@ func TestValues_HCPVaultSecrets_String(t *testing.T) {
 				key := "vals-test"
 				actual := vals[key]
 				if actual != expected {
-					t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
+					t.Errorf("unexpected value for key %q: expected=%q, got=%q", key, expected, actual)
 				}
 			}
 		})

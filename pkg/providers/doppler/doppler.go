@@ -14,15 +14,14 @@ import (
 )
 
 type provider struct {
-	log       *log.Logger
-	Proto     string
-	Host      string
-	Address   string
-	VerifyTLS bool
-
+	log                    *log.Logger
+	Proto                  string
+	Host                   string
+	Address                string
 	Token                  string
 	Project                string
 	Config                 string
+	VerifyTLS              bool
 	IncludeDopplerDefaults bool
 }
 

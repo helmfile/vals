@@ -10,9 +10,12 @@ import (
 func TestKsDecode(t *testing.T) {
 	in := `data:
   foo: Rk9P
+stringData:
+  bar: BAR
 kind: Secret
 `
 	outExpected := `stringData:
+  bar: BAR
   foo: FOO
 kind: Secret
 `

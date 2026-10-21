@@ -25,5 +25,5 @@ func New(c Config) *Logger {
 }
 
 func (l *Logger) Debugf(msg string, args ...interface{}) {
-	fmt.Fprintf(l.output, msg+"\n", args...)
+	_, _ = fmt.Fprintf(l.output, msg+"\n", args...)
 }

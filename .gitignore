@@ -1,4 +1,9 @@
 .idea
 *~
-bin/vals
+bin/
+dist/
+cover.out
+vals
 .vscode
+.codex-review/
+vals-all

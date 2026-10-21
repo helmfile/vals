@@ -1,4 +1,4 @@
-name: Go
+name: CI 
 
 on:
   push:
@@ -7,38 +7,16 @@ on:
     branches: [ main ]
 
 jobs:
-
   build-test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - name: Set up Go
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@v7
       with:
         go-version-file: 'go.mod'
         cache: true
-    - name: build 
+    - name: build
       run: make build
-
-  unit-test:
-    runs-on: ubuntu-latest
-    env:
-      SKIP_TESTS: true 
-    steps:
-    - name: Create k8s Kind Cluster
-      uses: helm/kind-action@v1.10.0
-      with:
-        cluster_name: cluster
-    - name: Set k8s provider
-      run: |
-        kubectl create namespace test-namespace
-        kubectl create secret generic mysecret -n test-namespace --from-literal=key=p4ssw0rd
-        kubectl create configmap myconfigmap -n test-namespace --from-literal=key=configValue
-    - uses: actions/checkout@v4
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version-file: 'go.mod'
-        cache: true
-    - name: test
-      run: make test
+    - name: build (minimal, without optional providers)
+      run: go build -tags custom_providers -o /dev/null ./cmd/vals

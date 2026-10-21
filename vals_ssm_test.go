@@ -8,6 +8,11 @@ import (
 	config2 "github.com/helmfile/vals/pkg/config"
 )
 
+const (
+	testKey   = "mykey"
+	testValue = "myvalue"
+)
+
 func TestValues_SSM_String(t *testing.T) {
 	// TODO
 	// Pre-requisite: aws ssm put-parameter --name /mykv/foo/mykey --value myvalue --type String
@@ -20,9 +25,9 @@ func TestValues_SSM_String(t *testing.T) {
 	}
 
 	commonInline := map[string]interface{}{
-		"foo": "mykey",
+		"foo": testKey,
 		"bar": map[string]interface{}{
-			"baz": "mykey",
+			"baz": testKey,
 		},
 	}
 
@@ -72,22 +77,22 @@ func TestValues_SSM_String(t *testing.T) {
 			}
 
 			{
-				expected := "myvalue"
+				expected := testValue
 				key := "foo"
 				actual := vals[key]
 				if actual != expected {
-					t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
+					t.Errorf("unexpected value for key %q: expected=%q, got=%q", key, expected, actual)
 				}
 			}
 
 			{
 				switch bar := vals["bar"].(type) {
 				case map[string]interface{}:
-					expected := "myvalue"
+					expected := testValue
 					key := "baz"
 					actual := bar[key]
 					if actual != expected {
-						t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
+						t.Errorf("unexpected value for key %q: expected=%q, got=%q", key, expected, actual)
 					}
 				default:
 					t.Fatalf("unexpected type of bar: value=%v, type=%T", bar, bar)
@@ -157,14 +162,14 @@ func TestValues_SSM_Map(t *testing.T) {
 			{
 				switch foo := vals["foo"].(type) {
 				case map[string]interface{}:
-					key := "mykey"
+					key := testKey
 					actual, ok := foo[key]
 					if !ok {
 						t.Fatalf("%q does not exist", key)
 					}
-					expected := "myvalue"
+					expected := testValue
 					if actual != expected {
-						t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
+						t.Errorf("unexpected value for key %q: expected=%q, got=%q", key, expected, actual)
 					}
 				default:
 					t.Fatalf("unexpected type of foo: value=%v, type=%T", foo, foo)
@@ -176,14 +181,14 @@ func TestValues_SSM_Map(t *testing.T) {
 				case map[string]interface{}:
 					switch baz := bar["baz"].(type) {
 					case map[string]interface{}:
-						key := "mykey"
+						key := testKey
 						actual, ok := baz[key]
 						if !ok {
 							t.Fatalf("%q does not exist", key)
 						}
-						expected := "myvalue"
+						expected := testValue
 						if actual != expected {
-							t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
+							t.Errorf("unexpected value for key %q: expected=%q, got=%q", key, expected, actual)
 						}
 					default:
 						t.Fatalf("unexpected type of baz: value=%v, type=%T", baz, baz)
@@ -251,14 +256,14 @@ func TestValues_SSM_Map_Raw(t *testing.T) {
 			{
 				switch foo := vals["foo"].(type) {
 				case map[string]interface{}:
-					key := "mykey"
+					key := testKey
 					actual, ok := foo[key]
 					if !ok {
 						t.Fatalf("%q does not exist", key)
 					}
-					expected := "myvalue"
+					expected := testValue
 					if actual != expected {
-						t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
+						t.Errorf("unexpected value for key %q: expected=%q, got=%q", key, expected, actual)
 					}
 				default:
 					t.Fatalf("unexpected type of foo: value=%v, type=%T", foo, foo)
@@ -270,14 +275,14 @@ func TestValues_SSM_Map_Raw(t *testing.T) {
 				case map[string]interface{}:
 					switch baz := bar["baz"].(type) {
 					case map[string]interface{}:
-						key := "mykey"
+						key := testKey
 						actual, ok := baz[key]
 						if !ok {
 							t.Fatalf("%q does not exist", key)
 						}
-						expected := "myvalue"
+						expected := testValue
 						if actual != expected {
-							t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
+							t.Errorf("unexpected value for key %q: expected=%q, got=%q", key, expected, actual)
 						}
 					default:
 						t.Fatalf("unexpected type of baz: value=%v, type=%T", baz, baz)
@@ -368,14 +373,14 @@ func TestValues_SSM_Map_YAML(t *testing.T) {
 				case map[string]interface{}:
 					switch baz := bar["baz"].(type) {
 					case map[string]interface{}:
-						key := "mykey"
+						key := testKey
 						actual, ok := baz[key]
 						if !ok {
 							t.Fatalf("%q does not exist", key)
 						}
-						expected := "myvalue"
+						expected := testValue
 						if actual != expected {
-							t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
+							t.Errorf("unexpected value for key %q: expected=%q, got=%q", key, expected, actual)
 						}
 					default:
 						t.Fatalf("unexpected type of baz: value=%v, type=%T", baz, baz)
@@ -477,14 +482,14 @@ func TestValues_SSM_Map_YAML_Root(t *testing.T) {
 			{
 				switch baz := vals["baz"].(type) {
 				case map[string]interface{}:
-					key := "mykey"
+					key := testKey
 					actual, ok := baz[key]
 					if !ok {
 						t.Fatalf("%q does not exist", key)
 					}
-					expected := "myvalue"
+					expected := testValue
 					if actual != expected {
-						t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
+						t.Errorf("unexpected value for key %q: expected=%q, got=%q", key, expected, actual)
 					}
 				default:
 					t.Fatalf("unexpected type of baz: value=%v, type=%T", baz, baz)
@@ -558,7 +563,7 @@ func TestValues_SSM_Map_Raw_Root(t *testing.T) {
 				"ssm": map[string]interface{}{
 					// implies format:raw
 					"prefix": "/mykv/foo",
-					"keys":   []string{"mykey"},
+					"keys":   []string{testKey},
 					"region": "ap-northeast-1",
 				},
 			},
@@ -587,14 +592,14 @@ func TestValues_SSM_Map_Raw_Root(t *testing.T) {
 			}
 
 			{
-				key := "mykey"
+				key := testKey
 				actual, ok := vals[key]
 				if !ok {
 					t.Fatalf("%q does not exist", key)
 				}
-				expected := "myvalue"
+				expected := testValue
 				if actual != expected {
-					t.Errorf("unepected value for key %q: expected=%q, got=%q", key, expected, actual)
+					t.Errorf("unexpected value for key %q: expected=%q, got=%q", key, expected, actual)
 				}
 			}
 		})

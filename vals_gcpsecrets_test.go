@@ -20,13 +20,12 @@ func TestValues_GCPSecretsManager(t *testing.T) {
 		t.Fatalf("gcpsecrets tests require GCP_PROJECT env var set correctly")
 	}
 	tests := []struct {
-		name    string
 		secrets map[string]string
 		config  map[string]interface{}
 		want    map[string]interface{}
+		name    string
 	}{
 		{
-			"latest string",
 			map[string]string{"valstestvar": "foo: bar"},
 			map[string]interface{}{
 				"provider": map[string]interface{}{
@@ -40,9 +39,25 @@ func TestValues_GCPSecretsManager(t *testing.T) {
 				},
 			},
 			map[string]interface{}{"valstestvar": "foo: bar"},
+			"latest string",
 		},
 		{
-			"fallback string",
+			map[string]string{"valstestvar": "foo: bar"},
+			map[string]interface{}{
+				"provider": map[string]interface{}{
+					"name":    "gcpsecrets",
+					"version": "latest",
+					"type":    "string",
+					"path":    "",
+				},
+				"inline": map[string]interface{}{
+					"valstestvar": "valstestvar",
+				},
+			},
+			map[string]interface{}{"valstestvar": "foo: bar"},
+			"latest string",
+		},
+		{
 			map[string]string{},
 			map[string]interface{}{
 				"provider": map[string]interface{}{
@@ -57,9 +72,9 @@ func TestValues_GCPSecretsManager(t *testing.T) {
 				},
 			},
 			map[string]interface{}{"missingvar": "default-value"},
+			"fallback string",
 		},
 		{
-			"empty fallback string",
 			map[string]string{},
 			map[string]interface{}{
 				"provider": map[string]interface{}{
@@ -74,9 +89,9 @@ func TestValues_GCPSecretsManager(t *testing.T) {
 				},
 			},
 			map[string]interface{}{"missingvar": ""},
+			"empty fallback string",
 		},
 		{
-			"v1 string",
 			map[string]string{"valstestvar": "foo: bar"},
 			map[string]interface{}{
 				"provider": map[string]interface{}{
@@ -90,9 +105,9 @@ func TestValues_GCPSecretsManager(t *testing.T) {
 				},
 			},
 			map[string]interface{}{"valstestvar": "foo: bar"},
+			"v1 string",
 		},
 		{
-			"optional string",
 			map[string]string{},
 			map[string]interface{}{
 				"provider": map[string]interface{}{
@@ -107,9 +122,9 @@ func TestValues_GCPSecretsManager(t *testing.T) {
 				},
 			},
 			map[string]interface{}{"missingvar": ""},
+			"optional string",
 		},
 		{
-			"v1 map",
 			map[string]string{"valstestvar": "foo: bar"},
 			map[string]interface{}{
 				"provider": map[string]interface{}{
@@ -127,9 +142,9 @@ func TestValues_GCPSecretsManager(t *testing.T) {
 					"foo": "bar",
 				},
 			},
+			"v1 map",
 		},
 		{
-			"latest map",
 			map[string]string{"valstestvar": "foo: bar"},
 			map[string]interface{}{
 				"provider": map[string]interface{}{
@@ -147,9 +162,9 @@ func TestValues_GCPSecretsManager(t *testing.T) {
 					"foo": "bar",
 				},
 			},
+			"latest map",
 		},
 		{
-			"trim_nl string",
 			map[string]string{"valstestvar": "foo: bar\n"},
 			map[string]interface{}{
 				"provider": map[string]interface{}{
@@ -164,6 +179,7 @@ func TestValues_GCPSecretsManager(t *testing.T) {
 				},
 			},
 			map[string]interface{}{"valstestvar": "foo: bar"},
+			"trim_nl string",
 		},
 	}
 

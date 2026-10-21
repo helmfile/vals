@@ -1,15 +1,18 @@
+//go:build integration
+
 package ssm
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"sort"
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/service/ssm"
-	"github.com/aws/aws-sdk-go/service/ssm/ssmiface"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ssm"
+	"github.com/aws/aws-sdk-go-v2/service/ssm/types"
+	"github.com/aws/smithy-go"
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/helmfile/vals/pkg/config"
@@ -18,10 +21,9 @@ import (
 
 type mockedSSM struct {
 	ssmiface.SSMAPI
-
-	Path   string
-	Output *ssm.GetParametersByPathOutput
 	Error  awserr.Error
+	Output *ssm.GetParametersByPathOutput
+	Path   string
 }
 
 func Output(params map[string]string) *ssm.GetParametersByPathOutput {
@@ -66,12 +68,11 @@ func (m mockedSSM) GetParametersByPathPages(in *ssm.GetParametersByPathInput, fn
 
 func TestGetStringMap(t *testing.T) {
 	cases := []struct {
-		key       string
-		recursive bool
+		ssm       mockedSSM
 		want      map[string]interface{}
+		key       string
 		wantErr   string
-
-		ssm mockedSSM
+		recursive bool
 	}{
 		// {
 		// 	key:     "bar",
@@ -121,8 +122,6 @@ func TestGetStringMap(t *testing.T) {
 	}
 
 	for i, c := range cases {
-		c := c
-
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			conf := map[string]interface{}{}
 
@@ -130,7 +129,7 @@ func TestGetStringMap(t *testing.T) {
 				conf["recursive"] = "true"
 			}
 
-			p := New(log.New(log.Config{Output: os.Stderr}), config.MapConfig{M: conf})
+			p := New(log.New(log.Config{Output: os.Stderr}), config.MapConfig{M: conf}, "")
 
 			p.ssmClient = c.ssm
 

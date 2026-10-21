@@ -15,10 +15,9 @@ import (
 )
 
 type provider struct {
+	ctx        context.Context
+	client     *storage.Client
 	Generation string
-
-	client *storage.Client
-	ctx    context.Context
 }
 
 // New creates a new GCS provider

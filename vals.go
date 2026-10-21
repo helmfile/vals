@@ -20,31 +20,11 @@ import (
 	"github.com/helmfile/vals/pkg/config"
 	"github.com/helmfile/vals/pkg/expansion"
 	"github.com/helmfile/vals/pkg/log"
-	"github.com/helmfile/vals/pkg/providers/awskms"
-	"github.com/helmfile/vals/pkg/providers/awssecrets"
-	"github.com/helmfile/vals/pkg/providers/azurekeyvault"
-	"github.com/helmfile/vals/pkg/providers/bitwarden"
-	"github.com/helmfile/vals/pkg/providers/conjur"
-	"github.com/helmfile/vals/pkg/providers/doppler"
 	"github.com/helmfile/vals/pkg/providers/echo"
 	"github.com/helmfile/vals/pkg/providers/envsubst"
+	execprovider "github.com/helmfile/vals/pkg/providers/exec"
 	"github.com/helmfile/vals/pkg/providers/file"
-	"github.com/helmfile/vals/pkg/providers/gcpsecrets"
-	"github.com/helmfile/vals/pkg/providers/gcs"
-	"github.com/helmfile/vals/pkg/providers/gitlab"
-	"github.com/helmfile/vals/pkg/providers/gkms"
-	"github.com/helmfile/vals/pkg/providers/googlesheets"
-	"github.com/helmfile/vals/pkg/providers/hcpvaultsecrets"
-	"github.com/helmfile/vals/pkg/providers/httpjson"
-	"github.com/helmfile/vals/pkg/providers/k8s"
-	"github.com/helmfile/vals/pkg/providers/onepassword"
-	"github.com/helmfile/vals/pkg/providers/onepasswordconnect"
-	"github.com/helmfile/vals/pkg/providers/pulumi"
-	"github.com/helmfile/vals/pkg/providers/s3"
-	"github.com/helmfile/vals/pkg/providers/sops"
-	"github.com/helmfile/vals/pkg/providers/ssm"
-	"github.com/helmfile/vals/pkg/providers/tfstate"
-	"github.com/helmfile/vals/pkg/providers/vault"
+	"github.com/helmfile/vals/pkg/providers/registry"
 	"github.com/helmfile/vals/pkg/stringmapprovider"
 	"github.com/helmfile/vals/pkg/stringprovider"
 )
@@ -73,6 +53,7 @@ const (
 	defaultCacheSize = 512
 
 	ProviderVault              = "vault"
+	ProviderOpenBao            = "openbao"
 	ProviderS3                 = "s3"
 	ProviderGCS                = "gcs"
 	ProviderGitLab             = "gitlab"
@@ -81,6 +62,7 @@ const (
 	ProviderSecretsManager     = "awssecrets"
 	ProviderSOPS               = "sops"
 	ProviderEcho               = "echo"
+	ProviderExec               = "exec"
 	ProviderFile               = "file"
 	ProviderGCPSecretManager   = "gcpsecrets"
 	ProviderGoogleSheets       = "googlesheets"
@@ -89,8 +71,11 @@ const (
 	ProviderTFStateS3          = "tfstates3"
 	ProviderTFStateAzureRM     = "tfstateazurerm"
 	ProviderTFStateRemote      = "tfstateremote"
+	ProviderTFStateGitLab      = "tfstategitlab"
 	ProviderAzureKeyVault      = "azurekeyvault"
 	ProviderEnvSubst           = "envsubst"
+	ProviderKeychain           = "keychain"
+	ProviderOCI                = "oci"
 	ProviderOnePassword        = "op"
 	ProviderOnePasswordConnect = "onepasswordconnect"
 	ProviderDoppler            = "doppler"
@@ -101,11 +86,14 @@ const (
 	ProviderHCPVaultSecrets    = "hcpvaultsecrets"
 	ProviderHttpJsonManager    = "httpjson"
 	ProviderBitwarden          = "bw"
+	ProviderLockbox            = "yclockbox"
+	ProviderScaleway           = "scw"
+	ProviderSecretserver       = "tss"
+	ProviderInfisical          = "infisical"
+	ProviderServercore         = "servercore"
 )
 
-var (
-	EnvFallbackPrefix = "VALS_"
-)
+var EnvFallbackPrefix = "VALS_"
 
 type Evaluator interface {
 	Eval(map[string]interface{}) (map[string]interface{}, error)
@@ -116,12 +104,9 @@ type Runtime struct {
 	providers map[string]api.Provider
 	docCache  *lru.Cache // secret documents are cached to improve performance
 	strCache  *lru.Cache // secrets are cached to improve performance
-
-	Options Options
-
-	logger *log.Logger
-
-	m sync.Mutex
+	logger    *log.Logger
+	Options   Options
+	m         sync.Mutex
 }
 
 // New returns an instance of Runtime
@@ -179,106 +164,20 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 		conf := config.MapConfig{M: m, FallbackFunc: envFallback}
 
 		switch scheme {
-		case ProviderVault:
-			p := vault.New(r.logger, conf)
-			return p, nil
-		case ProviderS3:
-			// ref+s3://foo/bar?region=ap-northeast-1#/baz
-			// 1. GetObject for the bucket foo and key bar
-			// 2. Then extracts the value for key baz(=/foo/bar/baz) from the result from step 1.
-			p := s3.New(r.logger, conf)
-			return p, nil
-		case ProviderGCS:
-			// vals+gcs://foo/bar?generation=timestamp#/baz
-			// 1. GetObject for the bucket foo and key bar
-			// 2. Then extracts the value for key baz(=/foo/bar/baz) from the result from step 1.
-			p := gcs.New(conf)
-			return p, nil
-		case ProviderGitLab:
-			// vals+gitlab://project/variable#key
-			p := gitlab.New(conf)
-			return p, nil
-		case ProviderSSM:
-			// ref+awsssm://foo/bar?region=ap-northeast-1#/baz
-			// 1. GetParametersByPath for the prefix /foo/bar
-			// 2. Then extracts the value for key baz(=/foo/bar/baz) from the result from step 1.
-			p := ssm.New(r.logger, conf)
-			return p, nil
-		case ProviderSecretsManager:
-			// ref+awssecrets://foo/bar?region=ap-northeast-1#/baz
-			// 1. Get secret for key foo/bar, parse it as yaml
-			// 2. Then extracts the value for key baz) from the result from step 1.
-			p := awssecrets.New(r.logger, conf)
-			return p, nil
-		case ProviderSOPS:
-			p := sops.New(r.logger, conf)
-			return p, nil
 		case ProviderEcho:
-			p := echo.New(conf)
-			return p, nil
+			return echo.New(conf), nil
 		case ProviderFile:
-			p := file.New(conf)
-			return p, nil
-		case ProviderGCPSecretManager:
-			p := gcpsecrets.New(conf)
-			return p, nil
-		case ProviderGoogleSheets:
-			return googlesheets.New(conf), nil
-		case ProviderTFState:
-			p := tfstate.New(conf, "")
-			return p, nil
-		case ProviderTFStateGS:
-			p := tfstate.New(conf, "gs")
-			return p, nil
-		case ProviderTFStateS3:
-			p := tfstate.New(conf, "s3")
-			return p, nil
-		case ProviderTFStateAzureRM:
-			p := tfstate.New(conf, "azurerm")
-			return p, nil
-		case ProviderTFStateRemote:
-			p := tfstate.New(conf, "remote")
-			return p, nil
-		case ProviderAzureKeyVault:
-			p := azurekeyvault.New(conf)
-			return p, nil
-		case ProviderKms:
-			p := awskms.New(conf)
-			return p, nil
+			return file.New(conf), nil
 		case ProviderEnvSubst:
-			p := envsubst.New(conf)
-			return p, nil
-		case ProviderOnePassword:
-			p := onepassword.New(conf)
-			return p, nil
-		case ProviderOnePasswordConnect:
-			p := onepasswordconnect.New(conf)
-			return p, nil
-		case ProviderDoppler:
-			p := doppler.New(r.logger, conf)
-			return p, nil
-		case ProviderPulumiStateAPI:
-			p := pulumi.New(r.logger, conf, "pulumistateapi")
-			return p, nil
-		case ProviderGKMS:
-			p := gkms.New(r.logger, conf)
-			return p, nil
-		case ProviderK8s:
-			return k8s.New(r.logger, conf)
-		case ProviderConjur:
-			p := conjur.New(r.logger, conf)
-			return p, nil
-		case ProviderHCPVaultSecrets:
-			p := hcpvaultsecrets.New(r.logger, conf)
-			return p, nil
-		case ProviderHttpJsonManager:
-			p := httpjson.New(r.logger, conf)
-			return p, nil
-		case ProviderBitwarden:
-			p := bitwarden.New(r.logger, conf)
-			return p, nil
+			return envsubst.New(conf), nil
+		case ProviderExec:
+			return execprovider.New(r.logger, conf), nil
+		default:
+			if factory, ok := registry.GetProvider(scheme); ok {
+				return factory(r.logger, conf, r.Options.AWSLogLevel)
+			}
+			return nil, fmt.Errorf("no provider registered for scheme %q", scheme)
 		}
-		return nil, fmt.Errorf("no provider registered for scheme %q", scheme)
 	}
 
 	updateProviders := func(uri *url.URL, hash string) (api.Provider, error) {
@@ -308,26 +207,59 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 	expand := expansion.ExpandRegexMatch{
 		Only:   only,
 		Target: expansion.DefaultRefRegexp,
-		Lookup: func(key string) (string, error) {
+		Lookup: func(key string) (interface{}, error) {
 			if val, ok := r.docCache.Get(key); ok {
-				valStr, ok := val.(string)
-				if !ok {
-					return "", fmt.Errorf("error reading string from cache: unsupported value type %T", val)
+				if isTerminalValue(val) {
+					return val, nil
 				}
-				return valStr, nil
 			}
 
-			uri, err := url.Parse(key)
+			// Handle ARN-based URIs which contain colons that would be misinterpreted as port separators.
+			// ARN examples: arn:aws:service:region:account:resource (standard), arn:aws-cn:..., arn:aws-us-gov:...
+			// We need to detect and transform the ARN to avoid URL parsing issues with colons across AWS partitions.
+			processedKey := key
+			arnValue := ""
+
+			// Check if this looks like an ARN-based URI (ARN immediately follows "://")
+			if schemeEnd := strings.Index(key, "://"); schemeEnd != -1 {
+				afterScheme := key[schemeEnd+3:]
+				if strings.HasPrefix(afterScheme, "arn:aws:") || strings.HasPrefix(afterScheme, "arn:aws-") {
+					prefix := key[:schemeEnd+3] // includes "://"
+					remainder := afterScheme
+
+					// Find where the ARN ends (at ? for query params, # for fragment, or end of string)
+					arnEnd := len(remainder)
+					if idx := strings.IndexAny(remainder, "?#"); idx != -1 {
+						arnEnd = idx
+					}
+
+					arnValue = remainder[:arnEnd]
+					suffix := remainder[arnEnd:]
+
+					// Temporarily transform to a triple-slash format so the ARN is kept in the path.
+					// This avoids net/url interpreting colons in the ARN as port separators; after parsing,
+					// we move the ARN from the path into the host field (see logic below).
+					processedKey = prefix + "/" + arnValue + suffix
+				}
+			}
+
+			uri, err := url.Parse(processedKey)
 			if err != nil {
-				return "", err
+				return nil, err
+			}
+			// If we processed an ARN, restore it directly from the original value
+			if arnValue != "" {
+				// Use the exact ARN string captured before parsing to avoid net/url normalization/decoding.
+				uri.Host = arnValue
+				uri.Path = ""
+				uri.RawPath = ""
 			}
 
 			hash := uriToProviderHash(uri)
 
 			p, err := updateProviders(uri, hash)
-
 			if err != nil {
-				return "", err
+				return nil, err
 			}
 
 			var frag string
@@ -366,12 +298,12 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 				if cachedStr, ok := r.strCache.Get(cacheKey); ok {
 					str, ok = cachedStr.(string)
 					if !ok {
-						return "", fmt.Errorf("error reading str from cache: unsupported value type %T", cachedStr)
+						return nil, fmt.Errorf("error reading str from cache: unsupported value type %T", cachedStr)
 					}
 				} else {
 					str, err = p.GetString(path)
 					if err != nil {
-						return "", err
+						return nil, err
 					}
 					r.strCache.Add(cacheKey, str)
 				}
@@ -383,7 +315,7 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 				if cachedMap, ok := r.docCache.Get(mapRequestURI); ok {
 					obj, ok = cachedMap.(map[string]interface{})
 					if !ok {
-						return "", fmt.Errorf("error reading map from cache: unsupported value type %T", cachedMap)
+						return nil, fmt.Errorf("error reading map from cache: unsupported value type %T", cachedMap)
 					}
 				} else if uri.Scheme == "httpjson" {
 					// Due to the unpredictability in the structure of the JSON object,
@@ -395,51 +327,76 @@ func (r *Runtime) prepare() (*expansion.ExpandRegexMatch, error) {
 					// object, accommodating different configurations and variations.
 					value, err := p.GetString(key)
 					if err != nil {
-						return "", err
+						return nil, err
 					}
 					return value, nil
 				} else {
 					obj, err = p.GetStringMap(path)
 					if err != nil {
-						return "", err
+						return nil, err
 					}
 					r.docCache.Add(mapRequestURI, obj)
 				}
 
 				keys := strings.Split(frag, "/")
 				for i, k := range keys {
-					newobj := map[string]interface{}{}
-					switch t := obj[k].(type) {
-					case int:
-						return fmt.Sprint(t), nil
-					case bool:
-						return fmt.Sprint(t), nil
-					case string:
-						if i != len(keys)-1 {
-							return "", fmt.Errorf("unexpected type of value for key at %d=%s in %v: expected map[string]interface{}, got %v(%T)", i, k, keys, t, t)
+					// comma-ok keeps an absent key distinct from a present null value.
+					t, found := obj[k]
+					if !found {
+						if r.Options.FailOnMissingKeyInMap {
+							return nil, fmt.Errorf("no value found for key %s", frag)
 						}
-						r.docCache.Add(key, t)
-						return t, nil
-					case map[string]interface{}:
-						newobj = t
-					case map[interface{}]interface{}:
-						for k, v := range t {
-							newobj[fmt.Sprintf("%v", k)] = v
-						}
+						return nil, nil
 					}
-					obj = newobj
+					// The value at the final fragment key is the result, whatever its type.
+					if i == len(keys)-1 {
+						if isTerminalValue(t) {
+							r.docCache.Add(key, t)
+						}
+						return t, nil
+					}
+					m, ok := asStringKeyedMap(t)
+					if !ok {
+						return nil, fmt.Errorf("unexpected type of value for key at %d=%s in %v: expected a map, got %v(%T)", i, k, keys, t, t)
+					}
+					obj = m
 				}
 
-				if r.Options.FailOnMissingKeyInMap {
-					return "", fmt.Errorf("no value found for key %s", frag)
-				}
-
-				return "", nil
+				return nil, nil
 			}
 		},
 	}
 
 	return &expand, nil
+}
+
+func isTerminalValue(v any) bool {
+	switch v.(type) {
+	case string, bool,
+		int, int8, int16, int32, int64,
+		uint, uint8, uint16, uint32, uint64,
+		float32, float64:
+		return true
+	default:
+		return false
+	}
+}
+
+// asStringKeyedMap normalizes a map[interface{}]interface{} (which some providers
+// produce) into a map[string]interface{}; the bool reports whether v was a map.
+func asStringKeyedMap(v any) (map[string]interface{}, bool) {
+	switch t := v.(type) {
+	case map[string]interface{}:
+		return t, true
+	case map[interface{}]interface{}:
+		m := make(map[string]interface{}, len(t))
+		for k, val := range t {
+			m[fmt.Sprintf("%v", k)] = val
+		}
+		return m, true
+	default:
+		return nil, false
+	}
 }
 
 // Eval replaces 'ref+<provider>://xxxxx' entries by their actual values
@@ -471,6 +428,7 @@ func (r *Runtime) Get(code string) (string, error) {
 
 	return ret, nil
 }
+
 func cloneMap(m map[string]interface{}) map[string]interface{} {
 	bs, err := yaml.Marshal(m)
 	if err != nil {
@@ -485,6 +443,7 @@ func cloneMap(m map[string]interface{}) map[string]interface{} {
 
 var KnownValuesTypes = []string{
 	ProviderVault,
+	ProviderOpenBao,
 	ProviderS3,
 	ProviderSSM,
 	ProviderSecretsManager,
@@ -494,12 +453,15 @@ var KnownValuesTypes = []string{
 	ProviderTFState,
 	ProviderFile,
 	ProviderEcho,
+	ProviderExec,
+	ProviderKeychain,
 	ProviderEnvSubst,
 	ProviderPulumiStateAPI,
 }
 
 type ctx struct {
 	ignorePrefix string
+	awsLogLevel  string
 }
 
 type Option func(*ctx)
@@ -510,8 +472,22 @@ func IgnorePrefix(p string) Option {
 	}
 }
 
+func AWSLogLevel(level string) Option {
+	return func(ctx *ctx) {
+		ctx.awsLogLevel = level
+	}
+}
+
 type Options struct {
-	LogOutput             io.Writer
+	LogOutput io.Writer
+	// AWSLogLevel controls AWS SDK logging. Valid values:
+	// - "off" or "" (default): No AWS SDK logging
+	// - "minimal": Log only retries
+	// - "standard": Log retries and requests (previous default)
+	// - "verbose": Log everything (requests, responses, signing)
+	// - Custom: Comma-separated values (e.g., "request,response")
+	// This is overridden by AWS_SDK_GO_LOG_LEVEL environment variable if set
+	AWSLogLevel           string
 	CacheSize             int
 	ExcludeSecret         bool
 	FailOnMissingKeyInMap bool
@@ -548,12 +524,14 @@ func applyEnvWithQuote(quote bool) func(map[string]interface{}, ...Options) ([]s
 	}
 }
 
-var Env = applyEnvWithQuote(false)
-var QuotedEnv = applyEnvWithQuote(true)
+var (
+	Env       = applyEnvWithQuote(false)
+	QuotedEnv = applyEnvWithQuote(true)
+)
 
 type ExecConfig struct {
-	InheritEnv bool
-	Options    Options
+	Stdout io.Writer
+	Stderr io.Writer
 	// StreamYAML reads the specific YAML file or all the YAML files
 	// stored within the specific directory, evaluate each YAML file,
 	// joining all the YAML files with "---" lines, and stream the
@@ -562,8 +540,8 @@ type ExecConfig struct {
 	// Kubernetes manifests to kubectl-apply, without writing
 	// the vals-eval outputs onto the disk, for security reasons.
 	StreamYAML string
-
-	Stdout, Stderr io.Writer
+	Options    Options
+	InheritEnv bool
 }
 
 func Exec(template map[string]interface{}, args []string, config ...ExecConfig) error {
@@ -618,16 +596,28 @@ func Exec(template map[string]interface{}, args []string, config ...ExecConfig) 
 func EvalNodes(nodes []yaml.Node, c Options) ([]yaml.Node, error) {
 	var res []yaml.Node
 	for _, node := range nodes {
-		node := node
-		var nodeValue map[string]interface{}
+		var nodeValue interface{}
 		err := node.Decode(&nodeValue)
 		if err != nil {
 			return nil, err
 		}
-		evalResult, err := Eval(nodeValue, c)
-		if err != nil {
-			return nil, err
+
+		var evalResult interface{}
+		switch v := nodeValue.(type) {
+		case map[string]interface{}:
+			evalResult, err = Eval(v, c)
+			if err != nil {
+				return nil, err
+			}
+		case []interface{}:
+			evalResult, err = evalArray(v, c)
+			if err != nil {
+				return nil, err
+			}
+		default:
+			return nil, fmt.Errorf("unexpected type: %T", v)
 		}
+
 		err = node.Encode(evalResult)
 		if err != nil {
 			return nil, err
@@ -637,6 +627,29 @@ func EvalNodes(nodes []yaml.Node, c Options) ([]yaml.Node, error) {
 			Kind:    yaml.DocumentNode,
 			Content: []*yaml.Node{&node},
 		})
+	}
+	return res, nil
+}
+
+func evalArray(arr []interface{}, c Options) ([]interface{}, error) {
+	var res []interface{}
+	for _, item := range arr {
+		switch v := item.(type) {
+		case map[string]interface{}:
+			evalResult, err := Eval(v, c)
+			if err != nil {
+				return nil, err
+			}
+			res = append(res, evalResult)
+		case []interface{}:
+			evalResult, err := evalArray(v, c)
+			if err != nil {
+				return nil, err
+			}
+			res = append(res, evalResult)
+		default:
+			res = append(res, v)
+		}
 	}
 	return res, nil
 }
@@ -797,7 +810,7 @@ func Load(conf api.StaticConfig, opt ...Option) (map[string]interface{}, error) 
 
 	switch tpe {
 	case TypeString:
-		p, err := stringprovider.New(l, provider)
+		p, err := stringprovider.New(l, provider, ctx.awsLogLevel)
 		if err != nil {
 			return nil, err
 		}
@@ -821,11 +834,11 @@ func Load(conf api.StaticConfig, opt ...Option) (map[string]interface{}, error) 
 			return nil, fmt.Errorf("unexpected type: %T", r)
 		}
 	case TypeMap:
-		p, err := stringmapprovider.New(l, provider)
+		p, err := stringmapprovider.New(l, provider, ctx.awsLogLevel)
 		if err != nil {
 			return nil, err
 		}
-		pp, err := stringprovider.New(l, provider)
+		pp, err := stringprovider.New(l, provider, ctx.awsLogLevel)
 		if err != nil {
 			return nil, err
 		}

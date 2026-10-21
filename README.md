@@ -22,7 +22,13 @@ It supports various backends including:
 - Conjur
 - HCP Vault Secrets
 - Bitwarden
+- [Yandex Cloud Lockbox](https://yandex.cloud/en/docs/lockbox/)
+- Servercore Secrets Manager
 - HTTP JSON
+- Keychain
+- Scaleway
+- [Delinea SecretServer](https://delinea.com/products/secret-server)
+- Infisical
 
 - Use `vals eval -f refs.yaml` to replace all the `ref`s in the file to actual values and secrets.
 - Use `vals exec -f env.yaml -- <COMMAND>` to populate envvars and execute the command.
@@ -30,12 +36,81 @@ It supports various backends including:
 
 ToC:
 
+- [Installation](#installation)
+  - [Building from source](#building-from-source)
 - [Usage](#usage)
   - [CLI](#cli)
   - [Helm](#helm)
   - [Go](#go)
 - [Expression Syntax](#expression-syntax)
 - [Supported Backends](#supported-backends)
+
+## Installation
+
+[![Packaging status](https://repology.org/badge/vertical-allrepos/vals.svg)](https://repology.org/project/vals/versions)
+
+### Download binary (Linux, macOS, Windows)
+
+[Download](https://github.com/helmfile/vals/releases) the latest executable for your platform and put it into a directory included in `PATH`.
+
+### homebrew (macOS, Linux)
+
+```sh
+brew install vals
+```
+
+### Arch Linux
+
+```sh
+sudo pacman -S vals
+```
+
+### Alpine Linux Edge
+
+```sh
+apk add vals
+```
+
+### MacPorts (macOS)
+
+```sh
+sudo port install vals
+```
+
+### Nix / NixOS
+
+```sh
+nix profile install nixpkgs#vals
+```
+
+### Scoop (Windows)
+
+```sh
+scoop install vals
+```
+
+### Building from source
+
+```sh
+go build -o vals ./cmd/vals
+```
+
+#### Custom builds
+
+By default, all providers are compiled into the binary. If you only need specific providers, you can use Go build tags to produce a smaller binary:
+
+```sh
+# Only include Vault, AWS, GCP and Azure providers
+go build -tags "custom_providers,vault,aws,gcp,azure" -o vals ./cmd/vals
+```
+
+The `custom_providers` tag switches to opt-in mode. Without it, all providers are included. Add the tags for the providers you need:
+
+`vault`, `openbao`, `aws`, `gcp`, `azure`, `terraform`, `gitlab`, `sops`, `onepassword`, `doppler`, `k8s`, `hcpvaultsecrets`, `conjur`, `bitwarden`, `scaleway`, `infisical`, `oci`, `httpjson`, `pulumi`, `secretserver`, `servercore`, `keychain`, `yandex`
+
+Utility providers (`echo`, `file`, `envsubst`, `exec`) are always included.
+
+Use `all_providers` to explicitly include everything: `go build -tags all_providers`.
 
 ## Usage
 
@@ -194,7 +269,7 @@ EOF
 
 `PARAMS` is key-value pairs where the key and the value are combined using the intermediate "=" character while key-value pairs are combined using "&" characters. It's supposed to be the "query" component of the URI as defined in [RFC3986](https://www.rfc-editor.org/rfc/rfc3986).
 
-`FRAGMENT` is a path-like expression that is used to extract a single value within the secret. When a fragment is specified, `vals` parse the secret value denoted by the `PATH` into a YAML or JSON object, and traverses the object following the fragment, and uses the value at the path as the final secret value. It's supposed to be the "fragment" componet of the URI as defined in [RFC3986](https://www.rfc-editor.org/rfc/rfc3986).
+`FRAGMENT` is a path-like expression that is used to extract a single value within the secret. When a fragment is specified, `vals` parse the secret value denoted by the `PATH` into a YAML or JSON object, and traverses the object following the fragment, and uses the value at the path as the final secret value. The value at the fragment can be of any type and its native type is preserved: a string, a number (integer or float), a boolean, or a nested object/array (which is returned as-is, e.g. the YAML/JSON subtree at that key). It's supposed to be the "fragment" componet of the URI as defined in [RFC3986](https://www.rfc-editor.org/rfc/rfc3986).
 
 Finally, the optional trailing `+` is the explicit "end" of the expression. You usually don't need it, as if omitted, it treats anything after `ref+` and before the new-line or the end-of-line as an expression to be evaluated. An explicit `+` is handy when you want to do a simple string interpolation. That is, `foo ref+SECRET1+ ref+SECRET2+ bar` evaluates to `foo SECRET1_VALUE SECRET2_VALUE bar`.
 
@@ -206,30 +281,67 @@ Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/
 
 ## Supported Backends
 
-- [Vault](#vault)
-- [AWS SSM Parameter Store](#aws-ssm-parameter-store)
-- [AWS Secrets Manager](#aws-secrets-manager)
-- [AWS S3](#aws-s3)
-- [GCP Secrets Manager](#gcp-secrets-manager)
-- [GCP KMS](#gcp-kms)
-- [Google Sheets](#google-sheets)
-- [Google GCS](#google-gcs)
-- [SOPS](#sops) powered by [sops](https://github.com/getsops/sops)
-- [Terraform (tfstate)](#terraform-tfstate) powered by [tfstate-lookup](https://github.com/fujiwara/tfstate-lookup)
-- [Echo](#echo)
-- [File](#file)
-- [Azure Key Vault](#azure-key-vault)
-- [EnvSubst](#envsubst)
-- [GitLab](#gitlab)
-- [1Password](#1password)
-- [1Password Connect](#1password-connect)
-- [Doppler](#doppler)
-- [Pulumi State](#pulumi-state)
-- [Kubernetes](#kubernetes)
-- [Conjur](#conjur)
-- [HCP Vault Secrets](#hcp-vault-secrets)
-- [HTTP JSON](#http-json)
-- [Bitwarden](#bitwarden)
+- [vals](#vals)
+  - [Installation](#installation)
+    - [Download binary (Linux, macOS, Windows)](#download-binary-linux-macos-windows)
+    - [homebrew (macOS, Linux)](#homebrew-macos-linux)
+    - [Arch Linux](#arch-linux)
+    - [Alpine Linux Edge](#alpine-linux-edge)
+    - [MacPorts (macOS)](#macports-macos)
+    - [Nix / NixOS](#nix--nixos)
+    - [Scoop (Windows)](#scoop-windows)
+  - [Usage](#usage)
+- [CLI](#cli)
+    - [Helm](#helm)
+    - [Go](#go)
+  - [Expression Syntax](#expression-syntax)
+  - [Supported Backends](#supported-backends)
+    - [Vault](#vault)
+    - [Authentication](#authentication)
+    - [OpenBao](#openbao)
+    - [AWS](#aws)
+      - [AWS SDK Logging Configuration](#aws-sdk-logging-configuration)
+      - [AWS SSM Parameter Store](#aws-ssm-parameter-store)
+      - [AWS Secrets Manager](#aws-secrets-manager)
+      - [AWS S3](#aws-s3)
+      - [AWS KMS](#aws-kms)
+      - [Google GCS](#google-gcs)
+    - [GCP Secrets Manager](#gcp-secrets-manager)
+    - [GCP KMS](#gcp-kms)
+    - [Google Sheets](#google-sheets)
+    - [Terraform (tfstate)](#terraform-tfstate)
+    - [Terraform in GCS bucket (tfstategs)](#terraform-in-gcs-bucket-tfstategs)
+    - [Terraform in S3 bucket (tfstates3)](#terraform-in-s3-bucket-tfstates3)
+    - [Terraform in AzureRM Blob storage (tfstateazurerm)](#terraform-in-azurerm-blob-storage-tfstateazurerm)
+    - [Terraform in Terraform Cloud / Terraform Enterprise (tfstateremote)](#terraform-in-terraform-cloud--terraform-enterprise-tfstateremote)
+    - [Terraform in GitLab (tfstategitlab)](#terraform-in-gitlab-tfstategitlab)
+    - [SOPS](#sops)
+    - [Keychain](#keychain)
+    - [Echo](#echo)
+    - [File](#file)
+    - [Azure Key Vault](#azure-key-vault)
+      - [Authentication](#authentication-1)
+    - [EnvSubst](#envsubst)
+    - [GitLab Secrets](#gitlab-secrets)
+    - [1Password](#1password)
+    - [1Password Connect](#1password-connect)
+    - [Doppler](#doppler)
+    - [Pulumi State](#pulumi-state)
+    - [Kubernetes](#kubernetes)
+    - [Conjur](#conjur)
+    - [HCP Vault Secrets](#hcp-vault-secrets)
+    - [Bitwarden](#bitwarden)
+    - [Yandex Cloud Lockbox](#yandex-cloud-lockbox)
+      - [Authentication](#authentication-2)
+    - [HTTP JSON](#http-json)
+      - [Fetch string value](#fetch-string-value)
+      - [Fetch integer value](#fetch-integer-value)
+    - [Delinea Secret Server](#secretserver)
+  - [Advanced Usages](#advanced-usages)
+    - [Discriminating config and secrets](#discriminating-config-and-secrets)
+  - [Non-Goals](#non-goals)
+    - [Complex String-Interpolation / Template Functions](#complex-string-interpolation--template-functions)
+    - [Merge](#merge)
 
 Please see [pkg/providers](https://github.com/helmfile/vals/tree/master/pkg/providers) for the implementations of all the providers. The package names corresponds to the URI schemes.
 
@@ -238,6 +350,7 @@ Please see [pkg/providers](https://github.com/helmfile/vals/tree/master/pkg/prov
 - `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT&token_file=PATH/TO/FILE&token_env=VAULT_TOKEN&namespace=VAULT_NAMESPACE]#/fieldkey`
 - `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT&auth_method=approle&role_id=ce5e571a-f7d4-4c73-93dd-fd6922119839&secret_id=5c9194b9-585e-4539-a865-f45604bd6f56]#/fieldkey`
 - `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT&auth_method=kubernetes&role_id=K8S-ROLE`
+- `ref+vault://PATH/TO/KVBACKEND[?address=VAULT_ADDR:PORT&auth_method=userpass&username=some-user&password_file=PATH/TO/FILE&password_env=VAULT_PASSWORD]#/fieldkey`
 
 * `address` defaults to the value of the `VAULT_ADDR` envvar.
 * `namespace` defaults to the value of the `VAULT_NAMESPACE` envvar.
@@ -245,6 +358,7 @@ Please see [pkg/providers](https://github.com/helmfile/vals/tree/master/pkg/prov
 * `role_id` defaults to the value of the `VAULT_ROLE_ID` envvar.
 * `secret_id` defaults to the value of the `VAULT_SECRET_ID` envvar.
 * `version` is the specific version of the secret to be obtained. Used when you want to get a previous content of the secret.
+* `decode` controls how the retrieved value is transformed before being returned. Defaults to `raw` (no transformation). Set to `base64` to base64-decode the stored value (useful when binary data such as certificates is stored as a base64 string).
 
 ### Authentication
 
@@ -252,7 +366,8 @@ The `auth_method` or `VAULT_AUTH_METHOD` envar configures how `vals` authenticat
 
 * [approle](https://www.vaultproject.io/docs/auth/approle#via-the-api): it requires you pass on a `role_id` together with a `secret_id`.
 * [token](https://www.vaultproject.io/docs/auth/token): you just need creating and passing on a `VAULT_TOKEN`. If `VAULT_TOKEN` isn't set, token can be retrieved from `VAULT_TOKEN_FILE` env or `~/.vault-token` file.
-* [kubernetes](https://www.vaultproject.io/docs/auth/kubernetes): if you're running inside a Kubernetes cluster, you can use this option. It requires you [configure](https://www.vaultproject.io/docs/auth/kubernetes#configuration) a policy, a Kubernetes role, a service account and a JWT token. The login path can also be set using the environment variable `VAULT_KUBERNETES_MOUNT_POINT` (default is `/kubernetes`). You must also set `role_id` or `VAULT_ROLE_ID` envar to the Kubernetes role.
+* [kubernetes](https://www.vaultproject.io/docs/auth/kubernetes): if you're running inside a Kubernetes cluster, you can use this option. It requires you [configure](https://www.vaultproject.io/docs/auth/kubernetes#configuration) a policy, a Kubernetes role, a service account and a JWT token. The login path can also be set using the environment variable `VAULT_KUBERNETES_MOUNT_POINT` (default is `/kubernetes`). You must also set `role_id` or `VAULT_ROLE_ID` envar to the Kubernetes role. You can also specify a custom token path using the `VAULT_KUBERNETES_JWT_TOKEN_PATH` environment variable.
+* [userpass](https://developer.hashicorp.com/vault/docs/auth/userpass): you need to provide a username, e.g. via `VAULT_USERNAME`, and a password retrieved from the file `VAULT_PASSWORD_FILE` or from the env variable referred to in `VAULT_PASSWORD_ENV`. `VAULT_PASSWORD_ENV` takes precedence over `VAULT_PASSWORD_FILE`.
 
 Examples:
 
@@ -260,6 +375,43 @@ Examples:
 - `ref+vault://mykv/foo?token_env=VAULT_TOKEN_VAULT1&namespace=ns1&address=https://vault1.example.com:8200#/bar` reads the value for the field `bar` from namespace `ns1` in the kv `foo` on Vault listening on `https://vault1.example.com` with the Vault token read from **the envvar `VAULT_TOKEN_VAULT1`**
 - `ref+vault://mykv/foo?token_file=~/.vault_token_vault1&address=https://vault1.example.com:8200#/bar` reads the value for the field `bar` in the kv `foo` on Vault listening on `https://vault1.example.com` with the Vault token read from **the file `~/.vault_token_vault1`**
 - `ref+vault://mykv/foo?role_id=my-kube-role#/bar` using the Kubernetes role to log in to Vault
+- `ref+vault://mykv/foo?auth_method=userpass&username=some-user&password_env=VAULT_PASSWORD#/bar` using `userpass` authentication with password read from env `VAULT_PASSWORD`
+- `ref+vault://mykv/foo?auth_method=userpass&username=some-user&password_file=PATH/TO/FILE#/bar` using `userpass` authentication with password read from file `VAULT_PASSWORD_FILE`
+
+### OpenBao
+
+[OpenBao](https://openbao.org/) is an open source, community-driven fork of Vault managed by the Linux Foundation. It provides the same secrets management capabilities as Vault and is API-compatible.
+
+- `ref+openbao://PATH/TO/KVBACKEND[?address=BAO_ADDR:PORT&token_file=PATH/TO/FILE&token_env=BAO_TOKEN&namespace=BAO_NAMESPACE]#/fieldkey`
+- `ref+openbao://PATH/TO/KVBACKEND[?address=BAO_ADDR:PORT&auth_method=approle&role_id=ce5e571a-f7d4-4c73-93dd-fd6922119839&secret_id=5c9194b9-585e-4539-a865-f45604bd6f56]#/fieldkey`
+- `ref+openbao://PATH/TO/KVBACKEND[?address=BAO_ADDR:PORT&auth_method=kubernetes&role_id=K8S-ROLE]#/fieldkey`
+- `ref+openbao://PATH/TO/KVBACKEND[?address=BAO_ADDR:PORT&auth_method=userpass&username=some-user&password_file=PATH/TO/FILE&password_env=BAO_PASSWORD]#/fieldkey`
+
+* `address` defaults to the value of the `BAO_ADDR` envvar.
+* `namespace` defaults to the value of the `BAO_NAMESPACE` envvar.
+* `auth_method` defaults to `token` and can also be set to the value of the `BAO_AUTH_METHOD` envvar.
+* `role_id` defaults to the value of the `BAO_ROLE_ID` envvar.
+* `secret_id` defaults to the value of the `BAO_SECRET_ID` envvar.
+* `version` is the specific version of the secret to be obtained. Used when you want to get a previous content of the secret.
+* `kv_version` (alias `engine_version`) forces the KV secrets engine version, either `1` or `2`. It can also be set via the `BAO_KV_VERSION` envvar. When unset, the KV v2 data path is tried first and the KV v1 path is used as a fallback.
+* `mount_path` (alias `mount`) explicitly sets the KV mount path boundary, e.g. `mount_path=custom/mount`. When unset, the first path segment of the reference is treated as the mount.
+* `decode` controls how the retrieved value is transformed before being returned. Defaults to `raw` (no transformation). Set to `base64` to base64-decode the stored value (useful when binary data such as certificates is stored as a base64 string).
+
+The `auth_method` or `BAO_AUTH_METHOD` envvar configures how `vals` authenticates to OpenBao. The following methods are supported:
+
+* [approle](https://openbao.org/docs/auth/approle/): it requires you pass on a `role_id` together with a `secret_id`.
+* [token](https://openbao.org/docs/auth/token/): you just need creating and passing on a `BAO_TOKEN`. If `BAO_TOKEN` isn't set, token can be retrieved from `BAO_TOKEN_FILE` env or `~/.bao-token` file.
+* [kubernetes](https://openbao.org/docs/auth/kubernetes/): if you're running inside a Kubernetes cluster, you can use this option. It requires you configure a policy, a Kubernetes role, a service account and a JWT token. The login path can also be set using the environment variable `BAO_KUBERNETES_MOUNT_POINT` (default is `/kubernetes`). You must also set `role_id` or `BAO_ROLE_ID` envvar to the Kubernetes role.
+* [userpass](https://openbao.org/docs/auth/userpass/): you need to provide a username, e.g. via `BAO_USERNAME`, and a password retrieved from the file `BAO_PASSWORD_FILE` or from the env variable referred to in `BAO_PASSWORD_ENV`. `BAO_PASSWORD_ENV` takes precedence over `BAO_PASSWORD_FILE`.
+
+Examples:
+
+- `ref+openbao://mykv/foo?address=https://bao.example.com:8200#/bar` reads the value for the field `bar` in the kv `foo` on OpenBao listening on `https://bao.example.com` with the token read from **the envvar `BAO_TOKEN`, or the file `~/.bao-token` when the envvar is not set**
+- `ref+openbao://mykv/foo?token_env=BAO_TOKEN_BAO1&namespace=ns1&address=https://bao.example.com:8200#/bar` reads the value for the field `bar` from namespace `ns1` in the kv `foo` on OpenBao listening on `https://bao.example.com` with the token read from **the envvar `BAO_TOKEN_BAO1`**
+- `ref+openbao://mykv/foo?token_file=~/.bao_token_bao1&address=https://bao.example.com:8200#/bar` reads the value for the field `bar` in the kv `foo` on OpenBao listening on `https://bao.example.com` with the token read from **the file `~/.bao_token_bao1`**
+- `ref+openbao://mykv/foo?role_id=my-kube-role#/bar` using the Kubernetes role to log in to OpenBao
+- `ref+openbao://mykv/foo?auth_method=userpass&username=some-user&password_env=BAO_PASSWORD#/bar` using `userpass` authentication with password read from env `BAO_PASSWORD`
+- `ref+openbao://mykv/foo?auth_method=userpass&username=some-user&password_file=PATH/TO/FILE#/bar` using `userpass` authentication with password read from file `BAO_PASSWORD_FILE`
 
 ### AWS
 
@@ -274,6 +426,38 @@ Both provider have support for specifying AWS region and profile via envvars or 
 
 - AWS profile can be specified via an option `profile=AWS_PROFILE_NAME` or envvar `AWS_PROFILE`
 - AWS region can be specified via an option `region=AWS_REGION_NAME` or envvar `AWS_DEFAULT_REGION`
+
+#### AWS SDK Logging Configuration
+
+You can control AWS SDK request logging verbosity using the `AWS_SDK_GO_LOG_LEVEL` environment variable. This applies to all AWS providers (SSM, Secrets Manager, S3, KMS).
+
+**Supported values** (case-insensitive, comma-separated):
+- `off` - Disable all AWS SDK logging
+- `retries` - Log retry attempts
+- `request` - Log requests (without body)
+- `request_with_body` - Log requests with body content
+- `response` - Log responses (without body)  
+- `response_with_body` - Log responses with body content
+- `signing` - Log request signing information
+
+**Examples:**
+```bash
+# Disable all AWS SDK logging
+export AWS_SDK_GO_LOG_LEVEL=off
+
+# Log only retries
+export AWS_SDK_GO_LOG_LEVEL=retries
+
+# Log requests and responses (without bodies)
+export AWS_SDK_GO_LOG_LEVEL=request,response
+
+# Log everything
+export AWS_SDK_GO_LOG_LEVEL=retries,request,response,signing
+
+# Default behavior (when not set): retries,request
+```
+
+When `AWS_SDK_GO_LOG_LEVEL` is not set, vals defaults to logging retries and requests for backward compatibility.
 
 #### AWS SSM Parameter Store
 
@@ -407,6 +591,11 @@ Examples:
 >
 > In some cases like you need to use an alternative credentials or project,
 > you'll likely need to set `GOOGLE_APPLICATION_CREDENTIALS` and/or `GCP_PROJECT` envvars.
+
+If `GCP_PROJECT` environment variable is set, the project name can be omitted from the URI, like:
+
+- `ref+gcpsecrets://mysecret`
+- `ref+gcpsecrets://mysecret?version=3`
 
 ### GCP KMS
 
@@ -557,11 +746,14 @@ $ echo 'foo: ref+tfstateazurerm://my_rg/my_storage_account/terraform-backend/uni
 
 ### Terraform in Terraform Cloud / Terraform Enterprise (tfstateremote)
 
-- `ref+tfstateremote://app.terraform.io/{org}/{myworkspace}/RESOURCE_NAME`
+- `ref+tfstateremote://app.terraform.io/{org}/{myworkspace}/RESOURCE_NAME[?tfe_token=TOKEN]`
+- `ref+tfstateremote://app.terraform.io/{org}/{myworkspace}/RESOURCE_NAME[?tfe_credentials_file=PATH]`
 
 Examples:
 
 - `ref+tfstateremote://app.terraform.io/myorg/myworkspace/output.virtual_network.name`
+- `ref+tfstateremote://app.terraform.io/myorg/myworkspace/output.virtual_network.name?tfe_token=xxxx`
+- `ref+tfstateremote://tfe.example.com/myorg/myworkspace/output.virtual_network.name?tfe_credentials_file=/custom/path/credentials.tfrc.json`
 
 It allows to use Terraform state stored in Terraform Cloud / Terraform Enterprise given the resource group, the organization and the workspace. You can try to read the state with command (with exported variable `TFE_TOKEN`):
 
@@ -575,9 +767,50 @@ which is equivalent to the following input for `vals`:
 $ echo 'foo: ref+tfstateremote://app.terraform.io/myorg/myworkspace/output.virtual_network.name' | vals eval -f -
 ```
 
+The API token is resolved in the following order of precedence:
+
+1. the `tfe_token` option (via the `providers` config or a `ref+` URL query parameter)
+2. the `TFE_TOKEN` environment variable
+3. the token stored by `terraform login` / `tofu login` in `credentials.tfrc.json`
+
+The credentials file is read from `$HOME/.terraform.d/credentials.tfrc.json`, then from `$XDG_CONFIG_HOME/opentofu/credentials.tfrc.json`, using the token stored for the requested host (e.g. `app.terraform.io`). A non-default location can be set with the `tfe_credentials_file` option.
+
+### Terraform in GitLab (tfstategitlab)
+
+- `ref+tfstategitlab://{gitlab_host}/api/v4/projects/{project_id}/terraform/state/{state_name}/RESOURCE_NAME[?gitlab_user=GITLAB_USER&gitlab_token=GITLAB_TOKEN]`
+
+* `gitlab_user` defaults to value of `GITLAB_USER` envvar.
+* `gitlab_token` defaults to value of `GITLAB_TOKEN` envvar.
+* `gitlab_scheme` selects `http` or `https` (defaults to `https`); use `http` for a self-hosted GitLab reachable over plain HTTP.
+
+GitLab authenticates the Terraform state backend via HTTP Basic Auth, so **both `gitlab_user` and `gitlab_token` are required** for authentication. If only one is set, the request is sent unauthenticated and GitLab will return a clear HTTP 401 error. Credentials may be provided via URL query parameters, via the `providers` config, or via environment variables (in that order of precedence). Credentials are sent in the `Authorization` header and never appear in the request URL.
+
+Examples:
+
+- `ref+tfstategitlab://gitlab.com/api/v4/projects/123/terraform/state/my-state/aws_vpc.main.id`
+- `ref+tfstategitlab://my-gitlab.com/api/v4/projects/xx/terraform/state/xxx/output.my_output`
+
+It allows to use Terraform state stored in GitLab given GitLab host, project ID and state name. You can try to read state with command:
+
+```
+$ tfstate-lookup -s https://username:password@my-gitlab.com/api/v4/projects/xx/terraform/state/xxx/ output.my_output
+```
+
+which is equivalent to following input for `vals` (with environment variables `GITLAB_USER` and `GITLAB_TOKEN`):
+
+```
+$ echo 'foo: ref+tfstategitlab://my-gitlab.com/api/v4/projects/xx/terraform/state/xxx/output.my_output' | vals eval -f -
+```
+
+Or you can provide credentials via URL parameters:
+
+```
+$ echo 'foo: ref+tfstategitlab://my-gitlab.com/api/v4/projects/xx/terraform/state/xxx/output.my_output?gitlab_user=username&gitlab_token=token' | vals eval -f -
+```
+
 ### SOPS
 
-- The whole content of a SOPS-encrypted file: `ref+sops://base64_data_or_path_to_file?key_type=[filepath|base64]&format=[binary|dotenv|yaml]`
+- The whole content of a SOPS-encrypted file: `ref+sops://base64_data_or_path_to_file?key_type=[filepath|base64]&format=[binary|dotenv|yaml]&encode=[raw|base64]`
 - The value for the specific path in an encrypted YAML/JSON document: `ref+sops://base64_data_or_path_to_file#/json_or_yaml_key/in/the_encrypted_doc`
 
 Note: When using an inline base64-encoded sops "file", be sure to use URL-safe Base64 encoding.
@@ -591,6 +824,19 @@ Examples:
 - `ref+sops://<base64>?key_type=base64` reads `<base64>` as the base64-encoded data to be decrypted by sops as `binary`
 - `ref+sops://path/to/file#/foo/bar` reads `path/to/file` as a `yaml` file and returns the value at `foo.bar`.
 - `ref+sops://path/to/file?format=json#/foo/bar` reads `path/to/file` as a `json` file and returns the value at `foo.bar`.
+- `ref+sops://path/to/file?encode=base64` reads `path/to/file` and returns the decrypted content encoded as a base64 string
+
+### Keychain
+
+Keychain provider is going to be available on macOS only. It reads a secret from the macOS Keychain.
+
+- `ref+keychain://KEY1/[#/path/to/the/value]`
+
+Examples:
+
+- `security add-generic-password -U -a ${USER} -s "secret-name" -D "vals-secret" -w '{"foo":{"bar":"baz"}}'` - will create a secret in the Keychain with the name `secret-name` and the value `{"foo":{"bar":"baz"}}`, `vals-secret` is required to be able to find the secret in the Keychain.
+- `echo 'foo: ref+keychain://secret-name' | vals eval -f -` - will read the secret from the Keychain with the name `secret-name` and replace the `foo` with the secret value.
+- `echo 'foo: ref+keychain://secret-name#/foo/bar' | vals eval -f -` - will read the secret from the Keychain with the name `secret-name` and replace the `foo` with the value at the path `$.foo.bar`.
 
 ### Echo
 
@@ -602,7 +848,6 @@ Examples:
 
 - `ref+echo://foo/bar` generates `foo/bar`
 - `ref+echo://foo/bar/baz#/foo/bar` generates `baz`. This works by the host and the path part `foo/bar/baz` generating an object `{"foo":{"bar":"baz"}}` and the fragment part `#/foo/bar` results in digging the object to obtain the value at `$.foo.bar`.
-
 
 ### File
 
@@ -619,6 +864,32 @@ Examples:
 - `ref+file://some.yaml#/foo/bar` loads the YAML file at `some.yaml` and reads the value for the path `$.foo.bar`.
   Let's say `some.yaml` contains `{"foo":{"bar":"BAR"}}`, `key1: ref+file://some.yaml#/foo/bar` results in `key1: BAR`.
 
+### Exec
+
+Exec provider executes an arbitrary CLI command and uses its stdout as the secret value. This enables integration with any secrets backend that has a CLI tool, without needing a dedicated provider.
+
+- `ref+exec://COMMAND[/ARG1/ARG2][?args=EXTRA1,EXTRA2&timeout=30&trim=true&env_KEY=VALUE][#/json/path]`
+
+The command name is taken from the URI host, and path segments become positional arguments. Additional comma-separated arguments can be appended via the `args` query parameter. The command is executed directly (no shell invocation) for security.
+
+Parameters:
+
+| Parameter | Description | Default |
+|---|---|---|
+| `args` | Additional comma-separated arguments appended after path args | (none) |
+| `timeout` | Execution timeout in seconds | `30` |
+| `trim` | Trim trailing whitespace from stdout | `true` |
+| `env_KEY` | Set environment variable `KEY` for the child process | (none) |
+
+Examples:
+
+- `ref+exec://echo/hello` — runs `echo hello`, returns `hello`
+- `ref+exec://bw/get/password/item-id` — runs `bw get password item-id`
+- `ref+exec://my-script.sh?args=--key,my-secret` — runs `my-script.sh --key my-secret`
+- `ref+exec://vault-helper.sh?args=read,secret/db#/password` — runs the command, parses JSON/YAML output, and extracts `$.password`
+- `ref+exec:///usr/local/bin/my-tool?args=fetch,key1` — absolute path command
+- `ref+exec://my-tool?env_API_TOKEN=xyz&timeout=10` — sets env var `API_TOKEN=xyz` with 10s timeout
+
 ### Azure Key Vault
 
 Retrieve secrets from Azure Key Vault. Path is used to specify the vault and secret name. Optionally a specific secret version can be retrieved.
@@ -633,17 +904,25 @@ Examples:
 
 #### Authentication
 
-Vals aquires Azure credentials though Azure CLI or from environment variables. The easiest way is to run `az login`. Vals can then aquire the current credentials from `az` without further set up.
+Vals acquires Azure credentials via the [azidentity Go module](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity).
 
-Other authentication methods require information to be passed in environment variables. See [Azure SDK docs](https://docs.microsoft.com/en-us/azure/developer/go/azure-sdk-authorization#use-environment-based-authentication) and [auth.go](https://godoc.org/github.com/Azure/go-autorest/autorest/azure/auth#NewAuthorizerFromEnvironment) for the full list of supported environment variables.
+By default, the following authentication types will be tried and the first one that works will be used:
 
-For example, if using client credentials the required env vars are `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_TENANT_ID` and possibly `AZURE_ENVIRONMENT` in case of accessing an Azure GovCloud.
+1. [Environment Variables](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity#EnvironmentCredential)
+1. [Workload Identity](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity#WorkloadIdentityCredential)
+1. [Managed Identity](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity#ManagedIdentityCredential)
+1. [Azure CLI](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity#AzureCLICredential)
+1. [Azure Developer CLI](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity#AzureDeveloperCLICredential)
 
-The order in which authentication methods are checked is:
-1. Client credentials
-2. Client certificate
-3. Username/Password
-4. Azure CLI or Managed identity (set environment `AZURE_USE_MSI=true` to enabled MSI)
+In practice, the simplest way to authenticate is to log into the Azure CLI using an account that has access to read secrets from the Key Vault in question.
+
+In case you are running in an environment that has multiple authentication types configured at once (and you need to use one that is lower on the list above), you can choose a specific one to use by setting the environment variable `AZKV_AUTH` to to one of the following values.
+
+- Default Behavior: `default` (or unset)
+- Workload Identity: `workload`
+- Managed Identity: `managed`
+- Azure CLI: `cli`
+- Azure Developer CLI: `devcli`
 
 ### EnvSubst
 
@@ -659,19 +938,33 @@ Examples:
 
 For this provider to work you require an [access token](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html) exported as the environment variable `GITLAB_TOKEN`.
 
+- `ref+gitlab://my-gitlab-server.com/[projects/|groups/]id/secret_name?[ssl_verify=false&scheme=https&api_version=v4]`
 
-- `ref+gitlab://my-gitlab-server.com/project_id/secret_name?[ssl_verify=false&scheme=https&api_version=v4]`
+* `Project variables`
+
+Fetches a CI/CD variable `password` from a `project`. Both forms are equivalent:
+
+- `ref+gitlab://gitlab.com/11111/password`
+- `ref+gitlab://gitlab.com/projects/11111/password`
+
+* `Group variables`
+
+Fetches a CI/CD variable `password` from a `group`:
+
+- `ref+gitlab://gitlab.com/groups/2222/password`
 
 Examples:
 
 - `ref+gitlab://gitlab.com/11111/password`
+- `ref+gitlab://gitlab.com/projects/11111/password`
+- `ref+gitlab://gitlab.com/groups/2222/password`
 - `ref+gitlab://my-gitlab.org/11111/password?ssl_verify=true&scheme=https`
 
 ### 1Password
 
-For this provider to work a working [service account token](https://developer.1password.com/docs/service-accounts/get-started/) is required.
-The following env var has to be configured:
-- `OP_SERVICE_ACCOUNT_TOKEN`
+When `OP_SERVICE_ACCOUNT_TOKEN` is set to a nonempty value, this provider uses the 1Password SDK with that service account token. If the variable is unset or empty, vals instead runs `op read --no-newline` with the installed [1Password CLI](https://developer.1password.com/docs/cli/get-started/), using its existing authentication (including the desktop app integration).
+
+For headless automation, set `OP_SERVICE_ACCOUNT_TOKEN`. For local CLI use, install 1Password CLI 2 or later and authenticate before running vals. Set `OP_ACCOUNT` when you need to select a specific account; otherwise, the CLI uses its current account. The `op` executable is resolved from `PATH`, invoked directly without a shell, and limited to 30 seconds per uncached secret.
 
 1Password is organized in vaults and items.
 An item can have multiple fields with or without a section. Labels can be set on fields and sections.
@@ -738,8 +1031,8 @@ Obtain value in state pulled from Pulumi Cloud REST API:
 
 - `ref+pulumistateapi://RESOURCE_TYPE/RESOURCE_LOGICAL_NAME/ATTRIBUTE_TYPE/ATTRIBUTE_KEY_PATH?project=PROJECT&stack=STACK`
 
-* `RESOURCE_TYPE` is a Pulumi [resource type](https://www.pulumi.com/docs/concepts/resources/names/#types) of the form `<package>:<module>:<type>`, where forward slashes (`/`) are replaced by a double underscore (`__`) and colons (`:`) are replaced by a single underscore (`_`). For example `aws:s3:Bucket` would be encoded as `aws__s3__Bucket` and `kubernetes:storage.k8s.io/v1:StorageClass` would be encoded as `kubernetes_storage.k8s.io__v1_StorageClass`.
-* `RESOURCE_LOGICAL_NAME` is the [logical name](https://www.pulumi.com/docs/concepts/resources/names/#logicalname) of the resource in the Pulumi program.
+* `RESOURCE_TYPE` is a Pulumi [resource type](https://www.pulumi.com/docs/concepts/resources/names/#types) of the form `<package>:<module>:<type>`, where forward slashes (`/`) are replaced by a double underscore (`__`) and colons (`:`) are replaced by a single underscore (`_`). For example `aws:s3:Bucket` would be encoded as `aws__s3__Bucket` and `kubernetes:storage.k8s.io/v1:StorageClass` would be encoded as `kubernetes_storage.k8s.io__v1_StorageClass`. To read Pulumi stack outputs, set the resource type to `pulumi_pulumi_Stack`.
+* `RESOURCE_LOGICAL_NAME` is the [logical name](https://www.pulumi.com/docs/concepts/resources/names/#logicalname) of the resource in the Pulumi program. To read Pulumi stack outputs, set this to the project name followed by a hyphen, then the stack name.
 * `ATTRIBUTE_TYPE` is either `outputs` or `inputs`.
 * `ATTRIBUTE_KEY_PATH` is a [GJSON](https://github.com/tidwall/gjson/blob/master/SYNTAX.md) expression that selects the desired attribute from the resource's inputs or outputs per the chosen `ATTRIBUTE_TYPE` value. You must encode any characters that would otherwise not comply with URI syntax, for example `#` becomes `%23`.
 * `project` is the Pulumi project name. May also be provided via the `PULUMI_PROJECT` environment variable.
@@ -758,16 +1051,18 @@ Examples:
 - `ref+pulumistateapi://aws-native_s3_Bucket/my-bucket/outputs/bucketName?project=my-project&stack=my-stack`
 - `ref+pulumistateapi://aws-native_s3_Bucket/my-bucket/outputs/tags.%23(key==SomeKey).value?project=my-project&stack=my-stack`
 - `ref+pulumistateapi://kubernetes_storage.k8s.io__v1_StorageClass/gp2-encrypted/inputs/metadata.name?project=my-project&stack=my-stack`
+- `ref+pulumistateapi://pulumi_pulumi_Stack/project-name-stack-name/outputs/output-name?project=my-project&stack=my-stack`
 
 ### Kubernetes
 
 Fetch value from Kubernetes:
 
-- `ref+k8s://API_VERSION/KIND/NAMESPACE/NAME/KEY[?kubeConfigPath=<path_to_kubeconfig>&kubeContext=<kubernetes context name>]`
+- `ref+k8s://API_VERSION/KIND/NAMESPACE/NAME/KEY[?kubeConfigPath=<path_to_kubeconfig>&kubeContext=<kubernetes context name>&inCluster]`
 
-Authentication to the Kubernetes cluster is done by referencing the local kubeconfig file.
+Authentication to the Kubernetes cluster is done by referencing the local kubeconfig file or in-cluster config.
 The path to the kubeconfig can be specified as a URI parameter, read from the `KUBECONFIG` environment variable or the provider will attempt to read `$HOME/.kube/config`.
 The Kubernetes context can be specified as a URI parameteter.
+If `?inCluster` is passed in the URI, ensure the pod running the `vals`command has the appropriate RBAC permissions to access the ConfigMap/Secret.
 
 Environment variables:
 
@@ -778,6 +1073,7 @@ Examples:
 - `ref+k8s://v1/Secret/mynamespace/mysecret/foo`
 - `ref+k8s://v1/ConfigMap/mynamespace/myconfigmap/foo`
 - `ref+k8s://v1/Secret/mynamespace/mysecret/bar?kubeConfigPath=/home/user/kubeconfig`
+- `ref+k8s://v1/Secret/mynamespace/mysecret/foo?inCluster`
 - `secretref+k8s://v1/Secret/mynamespace/mysecret/baz`
 - `secretref+k8s://v1/Secret/mynamespace/mysecret/baz?kubeContext=minikube`
 
@@ -794,7 +1090,7 @@ The following env vars have to be configured:
 - `CONJUR_AUTHN_LOGIN`
 - `CONJUR_AUTHN_API_KEY`
 
-- `ref+conjur://PATH/TO/VARIABLE[?address=CONJUR_APPLIANCE_URL&account=CONJUR_ACCOUNT&login=CONJUR_AUTHN_LOGIN&apikey=CONJUR_AUTHN_API_KEY]/CONJUR_SECRET_ID`
+- `ref+conjur://PATH/TO/VARIABLE/CONJUR_SECRET_ID[?address=CONJUR_APPLIANCE_URL&account=CONJUR_ACCOUNT&login=CONJUR_AUTHN_LOGIN&apikey=CONJUR_AUTHN_API_KEY]`
 
 Example:
 
@@ -833,7 +1129,7 @@ Example:
 
 
 ### Bitwarden
-This provider retrieves the secrets stored in Bitwarden. It uses the [Bitwarden Vault-Management API](https://bitwarden.com/help/vault-management-api/) that is included in the [Bitwarden CLI](https://github.com/bitwarden/clients) by executing `bw serve`. 
+This provider retrieves the secrets stored in Bitwarden. It uses the [Bitwarden Vault-Management API](https://bitwarden.com/help/vault-management-api/) that is included in the [Bitwarden CLI](https://github.com/bitwarden/clients) by executing `bw serve`.
 
 Environment variables:
 
@@ -852,11 +1148,41 @@ Examples:
 - `ref+bw://4d084b01-87e7-4411-8de9-2476ab9f3f48/{username,password,uri,notes,item}` gets username, password, uri, notes or the whole item of the given item id
 - `ref+bw://4d084b01-87e7-4411-8de9-2476ab9f3f48/notes#/key1` gets the *key1* from the yaml stored as note in the item
 
+### Yandex Cloud Lockbox
+
+Retrieve secrets from [Yandex Cloud Lockbox](https://yandex.cloud/en/docs/lockbox/). Path is used to specify secret ID. Optionally a specific secret version can be retrieved (using current version by default). If fragment is specified, retrieves a specific key from the secret.
+
+- `ref+yclockbox://SECRET_ID[?version_id=VERSION][#KEY]`
+
+Examples:
+
+- `ref+yclockbox://e6qeoqvd88dcpf044n5i` - get whole secret `e6qeoqvd88dcpf044n5i` from the current version
+- `ref+yclockbox://e6qeoqvd88dcpf044n5i?version_id=e6qn22seoaprg9cbe1dj` - get whole secret `e6qeoqvd88dcpf044n5i` from the `e6qn22seoaprg9cbe1dj` version
+- `ref+yclockbox://e6qeoqvd88dcpf044n5i?version_id=e6qn22seoaprg9cbe1dj#oauth_secret` - get secret entry from the `oauth_secret` key of `e6qn22seoaprg9cbe1dj` version of `e6qeoqvd88dcpf044n5i` secret
+- `ref+yclockbox://e6qeoqvd88dcpf044n5i#oauth_secret` - get secret entry from the `oauth_secret` key of current version of `e6qeoqvd88dcpf044n5i` secret
+
+#### Authentication
+
+Vals uses `YC_TOKEN` for authentication:
+
+- If `YC_TOKEN` is an IAM token string (for example, from `yc iam create-token`), it is used directly.
+- If `YC_TOKEN` contains a JSON service account `authorized_key`, it is automatically used as authorized-key credentials.
+
+See [Yandex Cloud Lockbox docs](https://yandex.cloud/en/docs/lockbox/api-ref/authentication) for more details on authentication.
+
+To override the Yandex Cloud API endpoint used by the Lockbox provider (for example, when using regional endpoints like `api.yandexcloud.kz:443`), set the `YC_LOCKBOX_ENDPOINT` environment variable:
+
+```sh
+export YC_TOKEN="$(yc iam create-token)"
+export YC_LOCKBOX_ENDPOINT="api.yandexcloud.kz:443"
+vals get 'ref+yclockbox://SECRET_ID'
+```
+
 ### HTTP JSON
 
 This provider retrieves values stored in JSON hosted by a HTTP frontend.
 
-This provider is built on top of [jsonquery](https://pkg.go.dev/github.com/antchfx/jsonquery@v1.3.3) and [xpath](https://pkg.go.dev/github.com/antchfx/xpath@v1.2.3) packages.  
+This provider is built on top of [jsonquery](https://pkg.go.dev/github.com/antchfx/jsonquery@v1.3.3) and [xpath](https://pkg.go.dev/github.com/antchfx/xpath@v1.2.3) packages.
 
 Given the diverse array of JSON structures that can be encountered, utilizing jsonquery with XPath presents a more effective approach for handling this variability in data structures.
 
@@ -880,7 +1206,7 @@ Let's say you want to fetch the below JSON object from https://api.github.com/us
         "name": "go-yaml"
     }
 ]
-``` 
+```
 ```
 # To get name="chartify" using https protocol you would use:
 ref+httpjson://api.github.com/users/helmfile/repos#///*[1]/name
@@ -903,7 +1229,7 @@ Let's say you want to fetch the below JSON object from https://api.github.com/us
         "id": 251296379
     }
 ]
-``` 
+```
 ```
 # Running the following will return: 2.51296379e+08
 ref+httpjson://api.github.com/users/helmfile/repos#///*[1]/id
@@ -912,6 +1238,150 @@ ref+httpjson://api.github.com/users/helmfile/repos#///*[1]/id
 ref+httpjson://api.github.com/users/helmfile/repos?floatAsInt=true#///*[1]/id
 ```
 
+### Servercore secret manager
+
+Retrieve secrets from Servercore Secrets Manager. The path identifies the secret. If a fragment is specified, the provider returns a specific key from the decoded secret.
+
+Authentication:
+
+Set the following environment variables:
+
+- `SERVERCORE_USERNAME`
+- `SERVERCORE_PASSWORD`
+- `SERVERCORE_ACCOUNT_ID`
+- `SERVERCORE_PROJECT_NAME`
+
+URI formats:
+
+- `ref+servercore://SECRET_NAME`
+  Returns the secret value as a string.
+- `ref+servercore://SECRET_NAME#/key/in/secret`
+  Parses the decoded secret as JSON (with YAML as a fallback) and returns the value at the leaf key path.
+
+Notes:
+- The provider expects the Servercore API to return a base64-encoded string in the `version.value` field. After decoding, the provider attempts JSON parsing, and if that fails, YAML.
+- API reference: [Servercore Secrets API](https://docs.servercore.com/api/secrets-manager-secrets/).
+
+### Scaleway
+This provider allows retrieval of secrets from [Scaleway Secret Manager](https://www.scaleway.com/en/docs/secret-manager/) using the [Scaleway Go SDK](https://github.com/scaleway/scaleway-sdk-go). For authentication, it uses the environment variables `SCW_PROJECT_ID` (defaults to `SCW_DEFAULT_PROJECT_ID` if unset), `SCW_REGION` (defaults to `SCW_DEFAULT_REGION` if unset), `SCW_ACCESS_KEY`, and `SCW_SECRET_KEY`. You can reference secrets in your config using the `ref+scw://` URI scheme.
+
+Examples:
+
+- `ref+scw:///path/to/secret` retrieves the value of an Opaque secret at the specified path.
+- `ref+scw:///path/to/secret#key` retrieves the value for a specific key in a JSON secret at the specified path.
+
+### Infisical
+
+This provider allows retrieval of secrets from [Infisical](https://infisical.com) (either the SaaS or a self-deployment) using the [Infisical Go SDK](https://github.com/infisical/go-sdk).
+
+Environment variables:
+
+- `INFISICAL_URL`: the Infisical instance URL, defaults to the SaaS (`https://app.infisical.com`).
+- `INFISICAL_AUTH_METHOD` (required): the authentication method, one of: `UNIVERSAL_AUTH`, `KUBERNETES`, `AWS_IAM`, `AZURE`, `GCP_IAM`, `GCP_ID_TOKEN`, `OIDC_AUTH`.
+
+Parameters:
+
+- `project` or `project_id` (required): the project slug or ID, respectively, where the secret lives in.
+- `environment` (required): the slug name (`dev`, `prod`, etc) of the environment from where the secret should be fetched.
+- `path`: the path from where the secret should be fetched.
+- `type`: the type of the secret. Valid options are `shared` (default) or `personal`.
+- `version`: the version of the secret to retrieve.
+
+Examples:
+
+- `ref+infisical://WEBHOOK_URL?project=infrastructure-hue8&path=prometheus&environment=prod`: gets the secret at "infrastructure-hue8" (project slug) -> "prometheus" (folder) -> "WEBHOOK_URL" (secret) -> "prod" (environment).
+- `ref+infisical://POSTGRES_PASSWORD?project_id=c2f75015-37b7-40b6-8412-2523ddfea5ed&environment=dev`: gets the secret at "c2f75015-37b7-40b6-8412-2523ddfea5ed" (project ID) -> "POSTGRES_PASSWORD" (secret) -> "dev" (environment).
+
+#### Authentication
+
+These are the supported authentication methods. Please, read [the SDK docs](https://infisical.com/docs/sdks/languages/go#authentication) for more information.
+
+Depending on which one is chosen with the `INFISICAL_AUTH_METHOD` environment variable, the following environment variables must also be provided.
+
+- **Universal**: `UNIVERSAL_AUTH`
+  - `INFISICAL_UNIVERSAL_AUTH_CLIENT_ID`: your machine identity client ID.
+  - `INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET`: your machine identity client secret.
+- **Kubernetes**: `KUBERNETES`
+  - `INFISICAL_KUBERNETES_IDENTITY_ID`: your Infisical Machine Identity ID.
+  - `INFISICAL_KUBERNETES_SERVICE_ACCOUNT_TOKEN_PATH`: the environment variable name that contains the path to the service account token (defaults to: `/var/run/secrets/kubernetes.io/serviceaccount/token`).
+- **AWS IAM**: `AWS_IAM`
+  - `INFISICAL_AWS_IAM_AUTH_IDENTITY_ID`: your Infisical Machine Identity ID.
+- **Azure**: `AZURE`
+  - `INFISICAL_AZURE_AUTH_IDENTITY_ID`: your Infisical Machine Identity ID.
+- **GCP IAM**: `GCP_IAM`
+  - `INFISICAL_GCP_IAM_AUTH_IDENTITY_ID`: your Infisical Machine Identity ID.
+  - `INFISICAL_GCP_IAM_SERVICE_ACCOUNT_KEY_FILE_PATH`: the path to your GCP service account key file.
+- **GCP ID Token**: `GCP_ID_TOKEN`
+  - `INFISICAL_GCP_AUTH_IDENTITY_ID`: your Infisical Machine Identity ID.
+- **OIDC Auth**: `OIDC_AUTH`
+  - `INFISICAL_OIDC_AUTH_IDENTITY_ID`: your Infisical Machine Identity ID.
+  - `INFISICAL_AUTH_JWT` (or `INFISICAL_JWT`): the OIDC JWT from your identity provider. Obtaining the JWT is the caller's responsibility (any OIDC IdP). Optionally set `INFISICAL_OIDC_AUTH_TOKEN_KEY_NAME` to read the JWT from a different environment variable (defaults to `INFISICAL_AUTH_JWT`).
+
+##### GitHub Actions (OIDC)
+
+Configure a machine identity with [OIDC Auth for GitHub](https://infisical.com/docs/documentation/platform/identities/oidc-auth/github) (discovery URL / issuer `https://token.actions.githubusercontent.com`, plus your bound subject/audiences/claims). The workflow must request an ID token, export it as `INFISICAL_AUTH_JWT`, then run `vals`:
+
+```yaml
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Request OIDC token
+        run: |
+          TOKEN=$(curl -sS -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=https://github.com/${{ github.repository_owner }}" \
+            | jq -r '.value')
+          echo "::add-mask::$TOKEN"
+          echo "INFISICAL_AUTH_JWT=$TOKEN" >> "$GITHUB_ENV"
+
+      - name: Resolve secrets with vals
+        env:
+          INFISICAL_AUTH_METHOD: OIDC_AUTH
+          INFISICAL_OIDC_AUTH_IDENTITY_ID: ${{ vars.INFISICAL_OIDC_AUTH_IDENTITY_ID }}
+          # Optional: INFISICAL_URL for self-hosted / EU
+        run: vals eval -f refs.yaml
+```
+
+Match the `audience` query parameter to the audiences configured on the Infisical machine identity. `INFISICAL_OIDC_AUTH_IDENTITY_ID` is not secret and can live in repository variables.
+
+### SecretServer
+
+This provider allows retrieval of secrets from [Delinea SecretSever](https://delinea.com/products/secret-server) using their [REST API](https://docs.delinea.com/online-help/secret-server/api-scripting/rest-api/index.htm)
+
+#### Configuration
+
+For on-prem instances set `TSS_SERVER_URL`. For cloud use set `TSS_TLD` to the top level domain and `TSS_TENANT` to your tenant id. If `TSS_SERVER_URL` is set other connection variables are ignored.
+
+#### Authentication
+
+Authentication is done via environment variables:
+
+- `TSS_USERNAME`: username to authenticate with
+- `TSS_PASSWORD`: password to authenticate with
+- `TSS_DOMAIN`: optional domain for the user
+
+Alternatively you can provide an OAuth token directly via `TSS_TOKEN`. If you do all other authentication environment variables are ignored.
+
+#### Parameters
+
+You can disable ssl certificate verification by setting `ssl_verify=false` in the URLs
+query.
+
+#### Examples
+
+- `ref+tss://12345#/password`: gets the `password` field of the secret with id `12345`
+- `ref+tss://secret-name/password`: gets the `password` field of the secret with the name `secret-name`. The name has to uniquely identify the secret
+
+
+#### Limitations
+
+The content of file fields, like certificates can't be retrieved. They will be replaced with the string `*** Not Valid For Display ***`.
 
 ## Advanced Usages
 

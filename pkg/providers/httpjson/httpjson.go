@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/antchfx/jsonquery"
 	"github.com/antchfx/xpath"
@@ -15,10 +16,14 @@ import (
 
 type provider struct {
 	// Keeping track of httpjson services since we need a service per url
-	protocol   string
 	log        *log.Logger
 	docs       map[string]*jsonquery.Node
+	protocol   string
 	floatAsInt bool
+	// docsMu guards the docs map so concurrent callers don't race while
+	// reading or writing it. It is not held during document fetching, so
+	// different URLs can be fetched in parallel.
+	docsMu sync.Mutex
 }
 
 func New(l *log.Logger, cfg api.StaticConfig) *provider {
@@ -64,39 +69,61 @@ func GetXpathFromUri(uri string) (xpathExpression string, err error) {
 
 func GetUrlFromUri(uri string, protocol string) (string, error) {
 	// Remove httpjson:// prefix
-	trimmedStr := strings.TrimPrefix(uri, "httpjson://")
-	// Attempt to split uri on argument
-	uriParts := strings.Split(trimmedStr, "?")
-	urlDomain := ""
-	if len(uriParts) == 1 {
-		// Attempt to split uri on parameter
-		urlDomain = strings.Split(trimmedStr, "#")[0]
-	} else {
-		urlDomain = uriParts[0]
-	}
-	if urlDomain == "" {
-		return "", fmt.Errorf("no domain found in uri: %s", uri)
-	}
-	fullURL := fmt.Sprintf("%s://%s", protocol, urlDomain)
-	_, err := url.Parse(fullURL)
-	if err != nil {
-		return "", fmt.Errorf("invalid domain: %s", err.Error())
+	trimmedUrl := strings.TrimPrefix(uri, "httpjson://")
+	// Remove xpath suffix
+	trimmedUrl = strings.Split(trimmedUrl, "#/")[0]
+
+	fullURL := fmt.Sprintf("%s://%s", protocol, trimmedUrl)
+
+	parsedUrl, parseErr := url.Parse(fullURL)
+	if parseErr != nil {
+		return "", fmt.Errorf("invalid URL: %s, error: %s", fullURL, parseErr.Error())
 	}
 
-	return fullURL, nil
+	if parsedUrl.Host == "" {
+		return "", fmt.Errorf("no domain found in uri: %s", uri)
+	}
+
+	query := parsedUrl.Query()
+
+	for _, key := range []string{"insecure", "floatAsInt"} {
+		query.Del(key)
+	}
+
+	parsedUrl.RawQuery = query.Encode()
+
+	return parsedUrl.String(), nil
 }
 
 func (p *provider) GetJsonDoc(url string) error {
-	if _, ok := p.docs[url]; !ok {
-		doc, err := jsonquery.LoadURL(url)
-		if err != nil {
-			return fmt.Errorf("error fetching json document at %v: %v", url, err)
-		}
-		p.log.Debugf("httpjson: successfully retrieved JSON data from: %s", url)
-		p.docs[url] = doc
+	_, err := p.getJsonDoc(url)
+	return err
+}
+
+func (p *provider) getJsonDoc(url string) (*jsonquery.Node, error) {
+	p.docsMu.Lock()
+	doc, ok := p.docs[url]
+	p.docsMu.Unlock()
+	if ok {
+		return doc, nil
 	}
 
-	return nil
+	doc, err := jsonquery.LoadURL(url)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching json document at %v: %w", url, err)
+	}
+	p.log.Debugf("httpjson: successfully retrieved JSON data from: %s", url)
+
+	// Concurrent callers may have fetched the same URL in the meantime,
+	// so keep the first stored document as the canonical one.
+	p.docsMu.Lock()
+	defer p.docsMu.Unlock()
+	if cached, ok := p.docs[url]; ok {
+		return cached, nil
+	}
+	p.docs[url] = doc
+
+	return doc, nil
 }
 
 func (p *provider) GetString(uri string) (string, error) {
@@ -104,7 +131,7 @@ func (p *provider) GetString(uri string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	err = p.GetJsonDoc(url)
+	doc, err := p.getJsonDoc(url)
 	if err != nil {
 		return "", err
 	}
@@ -115,8 +142,12 @@ func (p *provider) GetString(uri string) (string, error) {
 
 	returnValue := ""
 	var values []string
-	node, err := jsonquery.Query(p.docs[url], xpathQuery)
-	if err != nil || node == nil {
+	node, err := jsonquery.Query(doc, xpathQuery)
+	if err != nil {
+		return "", fmt.Errorf("error querying the xpath expression %s, error: %s", xpathQuery, err)
+	}
+
+	if node == nil {
 		return "", fmt.Errorf("unable to query doc for value with xpath query using %v", uri)
 	}
 

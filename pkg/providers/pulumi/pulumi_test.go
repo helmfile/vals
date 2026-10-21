@@ -44,10 +44,10 @@ func Test_parsePulumiResourceType(t *testing.T) {
 
 func Test_pulumiState_findResourceByLogicalName(t *testing.T) {
 	testcases := []struct {
-		resourceType        string
-		resourceLogicalName string
 		want                *pulumiResource
 		state               *pulumiState
+		resourceType        string
+		resourceLogicalName string
 	}{
 		{
 			resourceType:        "provider:resource:TypeA",
@@ -116,10 +116,10 @@ func Test_pulumiState_findResourceByLogicalName(t *testing.T) {
 
 func Test_pulumiResource_getAttributeValue(t *testing.T) {
 	testcases := []struct {
+		pulumiResource        *pulumiResource
 		resourceAttribute     string
 		resourceAttributePath string
 		want                  string
-		pulumiResource        *pulumiResource
 	}{
 		{
 			resourceAttribute:     "outputs",
