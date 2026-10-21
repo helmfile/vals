@@ -149,7 +149,7 @@ require (
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.8.0 // indirect
 	github.com/ProtonMail/go-crypto v1.4.1 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.47.2
+	github.com/aws/aws-sdk-go-v2 v1.47.3
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.20 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.33.5
 	github.com/aws/aws-sdk-go-v2/credentials v1.20.8
@@ -167,7 +167,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sso v1.38.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.43.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.51.3
-	github.com/aws/smithy-go v1.28.4
+	github.com/aws/smithy-go v1.28.5
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/cloudflare/circl v1.6.4 // indirect
