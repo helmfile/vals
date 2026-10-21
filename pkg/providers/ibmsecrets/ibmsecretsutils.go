@@ -9,17 +9,32 @@ import (
 	sm "github.com/IBM/secrets-manager-go-sdk/v2/secretsmanagerv2"
 )
 
-// client constructs an authenticated SecretsManagerV2 client.
+// client returns the cached, authenticated SecretsManagerV2 client,
+// constructing it on first use so that repeated secret fetches reuse the
+// same IAM token.
 func (p *provider) client() (*sm.SecretsManagerV2, error) {
-	auth := &core.IamAuthenticator{ApiKey: p.APIKey}
-	svc, err := sm.NewSecretsManagerV2(&sm.SecretsManagerV2Options{
-		Authenticator: auth,
-		URL:           p.ServiceURL,
+	p.clientOnce.Do(func() {
+		if p.APIKey == "" {
+			p.clientErr = fmt.Errorf("ibmsecrets: api_key config or IBMCLOUD_API_KEY environment variable is required")
+			return
+		}
+		if p.ServiceURL == "" {
+			p.clientErr = fmt.Errorf("ibmsecrets: service_url config or IBMCLOUD_SM_SERVICE_URL environment variable is required")
+			return
+		}
+
+		auth := &core.IamAuthenticator{ApiKey: p.APIKey}
+		svc, err := sm.NewSecretsManagerV2(&sm.SecretsManagerV2Options{
+			Authenticator: auth,
+			URL:           p.ServiceURL,
+		})
+		if err != nil {
+			p.clientErr = fmt.Errorf("ibmsecrets: failed to create client: %w", err)
+			return
+		}
+		p.smClient = svc
 	})
-	if err != nil {
-		return nil, fmt.Errorf("ibmsecrets: failed to create client: %w", err)
-	}
-	return svc, nil
+	return p.smClient, p.clientErr
 }
 
 // fetchSecret retrieves the secret described by spec and returns the
@@ -58,12 +73,18 @@ func (p *provider) fetchSecret(spec secretSpec) (string, error) {
 		if !ok {
 			return "", fmt.Errorf("ibmsecrets: unexpected result type for kv secret %q", spec.secretName)
 		}
+		if kv.Data == nil {
+			return "", fmt.Errorf("ibmsecrets: nil data for secret %q", spec.secretName)
+		}
 		return getValueByPath(kv.Data, spec.fragmentPath)
 
 	case sm.GetSecretByNameTypeOptions_SecretType_ServiceCredentials:
 		sc, ok := result.(*sm.ServiceCredentialsSecret)
 		if !ok {
 			return "", fmt.Errorf("ibmsecrets: unexpected result type for service_credentials secret %q", spec.secretName)
+		}
+		if sc.Credentials == nil {
+			return "", fmt.Errorf("ibmsecrets: nil credentials for secret %q", spec.secretName)
 		}
 		// Convert credentials struct → map[string]interface{} via JSON round-trip
 		// so getValueByPath can traverse it uniformly.
@@ -78,9 +99,8 @@ func (p *provider) fetchSecret(spec secretSpec) (string, error) {
 	}
 }
 
-// getValueByPath walks obj using a slash-delimited path.
+// getValueByPath walks obj using a slash-delimited path of map keys.
 // An empty path returns the JSON-serialized form of obj.
-// Numeric path segments are treated as array indices.
 // Mirrors the Node.js getValueByPath implementation.
 func getValueByPath(obj map[string]interface{}, path string) (string, error) {
 	if path == "" {

@@ -4,17 +4,27 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 
 	"gopkg.in/yaml.v3"
+
+	sm "github.com/IBM/secrets-manager-go-sdk/v2/secretsmanagerv2"
 
 	"github.com/helmfile/vals/pkg/api"
 	"github.com/helmfile/vals/pkg/log"
 )
 
 type provider struct {
-	log        *log.Logger
+	log *log.Logger
+
 	APIKey     string
 	ServiceURL string
+
+	// clientOnce guards lazy construction of the Secrets Manager client so
+	// that the IAM token is exchanged only once per provider instance.
+	clientOnce sync.Once
+	smClient   *sm.SecretsManagerV2
+	clientErr  error
 }
 
 func New(l *log.Logger, cfg api.StaticConfig) *provider {

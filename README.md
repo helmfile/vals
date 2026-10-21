@@ -1404,9 +1404,8 @@ db_host: ref+ibmsecrets://secret_groups/prod/secret_types/kv/secrets/db-config#/
 
 # Retrieve the IAM API key from a service_credentials secret
 cos_apikey: ref+ibmsecrets://secret_groups/prod/secret_types/service_credentials/secrets/cos-binding#/apikey
-
-
 ```
+
 
 ### SecretServer
 
