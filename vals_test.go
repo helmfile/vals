@@ -31,14 +31,14 @@ func TestExec(t *testing.T) {
 		Stderr:     stderr,
 	}
 
-	err := Exec(map[string]interface{}{}, []string{"cat"}, c)
+	err := Exec(map[string]any{}, []string{"cat"}, c)
 	require.NoError(t, err)
 
 	require.Equal(t, "x: baz\n", stdout.String())
 }
 
 func TestEnv(t *testing.T) {
-	input := make(map[string]interface{})
+	input := make(map[string]any)
 
 	input["var1"] = "ref+echo://value"
 	input["var2"] = "ref+echo://val;ue"
@@ -60,7 +60,7 @@ func TestEnv(t *testing.T) {
 }
 
 func TestQuotedEnv(t *testing.T) {
-	input := make(map[string]interface{})
+	input := make(map[string]any)
 
 	input["var1"] = "ref+echo://value"
 	input["var2"] = "ref+echo://val;ue"
@@ -316,7 +316,7 @@ func TestTextInput(t *testing.T) {
 func TestEvalNested(t *testing.T) {
 	t.Setenv("TEST_NESTED_VAR", "resolved")
 
-	template := map[string]interface{}{
+	template := map[string]any{
 		"key1": "ref+echo://ref+echo://inner/value",
 		"key2": "ref+echo://simple/value",
 		"key3": "ref+echo://ref+envsubst://$TEST_NESTED_VAR/path",
@@ -465,7 +465,7 @@ string_value: It's a string
 
 type mockProvider struct {
 	getStringFunc    func(string) (string, error)
-	getStringMapFunc func(string) (map[string]interface{}, error)
+	getStringMapFunc func(string) (map[string]any, error)
 }
 
 func (m *mockProvider) GetString(key string) (string, error) {
@@ -475,7 +475,7 @@ func (m *mockProvider) GetString(key string) (string, error) {
 	return "", nil
 }
 
-func (m *mockProvider) GetStringMap(key string) (map[string]interface{}, error) {
+func (m *mockProvider) GetStringMap(key string) (map[string]any, error) {
 	if m.getStringMapFunc != nil {
 		return m.getStringMapFunc(key)
 	}
@@ -491,12 +491,12 @@ func TestARNFragmentExtractionWithMockProvider(t *testing.T) {
 	arn := "arn:aws:secretsmanager:us-east-1:123456789012:secret:/myteam/mydoc"
 
 	mock := &mockProvider{
-		getStringMapFunc: func(key string) (map[string]interface{}, error) {
+		getStringMapFunc: func(key string) (map[string]any, error) {
 			if key != arn {
 				t.Fatalf("unexpected key passed to provider.GetStringMap: %q", key)
 			}
-			return map[string]interface{}{
-				"myteam": map[string]interface{}{
+			return map[string]any{
+				"myteam": map[string]any{
 					"mydoc": "mydoc",
 				},
 			}, nil
@@ -563,13 +563,13 @@ func TestARNBasedURIParsingWithFragment(t *testing.T) {
 	arn := "arn:aws:secretsmanager:us-east-1:123456789012:secret:/demo/app/database"
 
 	mock := &mockProvider{
-		getStringMapFunc: func(key string) (map[string]interface{}, error) {
+		getStringMapFunc: func(key string) (map[string]any, error) {
 			if key != arn {
 				t.Fatalf("unexpected key passed to provider.GetStringMap: %q", key)
 			}
-			return map[string]interface{}{
-				"demo": map[string]interface{}{
-					"app": map[string]interface{}{
+			return map[string]any{
+				"demo": map[string]any{
+					"app": map[string]any{
 						"database": "db-secret-value",
 					},
 				},
@@ -593,13 +593,13 @@ func TestARNBasedURIParsingWithQueryAndFragment(t *testing.T) {
 	arn := "arn:aws:secretsmanager:us-east-1:123456789012:secret:/demo/app/database"
 
 	mock := &mockProvider{
-		getStringMapFunc: func(key string) (map[string]interface{}, error) {
+		getStringMapFunc: func(key string) (map[string]any, error) {
 			if key != arn {
 				t.Fatalf("unexpected key passed to provider.GetStringMap: %q", key)
 			}
-			return map[string]interface{}{
-				"demo": map[string]interface{}{
-					"app": map[string]interface{}{
+			return map[string]any{
+				"demo": map[string]any{
+					"app": map[string]any{
 						"database": "db-secret-value",
 					},
 				},

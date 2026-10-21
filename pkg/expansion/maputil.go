@@ -2,14 +2,15 @@ package expansion
 
 import (
 	"fmt"
+	"maps"
 
 	"gopkg.in/yaml.v3"
 )
 
-func ModifyStringValues(v interface{}, f func(path string) (interface{}, error)) (interface{}, error) {
-	merge := func(strmap map[string]interface{}, k string, opts interface{}) (bool, error) {
+func ModifyStringValues(v any, f func(path string) (any, error)) (any, error) {
+	merge := func(strmap map[string]any, k string, opts any) (bool, error) {
 		switch opts.(type) {
-		case map[string]interface{}, map[interface{}]interface{}:
+		case map[string]any, map[any]any:
 		default:
 			return false, nil
 		}
@@ -23,29 +24,27 @@ func ModifyStringValues(v interface{}, f func(path string) (interface{}, error))
 			if yamlOrJson == k {
 				break
 			}
-			m := map[string]interface{}{}
+			m := map[string]any{}
 			if err := yaml.Unmarshal([]byte(yamlOrJson), &m); err != nil {
 				return false, err
 			}
 			// opts := v
-			for mk, mv := range m {
-				strmap[mk] = mv
-			}
+			maps.Copy(strmap, m)
 			return true, nil
 		}
 		return false, nil
 	}
 
-	var casted_v interface{}
+	var casted_v any
 	switch typed_v := v.(type) {
 	case string:
 		return f(typed_v)
-	case map[interface{}]interface{}:
-		strmap := map[string]interface{}{}
+	case map[any]any:
+		strmap := map[string]any{}
 		for k, v := range typed_v {
 			strmap[fmt.Sprintf("%v", k)] = v
 		}
-		extends := map[string]interface{}{}
+		extends := map[string]any{}
 		var deleted []string
 		for k, v := range strmap {
 			ok, err := merge(extends, k, v)
@@ -66,12 +65,10 @@ func ModifyStringValues(v interface{}, f func(path string) (interface{}, error))
 		for _, k := range deleted {
 			delete(strmap, k)
 		}
-		for k, v := range extends {
-			strmap[k] = v
-		}
+		maps.Copy(strmap, extends)
 		return strmap, nil
-	case map[string]interface{}:
-		extends := map[string]interface{}{}
+	case map[string]any:
+		extends := map[string]any{}
 		var deleted []string
 		for k, v := range typed_v {
 			ok, err := merge(extends, k, v)
@@ -92,12 +89,10 @@ func ModifyStringValues(v interface{}, f func(path string) (interface{}, error))
 		for _, k := range deleted {
 			delete(typed_v, k)
 		}
-		for k, v := range extends {
-			typed_v[k] = v
-		}
+		maps.Copy(typed_v, extends)
 		return typed_v, nil
-	case []interface{}:
-		a := []interface{}{}
+	case []any:
+		a := []any{}
 		for i := range typed_v {
 			res, err := ModifyStringValues(typed_v[i], f)
 			if err != nil {
@@ -107,7 +102,7 @@ func ModifyStringValues(v interface{}, f func(path string) (interface{}, error))
 		}
 		casted_v = a
 	case []string:
-		a := []interface{}{}
+		a := []any{}
 		for i := range typed_v {
 			res, err := f(typed_v[i])
 			if err != nil {

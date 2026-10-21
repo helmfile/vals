@@ -18,8 +18,8 @@ func TestValues_k8s(t *testing.T) {
 	//   kubectl create configmap myconfigmap -n test-namespace --from-literal=key=configValue
 
 	type testcase struct {
-		template map[string]interface{}
-		want     map[string]interface{}
+		template map[string]any
+		want     map[string]any
 		wantErr  string
 	}
 
@@ -28,47 +28,47 @@ func TestValues_k8s(t *testing.T) {
 	testcases := []testcase{
 		// (secret) valid Secret is specified, uses current context
 		{
-			template: map[string]interface{}{
+			template: map[string]any{
 				"test_key": "secretref+k8s://v1/Secret/test-namespace/mysecret/key",
 			},
-			want: map[string]interface{}{
+			want: map[string]any{
 				"test_key": "p4ssw0rd",
 			},
 			wantErr: "",
 		},
 		// (secret) valid Secret is specified, with specific kube context
 		{
-			template: map[string]interface{}{
+			template: map[string]any{
 				"test_key": "secretref+k8s://v1/Secret/test-namespace/mysecret/key?kubeContext=kind-cluster",
 			},
-			want: map[string]interface{}{
+			want: map[string]any{
 				"test_key": "p4ssw0rd",
 			},
 			wantErr: "",
 		},
 		// (secret) valid Secret is specified, with specific kube context and kube config path
 		{
-			template: map[string]interface{}{
+			template: map[string]any{
 				"test_key": fmt.Sprintf("secretref+k8s://v1/Secret/test-namespace/mysecret/key?kubeContext=kind-cluster&kubeConfigPath=%s/.kube/config", homeDir),
 			},
-			want: map[string]interface{}{
+			want: map[string]any{
 				"test_key": "p4ssw0rd",
 			},
 			wantErr: "",
 		},
 		// (secret) valid Secret is specified, with a kube config path, no specific kube context (uses current)
 		{
-			template: map[string]interface{}{
+			template: map[string]any{
 				"test_key": fmt.Sprintf("ref+k8s://v1/Secret/test-namespace/mysecret/key?kubeConfigPath=%s/.kube/config", homeDir),
 			},
-			want: map[string]interface{}{
+			want: map[string]any{
 				"test_key": "p4ssw0rd",
 			},
 			wantErr: "",
 		},
 		// (secret) non-existent Secret
 		{
-			template: map[string]interface{}{
+			template: map[string]any{
 				"test_key": "ref+k8s://v1/Secret/test-namespace/non-existent-secret/key",
 			},
 			want:    nil,
@@ -76,36 +76,36 @@ func TestValues_k8s(t *testing.T) {
 		},
 		// (configmap) valid ConfigMap is specified, using current context
 		{
-			template: map[string]interface{}{
+			template: map[string]any{
 				"test_key": "ref+k8s://v1/ConfigMap/test-namespace/myconfigmap/key",
 			},
-			want: map[string]interface{}{
+			want: map[string]any{
 				"test_key": "configValue",
 			},
 			wantErr: "",
 		},
 		// (configmap) valid Secret is specified, with specific kube context
 		{
-			template: map[string]interface{}{
+			template: map[string]any{
 				"test_key": "ref+k8s://v1/ConfigMap/test-namespace/myconfigmap/key?kubeContext=kind-cluster",
 			},
-			want: map[string]interface{}{
+			want: map[string]any{
 				"test_key": "configValue",
 			},
 			wantErr: "",
 		},
 		// (configmap) valid ConfigMap is specified, with specific kube context and kube config path
 		{
-			template: map[string]interface{}{
+			template: map[string]any{
 				"test_key": fmt.Sprintf("ref+k8s://v1/ConfigMap/test-namespace/myconfigmap/key?kubeContext=kind-cluster&kubeConfigPath=%s/.kube/config", homeDir),
 			},
-			want: map[string]interface{}{
+			want: map[string]any{
 				"test_key": "configValue",
 			},
 		},
 		// (configmap) non-existent ConfigMap
 		{
-			template: map[string]interface{}{
+			template: map[string]any{
 				"test_key": "ref+k8s://v1/ConfigMap/test-namespace/non-existent-configmap/key",
 			},
 			want:    nil,
@@ -113,7 +113,7 @@ func TestValues_k8s(t *testing.T) {
 		},
 		// unsupported kind
 		{
-			template: map[string]interface{}{
+			template: map[string]any{
 				"test_key": "ref+k8s://v1/UnsupportedKind/test-namespace/myconfigmap/key",
 			},
 			want:    nil,
@@ -121,7 +121,7 @@ func TestValues_k8s(t *testing.T) {
 		},
 		// unsupported apiVersion
 		{
-			template: map[string]interface{}{
+			template: map[string]any{
 				"test_key": "ref+k8s://v2/ConfigMap/test-namespace/myconfigmap/key",
 			},
 			want:    nil,
@@ -129,7 +129,7 @@ func TestValues_k8s(t *testing.T) {
 		},
 		// invalid apiVersion
 		{
-			template: map[string]interface{}{
+			template: map[string]any{
 				"test_key": "ref+k8s://invalidApiVersion/ConfigMap/test-namespace/myconfigmap/key",
 			},
 			want:    nil,
@@ -137,7 +137,7 @@ func TestValues_k8s(t *testing.T) {
 		},
 		// non-existent namespace
 		{
-			template: map[string]interface{}{
+			template: map[string]any{
 				"test_key": "ref+k8s://v1/ConfigMap/non-existent-namespace/myconfigmap/key",
 			},
 			want:    nil,

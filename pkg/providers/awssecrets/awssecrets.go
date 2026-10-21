@@ -77,17 +77,17 @@ func (p *provider) GetString(key string) (string, error) {
 	return v, nil
 }
 
-func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
+func (p *provider) GetStringMap(key string) (map[string]any, error) {
 	yamlStr, err := p.GetString(key)
 	if err == nil {
-		m := map[string]interface{}{}
+		m := map[string]any{}
 		if err := yaml.Unmarshal([]byte(yamlStr), &m); err != nil {
 			return nil, fmt.Errorf("error while parsing secret for key %q as yaml: %v", key, err)
 		}
 		return m, nil
 	}
 
-	meta := map[string]interface{}{}
+	meta := map[string]any{}
 
 	metaKey := strings.TrimRight(key, "/") + "/meta"
 
@@ -110,7 +110,7 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 	switch f := f.(type) {
 	case []string:
 		suffixes = append(suffixes, f...)
-	case []interface{}:
+	case []any:
 		for _, v := range f {
 			suffixes = append(suffixes, fmt.Sprintf("%v", v))
 		}
@@ -121,7 +121,7 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 		return nil, fmt.Errorf("%q was not a string array", metaKeysField)
 	}
 
-	res := map[string]interface{}{}
+	res := map[string]any{}
 	for _, suf := range suffixes {
 		sufKey := strings.TrimLeft(suf, "/")
 		full := strings.TrimRight(key, "/") + "/" + sufKey

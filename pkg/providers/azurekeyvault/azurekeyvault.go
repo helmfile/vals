@@ -49,8 +49,8 @@ func (p *provider) GetString(key string) (string, error) {
 	return *secretBundle.Value, err
 }
 
-func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
-	m := map[string]interface{}{}
+func (p *provider) GetStringMap(key string) (map[string]any, error) {
+	m := map[string]any{}
 	yamlStr, err := p.GetString(key)
 	if err != nil {
 		return nil, err

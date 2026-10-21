@@ -25,20 +25,20 @@ func TestValues_OnePasswordConnect_EvalTemplate(t *testing.T) {
 	}
 
 	type testcase struct {
-		template map[string]interface{}
-		expected map[string]interface{}
+		template map[string]any
+		expected map[string]any
 	}
 	vaultLabel := "vals-test"
 	itemLabel := "vals-test"
 
 	testcases := []testcase{
 		{
-			template: map[string]interface{}{
+			template: map[string]any{
 				"foo":      "FOO",
 				"username": fmt.Sprintf("ref+onepasswordconnect://%s/%s#/username", vaultLabel, itemLabel),
 				"password": fmt.Sprintf("ref+onepasswordconnect://%s/%s#/password", vaultLabel, itemLabel),
 			},
-			expected: map[string]interface{}{
+			expected: map[string]any{
 				"foo":      "FOO",
 				"username": "foo@bar.org",
 				"password": "secret",

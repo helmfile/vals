@@ -195,7 +195,7 @@ func TestExpandRegexpMatchInString(t *testing.T) {
 		tc := testcases[i]
 
 		t.Run(tc.name, func(t *testing.T) {
-			lookup := func(m string) (interface{}, error) {
+			lookup := func(m string) (any, error) {
 				parsed, err := url.Parse(m)
 				if err != nil {
 					return "", err
@@ -225,51 +225,51 @@ func TestExpandRegexpMatchInString(t *testing.T) {
 func TestExpandRegexpMatchInMap(t *testing.T) {
 	testcases := []struct {
 		regex    *regexp.Regexp
-		input    map[string]interface{}
-		expected map[string]interface{}
+		input    map[string]any
+		expected map[string]any
 		name     string
 	}{
 		{
 			name:     "string",
 			regex:    DefaultRefRegexp,
-			input:    map[string]interface{}{"k": "ref+vault://srv/foo/bar"},
-			expected: map[string]interface{}{"k": "vault-srv-/foo/bar"},
+			input:    map[string]any{"k": "ref+vault://srv/foo/bar"},
+			expected: map[string]any{"k": "vault-srv-/foo/bar"},
 		},
 		{
 			name:     "string-slice",
 			regex:    DefaultRefRegexp,
-			input:    map[string]interface{}{"k": []string{"ref+vault://srv/foo/bar"}},
-			expected: map[string]interface{}{"k": []interface{}{"vault-srv-/foo/bar"}},
+			input:    map[string]any{"k": []string{"ref+vault://srv/foo/bar"}},
+			expected: map[string]any{"k": []any{"vault-srv-/foo/bar"}},
 		},
 		{
 			name:     "interface-slice",
 			regex:    DefaultRefRegexp,
-			input:    map[string]interface{}{"k": []interface{}{"ref+vault://srv/foo/bar"}},
-			expected: map[string]interface{}{"k": []interface{}{"vault-srv-/foo/bar"}},
+			input:    map[string]any{"k": []any{"ref+vault://srv/foo/bar"}},
+			expected: map[string]any{"k": []any{"vault-srv-/foo/bar"}},
 		},
 		{
 			name:     "interface-slice-in-interface-map",
 			regex:    DefaultRefRegexp,
-			input:    map[string]interface{}{"k": map[interface{}]interface{}{"k2": []interface{}{"ref+vault://srv/foo/bar"}}},
-			expected: map[string]interface{}{"k": map[string]interface{}{"k2": []interface{}{"vault-srv-/foo/bar"}}},
+			input:    map[string]any{"k": map[any]any{"k2": []any{"ref+vault://srv/foo/bar"}}},
+			expected: map[string]any{"k": map[string]any{"k2": []any{"vault-srv-/foo/bar"}}},
 		},
 		{
 			name:     "interface-slice-in-string-map",
 			regex:    DefaultRefRegexp,
-			input:    map[string]interface{}{"k": map[string]interface{}{"k2": []interface{}{"ref+vault://srv/foo/bar"}}},
-			expected: map[string]interface{}{"k": map[string]interface{}{"k2": []interface{}{"vault-srv-/foo/bar"}}},
+			input:    map[string]any{"k": map[string]any{"k2": []any{"ref+vault://srv/foo/bar"}}},
+			expected: map[string]any{"k": map[string]any{"k2": []any{"vault-srv-/foo/bar"}}},
 		},
 		{
 			name:     "string-in-interface-map",
 			regex:    DefaultRefRegexp,
-			input:    map[string]interface{}{"k": map[interface{}]interface{}{"k2": "ref+vault://srv/foo/bar"}},
-			expected: map[string]interface{}{"k": map[string]interface{}{"k2": "vault-srv-/foo/bar"}},
+			input:    map[string]any{"k": map[any]any{"k2": "ref+vault://srv/foo/bar"}},
+			expected: map[string]any{"k": map[string]any{"k2": "vault-srv-/foo/bar"}},
 		},
 		{
 			name:     "string-in-string-map",
 			regex:    DefaultRefRegexp,
-			input:    map[string]interface{}{"k": map[string]interface{}{"k2": "ref+vault://srv/foo/bar"}},
-			expected: map[string]interface{}{"k": map[string]interface{}{"k2": "vault-srv-/foo/bar"}},
+			input:    map[string]any{"k": map[string]any{"k2": "ref+vault://srv/foo/bar"}},
+			expected: map[string]any{"k": map[string]any{"k2": "vault-srv-/foo/bar"}},
 		},
 	}
 
@@ -277,7 +277,7 @@ func TestExpandRegexpMatchInMap(t *testing.T) {
 		tc := testcases[i]
 
 		t.Run(tc.name, func(t *testing.T) {
-			lookup := func(m string) (interface{}, error) {
+			lookup := func(m string) (any, error) {
 				parsed, err := url.Parse(m)
 				if err != nil {
 					return "", err
@@ -304,7 +304,7 @@ func TestExpandRegexpMatchInMap(t *testing.T) {
 }
 
 func TestResolveInnerRefs(t *testing.T) {
-	lookup := func(m string) (interface{}, error) {
+	lookup := func(m string) (any, error) {
 		parsed, err := url.Parse(m)
 		if err != nil {
 			return "", err
@@ -363,8 +363,8 @@ func TestResolveInnerRefsNonScalarError(t *testing.T) {
 	t.Run("map value", func(t *testing.T) {
 		expand := ExpandRegexMatch{
 			Target: DefaultRefRegexp,
-			Lookup: func(m string) (interface{}, error) {
-				return map[string]interface{}{"key": "value"}, nil
+			Lookup: func(m string) (any, error) {
+				return map[string]any{"key": "value"}, nil
 			},
 		}
 		_, err := expand.resolveInnerRefs(input, 0)
@@ -379,7 +379,7 @@ func TestResolveInnerRefsNonScalarError(t *testing.T) {
 	t.Run("nil value", func(t *testing.T) {
 		expand := ExpandRegexMatch{
 			Target: DefaultRefRegexp,
-			Lookup: func(m string) (interface{}, error) {
+			Lookup: func(m string) (any, error) {
 				return nil, nil
 			},
 		}
@@ -395,7 +395,7 @@ func TestResolveInnerRefsNonScalarError(t *testing.T) {
 	t.Run("slice value", func(t *testing.T) {
 		expand := ExpandRegexMatch{
 			Target: DefaultRefRegexp,
-			Lookup: func(m string) (interface{}, error) {
+			Lookup: func(m string) (any, error) {
 				return []string{"a", "b"}, nil
 			},
 		}
@@ -410,7 +410,7 @@ func TestResolveInnerRefsNonScalarError(t *testing.T) {
 }
 
 func TestResolveInnerRefsDepthLimit(t *testing.T) {
-	lookup := func(m string) (interface{}, error) {
+	lookup := func(m string) (any, error) {
 		// Always returns another nested ref to trigger infinite recursion
 		return "ref+echo://nested/value", nil
 	}

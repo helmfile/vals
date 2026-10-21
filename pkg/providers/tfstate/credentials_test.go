@@ -166,7 +166,7 @@ func TestResolveTFEToken_Precedence(t *testing.T) {
 
 	t.Run("config token wins", func(t *testing.T) {
 		t.Setenv("TFE_TOKEN", "envtoken")
-		p := New(config.MapConfig{M: map[string]interface{}{
+		p := New(config.MapConfig{M: map[string]any{
 			"tfe_token":            "cfgtoken",
 			"tfe_credentials_file": path,
 		}}, "remote")
@@ -175,19 +175,19 @@ func TestResolveTFEToken_Precedence(t *testing.T) {
 
 	t.Run("env token beats file", func(t *testing.T) {
 		t.Setenv("TFE_TOKEN", "envtoken")
-		p := New(config.MapConfig{M: map[string]interface{}{"tfe_credentials_file": path}}, "remote")
+		p := New(config.MapConfig{M: map[string]any{"tfe_credentials_file": path}}, "remote")
 		assert.Equal(t, "envtoken", resolve(t, p, "app.terraform.io"))
 	})
 
 	t.Run("file token as last resort", func(t *testing.T) {
 		unsetEnv(t, "TFE_TOKEN")
-		p := New(config.MapConfig{M: map[string]interface{}{"tfe_credentials_file": path}}, "remote")
+		p := New(config.MapConfig{M: map[string]any{"tfe_credentials_file": path}}, "remote")
 		assert.Equal(t, "filetoken", resolve(t, p, "app.terraform.io"))
 	})
 
 	t.Run("hostname is lowercased for the file lookup", func(t *testing.T) {
 		unsetEnv(t, "TFE_TOKEN")
-		p := New(config.MapConfig{M: map[string]interface{}{"tfe_credentials_file": path}}, "remote")
+		p := New(config.MapConfig{M: map[string]any{"tfe_credentials_file": path}}, "remote")
 		assert.Equal(t, "enterprisetoken", resolve(t, p, "TFE.Example.COM"))
 	})
 
@@ -195,13 +195,13 @@ func TestResolveTFEToken_Precedence(t *testing.T) {
 		unsetEnv(t, "TFE_TOKEN")
 		setHomeDir(t, t.TempDir())
 		unsetEnv(t, "XDG_CONFIG_HOME")
-		p := New(config.MapConfig{M: map[string]interface{}{}}, "remote")
+		p := New(config.MapConfig{M: map[string]any{}}, "remote")
 		assert.Empty(t, resolve(t, p, "app.terraform.io"))
 	})
 
 	t.Run("bad explicit credentials file surfaces an error", func(t *testing.T) {
 		unsetEnv(t, "TFE_TOKEN")
-		p := New(config.MapConfig{M: map[string]interface{}{
+		p := New(config.MapConfig{M: map[string]any{
 			"tfe_credentials_file": filepath.Join(t.TempDir(), "absent.json"),
 		}}, "remote")
 		_, err := p.resolveTFEToken("app.terraform.io")

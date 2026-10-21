@@ -19,10 +19,10 @@ func (p *provider) GetString(key string) (string, error) {
 	return strings.TrimRight(key, "/"), nil
 }
 
-func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
+func (p *provider) GetStringMap(key string) (map[string]any, error) {
 	keys := strings.Split(key, "/")
 
-	res := map[string]interface{}{}
+	res := map[string]any{}
 	cur := res
 
 	if len(keys) < 2 {
@@ -34,7 +34,7 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 		if i == len(keys)-2 {
 			cur[k] = keys[i+1]
 		} else {
-			newm := map[string]interface{}{}
+			newm := map[string]any{}
 			cur[k] = newm
 			cur = newm
 		}

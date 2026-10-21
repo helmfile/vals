@@ -51,13 +51,13 @@ type StaticConfig interface {
 	String(...string) string
 	Config(...string) StaticConfig
 	Exists(...string) bool
-	Map(...string) map[string]interface{}
+	Map(...string) map[string]any
 	StringSlice(...string) []string
 }
 
 // LazyLoadedStringMapProvider is a variant of string-map providers that connects to/loads the source at the time of getting a value
 type LazyLoadedStringMapProvider interface {
-	GetStringMap(string) (map[string]interface{}, error)
+	GetStringMap(string) (map[string]any, error)
 }
 
 // LazyLoadedStringProvider is a variant of value providers that connects to/loads the source at the time of getting a value

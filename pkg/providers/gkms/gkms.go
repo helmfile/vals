@@ -42,13 +42,13 @@ func (p *provider) GetString(key string) (string, error) {
 	return string(value), nil
 }
 
-func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
+func (p *provider) GetStringMap(key string) (map[string]any, error) {
 	ctx := context.Background()
 	value, err := p.getValue(ctx, key)
 	if err != nil {
 		return nil, err
 	}
-	var valueMap map[string]interface{}
+	var valueMap map[string]any
 	if err := yaml.Unmarshal(value, &valueMap); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal value: %w", err)
 	}

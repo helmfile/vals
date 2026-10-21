@@ -128,8 +128,8 @@ func (p *provider) GetString(key string) (string, error) {
 	return g.Value, nil
 }
 
-func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
-	secretMap := map[string]interface{}{}
+func (p *provider) GetStringMap(key string) (map[string]any, error) {
+	secretMap := map[string]any{}
 
 	secretString, err := p.GetString(key)
 	if err != nil {

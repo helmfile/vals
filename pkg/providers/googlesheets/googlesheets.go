@@ -37,7 +37,7 @@ func (p *provider) GetString(key string) (string, error) {
 	return fmt.Sprintf("%v", kvs[splits[1]]), nil
 }
 
-func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
+func (p *provider) GetStringMap(key string) (map[string]any, error) {
 	return FetchKVsWithCredentials(context.Background(), p.credentialsFile, key)
 }
 
@@ -150,7 +150,7 @@ func ClientFromConfig(file string) (*http.Client, error) {
 	}
 }
 
-func FetchKVs(ctx context.Context, client *http.Client, spreadsheetId string) (map[string]interface{}, error) {
+func FetchKVs(ctx context.Context, client *http.Client, spreadsheetId string) (map[string]any, error) {
 	srv, err := sheets.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize Sheets client: %v", err)
@@ -162,7 +162,7 @@ func FetchKVs(ctx context.Context, client *http.Client, spreadsheetId string) (m
 		return nil, fmt.Errorf("unable to get values from sheet: %v", err)
 	}
 
-	kvs := map[string]interface{}{}
+	kvs := map[string]any{}
 	for _, row := range resp.Values {
 		kvs[fmt.Sprintf("%v", row[0])] = row[1]
 	}
@@ -170,7 +170,7 @@ func FetchKVs(ctx context.Context, client *http.Client, spreadsheetId string) (m
 	return kvs, nil
 }
 
-func FetchKVsWithCredentials(ctx context.Context, credsFile, spreadsheetId string) (map[string]interface{}, error) {
+func FetchKVsWithCredentials(ctx context.Context, credsFile, spreadsheetId string) (map[string]any, error) {
 	client, err := ClientFromConfig(credsFile)
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize client: %w", err)

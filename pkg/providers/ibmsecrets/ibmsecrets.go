@@ -123,13 +123,13 @@ func (p *provider) GetString(key string) (string, error) {
 
 // GetStringMap resolves a secret and unmarshals its value as YAML/JSON into a map.
 // Useful for kv and service_credentials secrets when no fragment path is given.
-func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
+func (p *provider) GetStringMap(key string) (map[string]any, error) {
 	str, err := p.GetString(key)
 	if err != nil {
 		return nil, err
 	}
 
-	m := map[string]interface{}{}
+	m := map[string]any{}
 	if err := yaml.Unmarshal([]byte(str), &m); err != nil {
 		return nil, fmt.Errorf("ibmsecrets: error parsing secret %q as YAML: %v", key, err)
 	}

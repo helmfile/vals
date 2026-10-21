@@ -161,14 +161,14 @@ func (p *provider) GetString(path string) (string, error) {
 	return string(jsonBytes), nil
 }
 
-func (p *provider) GetStringMap(path string) (map[string]interface{}, error) {
+func (p *provider) GetStringMap(path string) (map[string]any, error) {
 	kind, namespace, name, objectData, err := p.fetchObjectData(path)
 	if err != nil {
 		return nil, err
 	}
 
 	// Convert map[string]string to map[string]interface{}
-	result := make(map[string]interface{}, len(objectData))
+	result := make(map[string]any, len(objectData))
 	for k, v := range objectData {
 		result[k] = v
 	}

@@ -136,7 +136,7 @@ func replaceTimestamp(n *yaml.Node) {
 
 func Output(output io.Writer, format string, nodes []yaml.Node) error {
 	for i, node := range nodes {
-		var v interface{}
+		var v any
 		if err := node.Decode(&v); err != nil {
 			return err
 		}

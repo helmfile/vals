@@ -38,7 +38,7 @@ Use "vals [command] --help" for more information about a command
 	fmt.Fprintf(os.Stderr, "%s\n", text)
 }
 
-func fatal(format string, args ...interface{}) {
+func fatal(format string, args ...any) {
 	fmt.Fprintf(os.Stderr, format+"\n", args...)
 	os.Exit(1)
 }
@@ -51,12 +51,12 @@ func readNodesOrFail(f *string) []yaml.Node {
 	return nodes
 }
 
-func readOrFail(f *string) map[string]interface{} {
+func readOrFail(f *string) map[string]any {
 	nodes := readNodesOrFail(f)
 	if len(nodes) == 0 {
 		fatal("no document found")
 	}
-	var nodeValue map[string]interface{}
+	var nodeValue map[string]any
 	err := nodes[0].Decode(&nodeValue)
 	if err != nil {
 		fatal("%v", err)
@@ -221,12 +221,12 @@ the vals-eval outputs onto the disk, for security reasons.`)
 			fatal("%v", err)
 		}
 
-		var m map[string]interface{}
+		var m map[string]any
 
 		if *f != "" {
 			m = readOrFail(f)
 		} else {
-			m = map[string]interface{}{}
+			m = map[string]any{}
 		}
 
 		var logOut io.Writer = os.Stderr

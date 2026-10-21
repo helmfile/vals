@@ -31,8 +31,8 @@ func TestValues_GKMS(t *testing.T) {
 	}
 
 	type testcase struct {
-		template map[string]interface{}
-		expected map[string]interface{}
+		template map[string]any
+		expected map[string]any
 	}
 
 	plain_value := "test_value"
@@ -45,10 +45,10 @@ func TestValues_GKMS(t *testing.T) {
 
 	testcases := []testcase{
 		{
-			template: map[string]interface{}{
+			template: map[string]any{
 				"test_key": fmt.Sprintf("ref+gkms://%s?project=%s&location=%s&keyring=%s&crypto_key=%s", encrypted_value, project, location, keyring, crypto_key),
 			},
-			expected: map[string]interface{}{
+			expected: map[string]any{
 				"test_key": plain_value,
 			},
 		},

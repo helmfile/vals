@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
@@ -170,24 +171,22 @@ func (p *provider) decodeString(key, s string) (string, error) {
 	}
 }
 
-func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
-	v, err, _ := p.sfRead.Do(key, func() (interface{}, error) {
+func (p *provider) GetStringMap(key string) (map[string]any, error) {
+	v, err, _ := p.sfRead.Do(key, func() (any, error) {
 		return p.readSecretMap(key)
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	secrets := v.(map[string]interface{})
-	res := make(map[string]interface{}, len(secrets))
-	for k, val := range secrets {
-		res[k] = val
-	}
+	secrets := v.(map[string]any)
+	res := make(map[string]any, len(secrets))
+	maps.Copy(res, secrets)
 
 	return res, nil
 }
 
-func (p *provider) readSecretMap(key string) (map[string]interface{}, error) {
+func (p *provider) readSecretMap(key string) (map[string]any, error) {
 	cli, err := p.ensureClient()
 	if err != nil {
 		return nil, fmt.Errorf("Cannot create OpenBao Client: %v", err)
@@ -231,7 +230,7 @@ func (p *provider) readSecretMap(key string) (map[string]interface{}, error) {
 
 	// KV v2 responses nest the secret data under the "data" key.
 	secrets := secret.Data
-	if m, ok := secret.Data["data"].(map[string]interface{}); isV2 && ok {
+	if m, ok := secret.Data["data"].(map[string]any); isV2 && ok {
 		secrets = m
 	}
 
@@ -312,7 +311,7 @@ func (p *provider) ensureClient() (*openbao.Client, error) {
 			}
 		}
 	case "approle":
-		data := map[string]interface{}{
+		data := map[string]any{
 			"role_id":   p.RoleId,
 			"secret_id": p.SecretId,
 		}
@@ -340,7 +339,7 @@ func (p *provider) ensureClient() (*openbao.Client, error) {
 			return nil, err
 		}
 
-		data := map[string]interface{}{
+		data := map[string]any{
 			"jwt":  jwt,
 			"role": p.RoleId,
 		}
@@ -380,7 +379,7 @@ func (p *provider) ensureClient() (*openbao.Client, error) {
 			return nil, fmt.Errorf("password missing for userpass authentication")
 		}
 
-		data := map[string]interface{}{
+		data := map[string]any{
 			"password": password,
 		}
 

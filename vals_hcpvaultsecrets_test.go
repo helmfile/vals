@@ -25,17 +25,17 @@ func TestValues_HCPVaultSecrets_String(t *testing.T) {
 	}
 
 	type testcase struct {
-		config map[string]interface{}
+		config map[string]any
 	}
 
-	commonInline := map[string]interface{}{
+	commonInline := map[string]any{
 		"vals-test": "fooKey",
 	}
 
 	testcases := []testcase{
 		{
-			config: map[string]interface{}{
-				"provider": map[string]interface{}{
+			config: map[string]any{
+				"provider": map[string]any{
 					"name": "hcpvaultsecrets",
 					"type": "string",
 					"path": "vals-test",
@@ -44,8 +44,8 @@ func TestValues_HCPVaultSecrets_String(t *testing.T) {
 			},
 		},
 		{
-			config: map[string]interface{}{
-				"provider": map[string]interface{}{
+			config: map[string]any{
+				"provider": map[string]any{
 					"name": "hcpvaultsecrets",
 					// implies type=string
 					"path": "vals-test",

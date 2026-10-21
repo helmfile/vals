@@ -123,7 +123,7 @@ func (p *provider) GetStringMap(key string) (map[string]any, error) {
 		return nil, err
 	}
 
-	res := map[string]interface{}{}
+	res := map[string]any{}
 
 	for _, entry := range secret.Entries {
 		var value string

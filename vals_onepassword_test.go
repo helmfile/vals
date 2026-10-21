@@ -22,20 +22,20 @@ func TestValues_OnePassword_EvalTemplate(t *testing.T) {
 	}
 
 	type testcase struct {
-		template map[string]interface{}
-		expected map[string]interface{}
+		template map[string]any
+		expected map[string]any
 	}
 	vaultName := "vals-test"
 	itemName := "vals-test"
 
 	testcases := []testcase{
 		{
-			template: map[string]interface{}{
+			template: map[string]any{
 				"foo":      "FOO",
 				"username": fmt.Sprintf("ref+op://%s/%s/username", vaultName, itemName),
 				"password": fmt.Sprintf("ref+op://%s/%s/password", vaultName, itemName),
 			},
-			expected: map[string]interface{}{
+			expected: map[string]any{
 				"foo":      "FOO",
 				"username": "foo@bar.org",
 				"password": "secret",

@@ -75,14 +75,14 @@ func (p *provider) GetString(key string) (string, error) {
 }
 
 // Convert yaml to map interface and return the requested keys
-func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
+func (p *provider) GetStringMap(key string) (map[string]any, error) {
 	yamlData, err := p.GetString(key)
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
 	}
 
-	m := map[string]interface{}{}
+	m := map[string]any{}
 
 	if err := yaml.Unmarshal([]byte(yamlData), &m); err != nil {
 		return nil, err

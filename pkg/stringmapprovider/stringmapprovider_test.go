@@ -29,7 +29,7 @@ func TestS3ProviderCallsS3API(t *testing.T) {
 	t.Setenv("AWS_SECRET_ACCESS_KEY", "test")
 
 	l := log.New(log.Config{Output: os.Stderr})
-	cfg := config.Map(map[string]interface{}{
+	cfg := config.Map(map[string]any{
 		"name":   "s3",
 		"region": "us-east-1",
 	})

@@ -192,7 +192,7 @@ func Test_getKubeConfigPath(t *testing.T) {
 		// kubeConfigPath is set
 		{
 			config: config.MapConfig{
-				M: map[string]interface{}{
+				M: map[string]any{
 					"kubeConfigPath": fmt.Sprintf("%s/.kube/config", homeDir),
 				},
 			},
@@ -202,7 +202,7 @@ func Test_getKubeConfigPath(t *testing.T) {
 		// kubeConfigPath does not exist
 		{
 			config: config.MapConfig{
-				M: map[string]interface{}{"kubeConfigPath": "/tmp/does-not-exist"},
+				M: map[string]any{"kubeConfigPath": "/tmp/does-not-exist"},
 			},
 			want:    "",
 			wantErr: "kubeConfigPath URI parameter is set but path /tmp/does-not-exist does not exist.",
@@ -210,7 +210,7 @@ func Test_getKubeConfigPath(t *testing.T) {
 		// KUBECONFIG specified path is set
 		{
 			config: config.MapConfig{
-				M: map[string]interface{}{},
+				M: map[string]any{},
 			},
 			kubeConfigEnvVar: fmt.Sprintf("%s/.kube/config", homeDir),
 			want:             fmt.Sprintf("%s/.kube/config", homeDir),
@@ -219,7 +219,7 @@ func Test_getKubeConfigPath(t *testing.T) {
 		// KUBECONFIG specified path does not exist
 		{
 			config: config.MapConfig{
-				M: map[string]interface{}{},
+				M: map[string]any{},
 			},
 			kubeConfigEnvVar: "/tmp/does-not-exist",
 			want:             "",
@@ -228,7 +228,7 @@ func Test_getKubeConfigPath(t *testing.T) {
 		// defaultPath exists
 		{
 			config: config.MapConfig{
-				M: map[string]interface{}{},
+				M: map[string]any{},
 			},
 			kubeConfigEnvVar: "",
 			want:             fmt.Sprintf("%s/.kube/config", homeDir),
@@ -269,7 +269,7 @@ func Test_getKubeContext(t *testing.T) {
 		// Valid kubeContext is specified
 		{
 			config: config.MapConfig{
-				M: map[string]interface{}{
+				M: map[string]any{
 					"kubeContext": "minikube",
 				},
 			},
@@ -278,7 +278,7 @@ func Test_getKubeContext(t *testing.T) {
 		// kubeContext is not specified, should return empty
 		{
 			config: config.MapConfig{
-				M: map[string]interface{}{"kubeConfigPath": ""},
+				M: map[string]any{"kubeConfigPath": ""},
 			},
 			want: "",
 		},
@@ -379,7 +379,7 @@ func Test_GetString(t *testing.T) {
 		t.Run(tc.path, func(t *testing.T) {
 			// Create provider with mock
 			homeDir, _ := os.UserHomeDir()
-			conf := map[string]interface{}{}
+			conf := map[string]any{}
 			conf["kubeConfigPath"] = fmt.Sprintf("%s/.kube/config", homeDir)
 			conf["kubeContext"] = "kind-cluster"
 			p, err := New(logger, config.MapConfig{M: conf})
@@ -441,19 +441,19 @@ func Test_GetStringMap(t *testing.T) {
 	logger := log.New(log.Config{Output: os.Stderr})
 	tests := []struct {
 		path    string
-		want    map[string]interface{}
+		want    map[string]any
 		wantErr string
 	}{
 		// (secret) Valid 4-part path returns all keys
 		{
 			path:    "v1/Secret/test-namespace/mysecret",
-			want:    map[string]interface{}{"key": "p4ssw0rd"},
+			want:    map[string]any{"key": "p4ssw0rd"},
 			wantErr: "",
 		},
 		// (configmap) Valid 4-part path returns all keys
 		{
 			path:    "v1/ConfigMap/test-namespace/myconfigmap",
-			want:    map[string]interface{}{"key": "configValue"},
+			want:    map[string]any{"key": "configValue"},
 			wantErr: "",
 		},
 		// Unsupported kind
@@ -479,7 +479,7 @@ func Test_GetStringMap(t *testing.T) {
 		t.Run(tc.path, func(t *testing.T) {
 			homeDir, err := os.UserHomeDir()
 			require.NoError(t, err, "failed to determine user home directory")
-			conf := map[string]interface{}{}
+			conf := map[string]any{}
 			conf["kubeConfigPath"] = fmt.Sprintf("%s/.kube/config", homeDir)
 			conf["kubeContext"] = "kind-cluster"
 			p, err := New(logger, config.MapConfig{M: conf})
@@ -547,19 +547,19 @@ func Test_GetString_AllKeys(t *testing.T) {
 	logger := log.New(log.Config{Output: os.Stderr})
 	tests := []struct {
 		path    string
-		want    map[string]interface{}
+		want    map[string]any
 		wantErr string
 	}{
 		// (secret) 4-part path returns JSON of all keys
 		{
 			path:    "v1/Secret/test-namespace/mysecret",
-			want:    map[string]interface{}{"key": "p4ssw0rd"},
+			want:    map[string]any{"key": "p4ssw0rd"},
 			wantErr: "",
 		},
 		// (configmap) 4-part path returns JSON of all keys
 		{
 			path:    "v1/ConfigMap/test-namespace/myconfigmap",
-			want:    map[string]interface{}{"key": "configValue"},
+			want:    map[string]any{"key": "configValue"},
 			wantErr: "",
 		},
 		// Unsupported kind with 4-part path
@@ -585,7 +585,7 @@ func Test_GetString_AllKeys(t *testing.T) {
 		t.Run(tc.path, func(t *testing.T) {
 			homeDir, err := os.UserHomeDir()
 			require.NoError(t, err, "failed to determine user home directory")
-			conf := map[string]interface{}{}
+			conf := map[string]any{}
 			conf["kubeConfigPath"] = fmt.Sprintf("%s/.kube/config", homeDir)
 			conf["kubeContext"] = "kind-cluster"
 			p, err := New(logger, config.MapConfig{M: conf})
@@ -604,7 +604,7 @@ func Test_GetString_AllKeys(t *testing.T) {
 			}
 
 			if tc.want != nil {
-				var gotMap map[string]interface{}
+				var gotMap map[string]any
 				require.NoErrorf(t, json.Unmarshal([]byte(got), &gotMap), "failed to unmarshal JSON: %s", got)
 				if diff := cmp.Diff(tc.want, gotMap); diff != "" {
 					t.Errorf("unexpected result: -(want), +(got)\n%s", diff)

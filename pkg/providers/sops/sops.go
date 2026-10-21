@@ -77,13 +77,13 @@ func (p *provider) GetString(key string) (string, error) {
 	}
 }
 
-func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
+func (p *provider) GetStringMap(key string) (map[string]any, error) {
 	cleartext, err := p.decrypt(key, p.format("yaml"))
 	if err != nil {
 		return nil, err
 	}
 
-	res := map[string]interface{}{}
+	res := map[string]any{}
 
 	if err := yaml.Unmarshal(cleartext, &res); err != nil {
 		return nil, err

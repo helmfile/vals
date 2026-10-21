@@ -65,7 +65,7 @@ func StartVault(t *testing.T, mountPath, mountInputType string) (Conn, func()) {
 	}
 }
 
-func SetupVaultKV(t *testing.T, writes map[string]map[string]interface{}) (string, func()) {
+func SetupVaultKV(t *testing.T, writes map[string]map[string]any) (string, func()) {
 	// TODO v2 api support where mountInputType should be "kv-v2" rather than "kv"
 	conn, stop := StartVault(t, "mykv", "kv")
 
@@ -95,7 +95,7 @@ func TestValues_Vault_EvalTemplate(t *testing.T) {
 
 	addr, stop := SetupVaultKV(
 		t,
-		map[string]map[string]interface{}{
+		map[string]map[string]any{
 			"mykv/foo": {
 				"mykey": "myvalue",
 			},
@@ -110,45 +110,45 @@ func TestValues_Vault_EvalTemplate(t *testing.T) {
 	defer stop()
 
 	type testcase struct {
-		config   map[string]interface{}
-		expected map[string]interface{}
+		config   map[string]any
+		expected map[string]any
 	}
 
 	testcases := []testcase{
 		{
-			config: map[string]interface{}{
+			config: map[string]any{
 				"foo": fmt.Sprintf("ref+vault://mykv/foo?address=%s#/mykey", addr),
-				"bar": map[string]interface{}{
+				"bar": map[string]any{
 					"baz": fmt.Sprintf("ref+vault://mykv/foo?address=%s#/mykey", addr),
 				},
 			},
-			expected: map[string]interface{}{
+			expected: map[string]any{
 				"foo": "myvalue",
-				"bar": map[string]interface{}{
+				"bar": map[string]any{
 					"baz": "myvalue",
 				},
 			},
 		},
 		{
-			config: map[string]interface{}{
+			config: map[string]any{
 				"foo": "FOO",
-				fmt.Sprintf("ref+vault://mykv/objs?address=%s#/myyaml", addr): map[string]interface{}{},
-				fmt.Sprintf("ref+vault://mykv/objs?address=%s#/myjson", addr): map[string]interface{}{},
+				fmt.Sprintf("ref+vault://mykv/objs?address=%s#/myyaml", addr): map[string]any{},
+				fmt.Sprintf("ref+vault://mykv/objs?address=%s#/myjson", addr): map[string]any{},
 			},
-			expected: map[string]interface{}{
+			expected: map[string]any{
 				"foo":      "FOO",
 				"yamlkey1": "yamlval1",
 				"jsonkey1": "jsonval1",
 			},
 		},
 		{
-			config: map[string]interface{}{
+			config: map[string]any{
 				"foo": "FOO",
 				// See https://github.com/roboll/helmfile/issues/990#issuecomment-557753645
-				fmt.Sprintf("ref+vault://mykv/objs?address=%s#/myyaml", addr): map[interface{}]interface{}{},
-				fmt.Sprintf("ref+vault://mykv/objs?address=%s#/myjson", addr): map[interface{}]interface{}{},
+				fmt.Sprintf("ref+vault://mykv/objs?address=%s#/myyaml", addr): map[any]any{},
+				fmt.Sprintf("ref+vault://mykv/objs?address=%s#/myjson", addr): map[any]any{},
 			},
-			expected: map[string]interface{}{
+			expected: map[string]any{
 				"foo":      "FOO",
 				"yamlkey1": "yamlval1",
 				"jsonkey1": "jsonval1",
@@ -182,7 +182,7 @@ func TestValues_Vault_Decode_Base64(t *testing.T) {
 
 	addr, stop := SetupVaultKV(
 		t,
-		map[string]map[string]interface{}{
+		map[string]map[string]any{
 			"mykv/bin": {
 				"cert":  encoded,
 				"plain": "not-base64-value",
@@ -192,7 +192,7 @@ func TestValues_Vault_Decode_Base64(t *testing.T) {
 	defer stop()
 
 	t.Run("decode=base64 decodes targeted key", func(t *testing.T) {
-		config := map[string]interface{}{
+		config := map[string]any{
 			"cert": fmt.Sprintf("ref+vault://mykv/bin?address=%s&decode=base64#/cert", addr),
 		}
 		got, err := Eval(config)
@@ -205,7 +205,7 @@ func TestValues_Vault_Decode_Base64(t *testing.T) {
 	})
 
 	t.Run("decode=base64 on non-base64 value returns error", func(t *testing.T) {
-		config := map[string]interface{}{
+		config := map[string]any{
 			"bad": fmt.Sprintf("ref+vault://mykv/bin?address=%s&decode=base64#/plain", addr),
 		}
 		_, err := Eval(config)
@@ -218,7 +218,7 @@ func TestValues_Vault_Decode_Base64(t *testing.T) {
 	})
 
 	t.Run("mixed secret with #/field does not break sibling non-base64 keys", func(t *testing.T) {
-		config := map[string]interface{}{
+		config := map[string]any{
 			"cert": fmt.Sprintf("ref+vault://mykv/bin?address=%s&decode=base64#/cert", addr),
 		}
 		got, err := Eval(config)
@@ -231,7 +231,7 @@ func TestValues_Vault_Decode_Base64(t *testing.T) {
 	})
 
 	t.Run("no decode parameter returns raw value", func(t *testing.T) {
-		config := map[string]interface{}{
+		config := map[string]any{
 			"raw": fmt.Sprintf("ref+vault://mykv/bin?address=%s#/cert", addr),
 		}
 		got, err := Eval(config)
@@ -252,19 +252,19 @@ func TestValues_Vault_String(t *testing.T) {
 	}
 
 	type testcase struct {
-		config map[string]interface{}
+		config map[string]any
 	}
-	commonInline := map[string]interface{}{
+	commonInline := map[string]any{
 		"foo": "mykey",
-		"bar": map[string]interface{}{
+		"bar": map[string]any{
 			"baz": "mykey",
 		},
 	}
 
 	testcases := []testcase{
 		{
-			config: map[string]interface{}{
-				"provider": map[string]interface{}{
+			config: map[string]any{
+				"provider": map[string]any{
 					"name":    "vault",
 					"type":    "string",
 					"path":    "mykv/foo",
@@ -274,8 +274,8 @@ func TestValues_Vault_String(t *testing.T) {
 			},
 		},
 		{
-			config: map[string]interface{}{
-				"provider": map[string]interface{}{
+			config: map[string]any{
+				"provider": map[string]any{
 					"name": "vault",
 					// implies type=string
 					"path":    "mykv/foo",
@@ -285,9 +285,9 @@ func TestValues_Vault_String(t *testing.T) {
 			},
 		},
 		{
-			config: map[string]interface{}{
+			config: map[string]any{
 				// implies name=vault and type=string
-				"vault": map[string]interface{}{
+				"vault": map[string]any{
 					"path":    "mykv/foo",
 					"address": "http://127.0.0.1:8200",
 				},
@@ -317,7 +317,7 @@ func TestValues_Vault_String(t *testing.T) {
 
 			{
 				switch bar := vals["bar"].(type) {
-				case map[string]interface{}:
+				case map[string]any:
 					expected := testValue
 					key := "baz"
 					actual := bar[key]
@@ -340,19 +340,19 @@ func TestValues_Vault_Map(t *testing.T) {
 	}
 
 	type testcase struct {
-		config map[string]interface{}
+		config map[string]any
 		name   string
 	}
 	testcases := []testcase{
 		{
-			config: map[string]interface{}{
-				"inline": map[string]interface{}{
+			config: map[string]any{
+				"inline": map[string]any{
 					"foo": "foo",
-					"bar": map[string]interface{}{
+					"bar": map[string]any{
 						"baz": "foo",
 					},
 				},
-				"provider": map[string]interface{}{
+				"provider": map[string]any{
 					"name":    "vault",
 					"type":    "map",
 					"path":    "mykv",
@@ -361,14 +361,14 @@ func TestValues_Vault_Map(t *testing.T) {
 			},
 		},
 		{
-			config: map[string]interface{}{
-				"inline": map[string]interface{}{
+			config: map[string]any{
+				"inline": map[string]any{
 					"foo": "foo",
-					"bar": map[string]interface{}{
+					"bar": map[string]any{
 						"baz": "foo",
 					},
 				},
-				"provider": map[string]interface{}{
+				"provider": map[string]any{
 					"name":    "vault",
 					"type":    "map",
 					"format":  "raw",
@@ -378,14 +378,14 @@ func TestValues_Vault_Map(t *testing.T) {
 			},
 		},
 		{
-			config: map[string]interface{}{
-				"inline": map[string]interface{}{
+			config: map[string]any{
+				"inline": map[string]any{
 					"foo": "foo",
-					"bar": map[string]interface{}{
+					"bar": map[string]any{
 						"baz": "foo",
 					},
 				},
-				"provider": map[string]interface{}{
+				"provider": map[string]any{
 					"name": "vault",
 					// implies type:map format:raw
 					"prefix":  "mykv",
@@ -395,8 +395,8 @@ func TestValues_Vault_Map(t *testing.T) {
 		},
 		{
 			name: "setForKey1",
-			config: map[string]interface{}{
-				"vault": map[string]interface{}{
+			config: map[string]any{
+				"vault": map[string]any{
 					// implies type:map format:raw
 					"prefix":     "mykv/foo",
 					"address":    "http://127.0.0.1:8200",
@@ -406,8 +406,8 @@ func TestValues_Vault_Map(t *testing.T) {
 		},
 		{
 			name: "setForKey2",
-			config: map[string]interface{}{
-				"vault": map[string]interface{}{
+			config: map[string]any{
+				"vault": map[string]any{
 					// implies type:map format:raw
 					"paths":      []string{"mykv/foo/mykey"},
 					"address":    "http://127.0.0.1:8200",
@@ -417,8 +417,8 @@ func TestValues_Vault_Map(t *testing.T) {
 		},
 		{
 			name: "setForKey3",
-			config: map[string]interface{}{
-				"vault": map[string]interface{}{
+			config: map[string]any{
+				"vault": map[string]any{
 					// implies type:map format:raw
 					"prefix":     "mykv/foo/",
 					"keys":       []string{"mykey"},
@@ -429,14 +429,14 @@ func TestValues_Vault_Map(t *testing.T) {
 		},
 		{
 			name: "set1",
-			config: map[string]interface{}{
-				"vault": map[string]interface{}{
+			config: map[string]any{
+				"vault": map[string]any{
 					// implies type:map format:raw
 					"prefix":  "mykv",
 					"address": "http://127.0.0.1:8200",
-					"set": map[string]interface{}{
+					"set": map[string]any{
 						"foo": "foo",
-						"bar": map[string]interface{}{
+						"bar": map[string]any{
 							"baz": "foo",
 						},
 					},
@@ -445,14 +445,14 @@ func TestValues_Vault_Map(t *testing.T) {
 		},
 		{
 			name: "set2",
-			config: map[string]interface{}{
-				"vault": map[string]interface{}{
+			config: map[string]any{
+				"vault": map[string]any{
 					// implies type:map format:raw
 					"prefix":  "mykv",
 					"address": "http://127.0.0.1:8200",
-					"set": map[string]interface{}{
+					"set": map[string]any{
 						"foo": "foo",
-						"bar": map[string]interface{}{
+						"bar": map[string]any{
 							"baz": "foo",
 						},
 					},
@@ -477,7 +477,7 @@ func TestValues_Vault_Map(t *testing.T) {
 
 			{
 				switch foo := vals["foo"].(type) {
-				case map[string]interface{}:
+				case map[string]any:
 					key := "mykey"
 					actual, ok := foo[key]
 					if !ok {
@@ -494,9 +494,9 @@ func TestValues_Vault_Map(t *testing.T) {
 
 			{
 				switch bar := vals["bar"].(type) {
-				case map[string]interface{}:
+				case map[string]any:
 					switch baz := bar["baz"].(type) {
-					case map[string]interface{}:
+					case map[string]any:
 						key := "mykey"
 						actual, ok := baz[key]
 						if !ok {
@@ -525,11 +525,11 @@ func TestValues_Vault_Map_Raw(t *testing.T) {
 	}
 
 	type testcase struct {
-		provider map[string]interface{}
+		provider map[string]any
 	}
 	testcases := []testcase{
 		{
-			provider: map[string]interface{}{
+			provider: map[string]any{
 				"name":    "vault",
 				"type":    "map",
 				"path":    "mykv",
@@ -538,7 +538,7 @@ func TestValues_Vault_Map_Raw(t *testing.T) {
 			},
 		},
 		{
-			provider: map[string]interface{}{
+			provider: map[string]any{
 				"name": "vault",
 				// implies
 				//"type":    "map",
@@ -553,11 +553,11 @@ func TestValues_Vault_Map_Raw(t *testing.T) {
 		tc := testcases[i]
 
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			config := config2.Map(map[string]interface{}{
+			config := config2.Map(map[string]any{
 				"provider": tc.provider,
-				"inline": map[string]interface{}{
+				"inline": map[string]any{
 					"foo": "foo",
-					"bar": map[string]interface{}{
+					"bar": map[string]any{
 						"baz": "foo",
 					},
 				},
@@ -570,7 +570,7 @@ func TestValues_Vault_Map_Raw(t *testing.T) {
 
 			{
 				switch foo := vals["foo"].(type) {
-				case map[string]interface{}:
+				case map[string]any:
 					key := "mykey"
 					actual, ok := foo[key]
 					if !ok {
@@ -587,9 +587,9 @@ func TestValues_Vault_Map_Raw(t *testing.T) {
 
 			{
 				switch bar := vals["bar"].(type) {
-				case map[string]interface{}:
+				case map[string]any:
 					switch baz := bar["baz"].(type) {
-					case map[string]interface{}:
+					case map[string]any:
 						key := "mykey"
 						actual, ok := baz[key]
 						if !ok {
@@ -638,7 +638,7 @@ func TestValues_Vault_Map_YAML(t *testing.T) {
 
 	addr, stop := SetupVaultKV(
 		t,
-		map[string]map[string]interface{}{
+		map[string]map[string]any{
 			"mykv/yamltest": {
 				"myyaml": string(yamlContent),
 				"myjson": string(jsonContent),
@@ -648,10 +648,10 @@ func TestValues_Vault_Map_YAML(t *testing.T) {
 	defer stop()
 
 	type testcase struct {
-		provider map[string]interface{}
+		provider map[string]any
 		dataKey  string
 	}
-	provider1 := map[string]interface{}{
+	provider1 := map[string]any{
 		"name":    "vault",
 		"type":    "map",
 		"path":    "mykv/yamltest",
@@ -659,7 +659,7 @@ func TestValues_Vault_Map_YAML(t *testing.T) {
 		"format":  "yaml",
 	}
 
-	provider2 := map[string]interface{}{
+	provider2 := map[string]any{
 		"name": "vault",
 		// implies `type: map`
 		"path":    "mykv/yamltest",
@@ -689,9 +689,9 @@ func TestValues_Vault_Map_YAML(t *testing.T) {
 	for i := range testcases {
 		tc := testcases[i]
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			config := config2.Map(map[string]interface{}{
+			config := config2.Map(map[string]any{
 				"provider": tc.provider,
-				"inline": map[string]interface{}{
+				"inline": map[string]any{
 					"bar": tc.dataKey,
 				},
 			})
@@ -703,9 +703,9 @@ func TestValues_Vault_Map_YAML(t *testing.T) {
 
 			{
 				switch bar := vals["bar"].(type) {
-				case map[string]interface{}:
+				case map[string]any:
 					switch baz := bar["baz"].(type) {
-					case map[string]interface{}:
+					case map[string]any:
 						key := "mykey"
 						actual, ok := baz[key]
 						if !ok {
@@ -743,12 +743,12 @@ func TestValues_Vault_Map_YAML_Root(t *testing.T) {
 	}
 
 	type provider struct {
-		config map[string]interface{}
+		config map[string]any
 	}
 	testcases := []provider{
 		{
-			config: map[string]interface{}{
-				"provider": map[string]interface{}{
+			config: map[string]any{
+				"provider": map[string]any{
 					"name":    "vault",
 					"type":    "map",
 					"path":    "mykv/yamltest/myyaml",
@@ -758,8 +758,8 @@ func TestValues_Vault_Map_YAML_Root(t *testing.T) {
 			},
 		},
 		{
-			config: map[string]interface{}{
-				"provider": map[string]interface{}{
+			config: map[string]any{
+				"provider": map[string]any{
 					"name":    "vault",
 					"type":    "map",
 					"path":    "mykv/yamltest/myjson",
@@ -769,8 +769,8 @@ func TestValues_Vault_Map_YAML_Root(t *testing.T) {
 			},
 		},
 		{
-			config: map[string]interface{}{
-				"provider": map[string]interface{}{
+			config: map[string]any{
+				"provider": map[string]any{
 					"name": "vault",
 					// implies format:yaml and type:map
 					"path":    "mykv/yamltest/myyaml",
@@ -779,8 +779,8 @@ func TestValues_Vault_Map_YAML_Root(t *testing.T) {
 			},
 		},
 		{
-			config: map[string]interface{}{
-				"provider": map[string]interface{}{
+			config: map[string]any{
+				"provider": map[string]any{
 					"name": "vault",
 					// implies format:yaml and type:map
 					"path":    "mykv/yamltest/myjson",
@@ -789,9 +789,9 @@ func TestValues_Vault_Map_YAML_Root(t *testing.T) {
 			},
 		},
 		{
-			config: map[string]interface{}{
+			config: map[string]any{
 				// implies name:vault
-				"vault": map[string]interface{}{
+				"vault": map[string]any{
 					// implies format:yaml and type:map
 					"path":    "mykv/yamltest/myjson",
 					"address": "http://127.0.0.1:8200",
@@ -812,7 +812,7 @@ func TestValues_Vault_Map_YAML_Root(t *testing.T) {
 
 			{
 				switch baz := vals["baz"].(type) {
-				case map[string]interface{}:
+				case map[string]any:
 					key := "mykey"
 					actual, ok := baz[key]
 					if !ok {
@@ -847,9 +847,9 @@ func TestValues_Vault_Map_Raw_Root(t *testing.T) {
 	}
 
 	type testcase struct {
-		config map[string]interface{}
+		config map[string]any
 	}
-	provider1 := map[string]interface{}{
+	provider1 := map[string]any{
 		"name":    "vault",
 		"type":    "map",
 		"path":    "mykv/foo",
@@ -857,7 +857,7 @@ func TestValues_Vault_Map_Raw_Root(t *testing.T) {
 		"format":  "raw",
 	}
 
-	provider2 := map[string]interface{}{
+	provider2 := map[string]any{
 		"name": "vault",
 		// implies format:raw
 		"prefix":  "mykv/foo",
@@ -866,19 +866,19 @@ func TestValues_Vault_Map_Raw_Root(t *testing.T) {
 
 	testcases := []testcase{
 		{
-			config: map[string]interface{}{
+			config: map[string]any{
 				"provider": provider1,
 			},
 		},
 		{
-			config: map[string]interface{}{
+			config: map[string]any{
 				"provider": provider2,
 			},
 		},
 		{
-			config: map[string]interface{}{
+			config: map[string]any{
 				// implies name:vault
-				"vault": map[string]interface{}{
+				"vault": map[string]any{
 					// implies format:raw
 					"prefix":  "mykv/foo",
 					"address": "http://127.0.0.1:8200",
@@ -886,9 +886,9 @@ func TestValues_Vault_Map_Raw_Root(t *testing.T) {
 			},
 		},
 		{
-			config: map[string]interface{}{
+			config: map[string]any{
 				// implies name:ssm
-				"vault": map[string]interface{}{
+				"vault": map[string]any{
 					// implies format:raw
 					"prefix":  "/mykv/foo",
 					"keys":    []string{"mykey"},
@@ -897,9 +897,9 @@ func TestValues_Vault_Map_Raw_Root(t *testing.T) {
 			},
 		},
 		{
-			config: map[string]interface{}{
+			config: map[string]any{
 				// implies name:ssm
-				"vault": map[string]interface{}{
+				"vault": map[string]any{
 					// implies format:raw
 					"paths":   []string{"/mykv/foo/mykey"},
 					"address": "http://127.0.0.1:8200",
