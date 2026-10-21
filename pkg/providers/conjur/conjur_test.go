@@ -12,14 +12,14 @@ import (
 
 func Test_New(t *testing.T) {
 	testsConfig := []struct {
-		options map[string]interface{}
+		options map[string]any
 		envVars map[string]string
 		want    *provider
 		name    string
 	}{
 		{
 			name: "onlyConf",
-			options: map[string]interface{}{
+			options: map[string]any{
 				"address": "http://127.0.0.1",
 				"account": "myAccount",
 				"login":   "user",
@@ -36,7 +36,7 @@ func Test_New(t *testing.T) {
 		},
 		{
 			name:    "onlyEnvVars",
-			options: map[string]interface{}{},
+			options: map[string]any{},
 			envVars: map[string]string{
 				"CONJUR_APPLIANCE_URL": "http://127.0.0.1",
 				"CONJUR_ACCOUNT":       "myAccount",
@@ -53,7 +53,7 @@ func Test_New(t *testing.T) {
 		},
 		{
 			name: "mixConfigAndEnvVars",
-			options: map[string]interface{}{
+			options: map[string]any{
 				"address": "http://127.0.0.1",
 				"account": "myAccount",
 				"login":   "user",
@@ -97,7 +97,7 @@ func Test_New(t *testing.T) {
 }
 
 func Test_GetStringMap(t *testing.T) {
-	options := map[string]interface{}{
+	options := map[string]any{
 		"address": "http://127.0.0.1",
 		"account": "myAccount",
 		"login":   "user",
@@ -115,7 +115,7 @@ func Test_GetStringMap(t *testing.T) {
 }
 
 func Test_ensureClient(t *testing.T) {
-	options := map[string]interface{}{
+	options := map[string]any{
 		"address": "http://127.0.0.1",
 		"account": "myAccount",
 		"login":   "user",

@@ -18,7 +18,7 @@ import (
 // uses) a provider makes.
 type fakeVault struct {
 	server *httptest.Server
-	data   map[string]interface{}
+	data   map[string]any
 
 	mountPath string
 	version   string // "1" or "2"
@@ -27,7 +27,7 @@ type fakeVault struct {
 	reads      atomic.Int64
 }
 
-func newFakeVault(t *testing.T, mountPath, version string, data map[string]interface{}) *fakeVault {
+func newFakeVault(t *testing.T, mountPath, version string, data map[string]any) *fakeVault {
 	t.Helper()
 	fv := &fakeVault{mountPath: mountPath, version: version, data: data}
 	fv.server = httptest.NewServer(http.HandlerFunc(fv.handle))
@@ -41,10 +41,10 @@ func (fv *fakeVault) handle(w http.ResponseWriter, r *http.Request) {
 
 	if strings.HasPrefix(r.URL.Path, "/v1/sys/internal/ui/mounts/") {
 		fv.preflights.Add(1)
-		_ = enc.Encode(map[string]interface{}{
-			"data": map[string]interface{}{
+		_ = enc.Encode(map[string]any{
+			"data": map[string]any{
 				"path":    fv.mountPath,
-				"options": map[string]interface{}{"version": fv.version},
+				"options": map[string]any{"version": fv.version},
 			},
 		})
 		return
@@ -54,16 +54,16 @@ func (fv *fakeVault) handle(w http.ResponseWriter, r *http.Request) {
 	fv.reads.Add(1)
 	payload := fv.data
 	if fv.version == "2" {
-		payload = map[string]interface{}{"data": fv.data}
+		payload = map[string]any{"data": fv.data}
 	}
-	_ = enc.Encode(map[string]interface{}{"data": payload})
+	_ = enc.Encode(map[string]any{"data": payload})
 }
 
 func newTestProvider(t *testing.T, addr string) *provider {
 	t.Helper()
 	// Avoid picking up a developer's real token file/agent during tests.
 	t.Setenv("VAULT_TOKEN", "test-token")
-	cfg := config.MapConfig{M: map[string]interface{}{
+	cfg := config.MapConfig{M: map[string]any{
 		"address":     addr,
 		"auth_method": "token",
 		"token_env":   "VAULT_TOKEN",
@@ -75,14 +75,14 @@ func newTestProvider(t *testing.T, addr string) *provider {
 // for the same path collapses to a single preflight and a single read, which is
 // the whole point of the singleflight wiring (#1204).
 func TestGetStringMap_ConcurrentDedup(t *testing.T) {
-	fv := newFakeVault(t, "secret/", "2", map[string]interface{}{"foo": "bar"})
+	fv := newFakeVault(t, "secret/", "2", map[string]any{"foo": "bar"})
 	p := newTestProvider(t, fv.server.URL)
 
 	const n = 20
 	var wg sync.WaitGroup
 	errs := make([]error, n)
-	results := make([]map[string]interface{}, n)
-	for i := 0; i < n; i++ {
+	results := make([]map[string]any, n)
+	for i := range n {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
@@ -112,7 +112,7 @@ func TestGetStringMap_ConcurrentDedup(t *testing.T) {
 // singleflight map by reference: mutating one caller's result must not leak into
 // another read.
 func TestGetStringMap_ReturnsIndependentCopies(t *testing.T) {
-	fv := newFakeVault(t, "secret/", "2", map[string]interface{}{"foo": "bar"})
+	fv := newFakeVault(t, "secret/", "2", map[string]any{"foo": "bar"})
 	p := newTestProvider(t, fv.server.URL)
 
 	first, err := p.GetStringMap("secret/myapp")
@@ -134,7 +134,7 @@ func TestGetStringMap_ReturnsIndependentCopies(t *testing.T) {
 // reuse a single KV-version preflight, while each read still hits Vault (no
 // stale secret caching).
 func TestPreflightCachedPerMount(t *testing.T) {
-	fv := newFakeVault(t, "secret/", "2", map[string]interface{}{"foo": "bar"})
+	fv := newFakeVault(t, "secret/", "2", map[string]any{"foo": "bar"})
 	p := newTestProvider(t, fv.server.URL)
 
 	if _, err := p.GetStringMap("secret/app1"); err != nil {
@@ -186,7 +186,7 @@ func TestLookupKVVersion_SiblingMountPrefix(t *testing.T) {
 // a trailing slash on insert: a mount reported without one still lets sibling
 // secrets reuse a single preflight via the segment-safe prefix match.
 func TestPreflightNormalizesMountWithoutSlash(t *testing.T) {
-	fv := newFakeVault(t, "secret", "2", map[string]interface{}{"foo": "bar"})
+	fv := newFakeVault(t, "secret", "2", map[string]any{"foo": "bar"})
 	p := newTestProvider(t, fv.server.URL)
 
 	if _, err := p.GetStringMap("secret/app1"); err != nil {
@@ -202,7 +202,7 @@ func TestPreflightNormalizesMountWithoutSlash(t *testing.T) {
 }
 
 func TestGetString(t *testing.T) {
-	fv := newFakeVault(t, "secret/", "2", map[string]interface{}{"username": "alice"})
+	fv := newFakeVault(t, "secret/", "2", map[string]any{"username": "alice"})
 	p := newTestProvider(t, fv.server.URL)
 
 	got, err := p.GetString("secret/myapp/username")
@@ -215,7 +215,7 @@ func TestGetString(t *testing.T) {
 }
 
 func TestGetStringMap_KVv1(t *testing.T) {
-	fv := newFakeVault(t, "kv/", "1", map[string]interface{}{"foo": "bar"})
+	fv := newFakeVault(t, "kv/", "1", map[string]any{"foo": "bar"})
 	p := newTestProvider(t, fv.server.URL)
 
 	got, err := p.GetStringMap("kv/myapp")

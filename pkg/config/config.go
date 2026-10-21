@@ -7,7 +7,7 @@ import (
 )
 
 type MapConfig struct {
-	M map[string]interface{}
+	M map[string]any
 
 	FallbackFunc func(string) string
 }
@@ -22,15 +22,15 @@ func (m MapConfig) String(path ...string) string {
 		return ""
 	}
 
-	var cur interface{}
+	var cur any
 
 	cur = m.M
 
 	for i, k := range path {
 		switch typed := cur.(type) {
-		case map[string]interface{}:
+		case map[string]any:
 			cur = typed[k]
-		case map[interface{}]interface{}:
+		case map[any]any:
 			cur = typed[k]
 		default:
 			return fallback()
@@ -47,15 +47,15 @@ func (m MapConfig) String(path ...string) string {
 }
 
 func (m MapConfig) StringSlice(path ...string) []string {
-	var cur interface{}
+	var cur any
 
 	cur = m.M
 
 	for i, k := range path {
 		switch typed := cur.(type) {
-		case map[string]interface{}:
+		case map[string]any:
 			cur = typed[k]
-		case map[interface{}]interface{}:
+		case map[any]any:
 			cur = typed[k]
 		default:
 			return nil
@@ -67,7 +67,7 @@ func (m MapConfig) StringSlice(path ...string) []string {
 			switch ary := cur.(type) {
 			case []string:
 				return ary
-			case []interface{}:
+			case []any:
 				ss := make([]string, len(ary))
 				for i := range ary {
 					ss[i] = fmt.Sprintf("%v", ary[i])
@@ -87,19 +87,19 @@ func (m MapConfig) Config(path ...string) api.StaticConfig {
 }
 
 func (m MapConfig) Exists(path ...string) bool {
-	var cur interface{}
+	var cur any
 	var ok bool
 
 	cur = m.M
 
 	for _, k := range path {
 		switch typed := cur.(type) {
-		case map[string]interface{}:
+		case map[string]any:
 			cur, ok = typed[k]
 			if !ok {
 				return false
 			}
-		case map[interface{}]interface{}:
+		case map[any]any:
 			cur, ok = typed[k]
 			if !ok {
 				return false
@@ -112,16 +112,16 @@ func (m MapConfig) Exists(path ...string) bool {
 	return true
 }
 
-func (m MapConfig) Map(path ...string) map[string]interface{} {
-	var cur interface{}
+func (m MapConfig) Map(path ...string) map[string]any {
+	var cur any
 
 	cur = m.M
 
 	for _, k := range path {
 		switch typed := cur.(type) {
-		case map[string]interface{}:
+		case map[string]any:
 			cur = typed[k]
-		case map[interface{}]interface{}:
+		case map[any]any:
 			cur = typed[k]
 		default:
 			return nil
@@ -129,10 +129,10 @@ func (m MapConfig) Map(path ...string) map[string]interface{} {
 	}
 
 	switch typed := cur.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		return typed
-	case map[interface{}]interface{}:
-		strmap := map[string]interface{}{}
+	case map[any]any:
+		strmap := map[string]any{}
 		for k, v := range typed {
 			strmap[fmt.Sprintf("%v", k)] = v
 		}
@@ -142,7 +142,7 @@ func (m MapConfig) Map(path ...string) map[string]interface{} {
 	}
 }
 
-func Map(m map[string]interface{}) MapConfig {
+func Map(m map[string]any) MapConfig {
 	return MapConfig{
 		M: m,
 	}

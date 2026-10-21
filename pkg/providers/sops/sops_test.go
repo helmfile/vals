@@ -210,7 +210,7 @@ func TestKmsAwareServerNilCredProviderDelegates(t *testing.T) {
 
 func TestNewProviderReadsAWSConfig(t *testing.T) {
 	cfg := config.MapConfig{
-		M: map[string]interface{}{
+		M: map[string]any{
 			"region":   "eu-west-1",
 			"profile":  "staging",
 			"role_arn": "arn:aws:iam::999:role/deploy",
@@ -242,7 +242,7 @@ func TestNewProviderReadsAWSConfig(t *testing.T) {
 }
 
 func TestNewProviderDefaultKeyType(t *testing.T) {
-	cfg := config.MapConfig{M: map[string]interface{}{}}
+	cfg := config.MapConfig{M: map[string]any{}}
 
 	p := New(log.New(log.Config{}), cfg, "")
 
@@ -252,7 +252,7 @@ func TestNewProviderDefaultKeyType(t *testing.T) {
 }
 
 func TestNewProviderDefaultEncode(t *testing.T) {
-	cfg := config.MapConfig{M: map[string]interface{}{}}
+	cfg := config.MapConfig{M: map[string]any{}}
 
 	p := New(log.New(log.Config{}), cfg, "")
 
@@ -263,7 +263,7 @@ func TestNewProviderDefaultEncode(t *testing.T) {
 
 func TestNewProviderReadsEncodeBase64(t *testing.T) {
 	cfg := config.MapConfig{
-		M: map[string]interface{}{
+		M: map[string]any{
 			"encode": "base64",
 		},
 	}
@@ -343,9 +343,9 @@ func TestGetStringEncode(t *testing.T) {
 	newProvider := func(encode string) *provider {
 		var cfg config.MapConfig
 		if encode == "" {
-			cfg = config.MapConfig{M: map[string]interface{}{}}
+			cfg = config.MapConfig{M: map[string]any{}}
 		} else {
-			cfg = config.MapConfig{M: map[string]interface{}{"encode": encode}}
+			cfg = config.MapConfig{M: map[string]any{"encode": encode}}
 		}
 		return New(log.New(log.Config{}), cfg, "")
 	}

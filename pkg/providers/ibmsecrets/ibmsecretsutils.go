@@ -102,7 +102,7 @@ func (p *provider) fetchSecret(spec secretSpec) (string, error) {
 // getValueByPath walks obj using a slash-delimited path of map keys.
 // An empty path returns the JSON-serialized form of obj.
 // Mirrors the Node.js getValueByPath implementation.
-func getValueByPath(obj map[string]interface{}, path string) (string, error) {
+func getValueByPath(obj map[string]any, path string) (string, error) {
 	if path == "" {
 		b, err := json.Marshal(obj)
 		if err != nil {
@@ -111,13 +111,13 @@ func getValueByPath(obj map[string]interface{}, path string) (string, error) {
 		return string(b), nil
 	}
 
-	var cur interface{} = obj
-	for _, segment := range strings.Split(path, "/") {
+	var cur any = obj
+	for segment := range strings.SplitSeq(path, "/") {
 		if segment == "" {
 			continue
 		}
 		switch v := cur.(type) {
-		case map[string]interface{}:
+		case map[string]any:
 			val, ok := v[segment]
 			if !ok {
 				return "", fmt.Errorf("ibmsecrets: key %q not found in secret data (path %q)", segment, path)
@@ -145,12 +145,12 @@ func getValueByPath(obj map[string]interface{}, path string) (string, error) {
 }
 
 // structToMap converts a struct to map[string]interface{} via JSON round-trip.
-func structToMap(v interface{}) (map[string]interface{}, error) {
+func structToMap(v any) (map[string]any, error) {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return nil, err
 	}
-	m := map[string]interface{}{}
+	m := map[string]any{}
 	if err := json.Unmarshal(b, &m); err != nil {
 		return nil, err
 	}

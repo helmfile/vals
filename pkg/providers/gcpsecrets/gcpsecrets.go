@@ -52,12 +52,12 @@ func (p *provider) GetString(key string) (string, error) {
 	return string(secret), nil
 }
 
-func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
+func (p *provider) GetStringMap(key string) (map[string]any, error) {
 	secret, err := p.getSecret(context.TODO(), key)
 	if err != nil {
 		return nil, err
 	}
-	var secretMap map[string]interface{}
+	var secretMap map[string]any
 	if err := yaml.Unmarshal(secret, &secretMap); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal secret: %w", err)
 	}

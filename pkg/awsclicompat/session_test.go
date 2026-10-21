@@ -229,8 +229,7 @@ func TestNewConfigProfileNotFoundFallback(t *testing.T) {
 		awsconfig.WithSharedCredentialsFiles([]string{credFile.Name()}),
 		awsconfig.WithSharedConfigProfile(nonExistentProfile),
 	)
-	var profileNotExist awsconfig.SharedConfigProfileNotExistError
-	if !errors.As(directErr, &profileNotExist) {
+	if _, ok := errors.AsType[awsconfig.SharedConfigProfileNotExistError](directErr); !ok {
 		t.Fatalf("expected SharedConfigProfileNotExistError from direct load, got: %v", directErr)
 	}
 

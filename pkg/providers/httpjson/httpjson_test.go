@@ -20,12 +20,12 @@ func Test_GetString_concurrent(t *testing.T) {
 	defer server.Close()
 
 	host := strings.TrimPrefix(server.URL, "http://")
-	p := New(log.New(log.Config{Output: io.Discard}), config.Map(map[string]interface{}{
+	p := New(log.New(log.Config{Output: io.Discard}), config.Map(map[string]any{
 		"insecure": "true",
 	}))
 
 	var wg sync.WaitGroup
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()

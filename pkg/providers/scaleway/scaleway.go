@@ -99,12 +99,12 @@ func (p *provider) GetString(key string) (string, error) {
 	return string(b), err
 }
 
-func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
+func (p *provider) GetStringMap(key string) (map[string]any, error) {
 	b, err := p.getBytes(key)
 	if err != nil {
 		return nil, err
 	}
-	res := make(map[string]interface{})
+	res := make(map[string]any)
 	err = json.Unmarshal(b, &res)
 	return res, err
 }

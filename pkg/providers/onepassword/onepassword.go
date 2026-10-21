@@ -112,6 +112,6 @@ func (p *provider) getStringWithCLI(reference string) (string, error) {
 	return "", fmt.Errorf("1Password CLI command failed: %w; authenticate with the desktop app, run %q, or set OP_SERVICE_ACCOUNT_TOKEN for headless use", err, "op signin")
 }
 
-func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
+func (p *provider) GetStringMap(key string) (map[string]any, error) {
 	return nil, fmt.Errorf("path fragment is not supported for 1password provider")
 }

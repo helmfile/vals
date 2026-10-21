@@ -109,7 +109,7 @@ func (p *provider) GetString(key string) (string, error) {
 	return "", fmt.Errorf("doppler: get string failed: project=%q, config=%q, key=%q", p.Project, p.Config, key)
 }
 
-func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
+func (p *provider) GetStringMap(key string) (map[string]any, error) {
 	response, err := dopplerhttp.GetSecrets(
 		p.Address,
 		p.VerifyTLS,
@@ -128,7 +128,7 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 	if parseErr != nil {
 		return nil, parseErr
 	}
-	m := map[string]interface{}{}
+	m := map[string]any{}
 
 	for _, secret := range secrets {
 		if !p.IncludeDopplerDefaults && (secret.Name == "DOPPLER_PROJECT" || secret.Name == "DOPPLER_CONFIG" || secret.Name == "DOPPLER_ENVIRONMENT") {

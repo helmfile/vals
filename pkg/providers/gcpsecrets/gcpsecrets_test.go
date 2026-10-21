@@ -11,13 +11,13 @@ func Test_New(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		options map[string]interface{}
+		options map[string]any
 		want    provider
 	}{
-		{"latest", map[string]interface{}{"version": "latest"}, provider{version: "latest", optional: false}},
-		{"optional", map[string]interface{}{"version": "latest", "optional": true}, provider{version: "latest", optional: true}},
-		{"latest", map[string]interface{}{"version": "latest"}, provider{version: "latest", fallback: nil}},
-		{"fallback", map[string]interface{}{"version": "latest", "fallback_value": defaultVal}, provider{version: "latest", fallback: &defaultVal}},
+		{"latest", map[string]any{"version": "latest"}, provider{version: "latest", optional: false}},
+		{"optional", map[string]any{"version": "latest", "optional": true}, provider{version: "latest", optional: true}},
+		{"latest", map[string]any{"version": "latest"}, provider{version: "latest", fallback: nil}},
+		{"fallback", map[string]any{"version": "latest", "fallback_value": defaultVal}, provider{version: "latest", fallback: &defaultVal}},
 	}
 
 	for _, tt := range tests {

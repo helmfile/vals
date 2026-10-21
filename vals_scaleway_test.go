@@ -81,16 +81,16 @@ func TestValues_SCW_String(t *testing.T) {
 	}()
 
 	type testcase struct {
-		template map[string]interface{}
-		expected map[string]interface{}
+		template map[string]any
+		expected map[string]any
 	}
 
 	testcases := []testcase{
 		{
-			template: map[string]interface{}{
+			template: map[string]any{
 				"test_key": "ref+scw:///confidential/foo",
 			},
-			expected: map[string]interface{}{
+			expected: map[string]any{
 				"test_key": "myvalue",
 			},
 		},
@@ -182,24 +182,24 @@ func TestValues_SCW_Json(t *testing.T) {
 	}()
 
 	type testcase struct {
-		template map[string]interface{}
-		expected map[string]interface{}
+		template map[string]any
+		expected map[string]any
 	}
 
 	testcases := []testcase{
 		{
-			template: map[string]interface{}{
+			template: map[string]any{
 				"test_key": "ref+scw:///confidential/bar",
 			},
-			expected: map[string]interface{}{
+			expected: map[string]any{
 				"test_key": `{"mykey":"myvalue"}`,
 			},
 		},
 		{
-			template: map[string]interface{}{
+			template: map[string]any{
 				"test_key": "ref+scw:///confidential/bar#mykey",
 			},
-			expected: map[string]interface{}{
+			expected: map[string]any{
 				"test_key": "myvalue",
 			},
 		},

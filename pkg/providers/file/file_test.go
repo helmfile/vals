@@ -117,7 +117,7 @@ func Test_provider_GetString(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create provider with mock
-			conf := map[string]interface{}{}
+			conf := map[string]any{}
 			conf["encode"] = tt.params.Encode
 			p := New(config.MapConfig{M: conf})
 			p.fileReader = mockReadFile
@@ -139,7 +139,7 @@ func Test_provider_GetStringMap(t *testing.T) {
 		key string
 	}
 	tests := []struct {
-		want    map[string]interface{}
+		want    map[string]any
 		name    string
 		args    args
 		wantErr bool
@@ -149,8 +149,8 @@ func Test_provider_GetStringMap(t *testing.T) {
 			args: args{
 				key: "path/to/file.yaml",
 			},
-			want: map[string]interface{}{
-				"foo": map[string]interface{}{
+			want: map[string]any{
+				"foo": map[string]any{
 					"bar": "baz",
 				},
 			},
@@ -169,7 +169,7 @@ func Test_provider_GetStringMap(t *testing.T) {
 			args: args{
 				key: "path/to/empty_file.txt",
 			},
-			want:    map[string]interface{}{},
+			want:    map[string]any{},
 			wantErr: false,
 		},
 		{
@@ -191,7 +191,7 @@ func Test_provider_GetStringMap(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			conf := map[string]interface{}{}
+			conf := map[string]any{}
 			p := New(config.MapConfig{M: conf})
 			p.fileReader = mockReadFile
 

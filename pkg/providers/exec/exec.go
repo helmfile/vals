@@ -52,8 +52,8 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 	p.env = map[string]string{}
 	if m := cfg.Map(); m != nil {
 		for k, v := range m {
-			if strings.HasPrefix(k, "env_") {
-				p.env[strings.TrimPrefix(k, "env_")] = fmt.Sprintf("%v", v)
+			if after, ok := strings.CutPrefix(k, "env_"); ok {
+				p.env[after] = fmt.Sprintf("%v", v)
 			}
 		}
 	}
@@ -128,13 +128,13 @@ func (p *provider) GetString(key string) (string, error) {
 	return result, nil
 }
 
-func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
+func (p *provider) GetStringMap(key string) (map[string]any, error) {
 	str, err := p.GetString(key)
 	if err != nil {
 		return nil, err
 	}
 
-	m := map[string]interface{}{}
+	m := map[string]any{}
 	if err := yaml.Unmarshal([]byte(str), &m); err != nil {
 		return nil, fmt.Errorf("exec provider: failed to parse output as YAML/JSON: %w", err)
 	}

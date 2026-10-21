@@ -126,7 +126,7 @@ func (p *provider) GetStringVersion(key string) (string, error) {
 	return "", errors.New("datasource.ssm.Get() out.Parameter.Value is nil")
 }
 
-func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
+func (p *provider) GetStringMap(key string) (map[string]any, error) {
 	if key != "" && key[0] != '/' {
 		key = "/" + key
 	}
@@ -137,7 +137,7 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 			return nil, err
 		}
 
-		m := map[string]interface{}{}
+		m := map[string]any{}
 
 		if err := yaml.Unmarshal([]byte(yamlData), &m); err != nil {
 			return nil, err
@@ -148,7 +148,7 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 
 	ssmClient := p.getSSMClient()
 
-	res := map[string]interface{}{}
+	res := map[string]any{}
 
 	in := &ssm.GetParametersByPathInput{
 		Path:           aws.String(key),
@@ -186,7 +186,7 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 
 		nameParts := strings.Split(name, "/")
 
-		var current map[string]interface{}
+		var current map[string]any
 
 		current = res
 
@@ -195,8 +195,8 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 				current[n] = *param.Value
 			} else {
 				if m, ok := current[n]; !ok {
-					current[n] = map[string]interface{}{}
-				} else if _, isMap := m.(map[string]interface{}); !isMap {
+					current[n] = map[string]any{}
+				} else if _, isMap := m.(map[string]any); !isMap {
 					if !p.Recursive {
 						return nil, fmt.Errorf("bug: unexpected type of value found at %d in %v: type = %T", i, nameParts, m)
 					}
@@ -204,10 +204,10 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 					//   {"foo":{"bar":{"baz":"VALUE2"}}}
 					// not
 					//   {"foo":{"bar":"VALUE1"}}
-					current[n] = map[string]interface{}{}
+					current[n] = map[string]any{}
 				}
 
-				current = current[n].(map[string]interface{})
+				current = current[n].(map[string]any)
 			}
 		}
 	}

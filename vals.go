@@ -97,7 +97,7 @@ const (
 var EnvFallbackPrefix = "VALS_"
 
 type Evaluator interface {
-	Eval(map[string]interface{}) (map[string]interface{}, error)
+	Eval(map[string]any) (map[string]any, error)
 }
 
 // Runtime an object for secrets rendering
@@ -385,12 +385,12 @@ func isTerminalValue(v any) bool {
 
 // asStringKeyedMap normalizes a map[interface{}]interface{} (which some providers
 // produce) into a map[string]interface{}; the bool reports whether v was a map.
-func asStringKeyedMap(v any) (map[string]interface{}, bool) {
+func asStringKeyedMap(v any) (map[string]any, bool) {
 	switch t := v.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		return t, true
-	case map[interface{}]interface{}:
-		m := make(map[string]interface{}, len(t))
+	case map[any]any:
+		m := make(map[string]any, len(t))
 		for k, val := range t {
 			m[fmt.Sprintf("%v", k)] = val
 		}
@@ -401,7 +401,7 @@ func asStringKeyedMap(v any) (map[string]interface{}, bool) {
 }
 
 // Eval replaces 'ref+<provider>://xxxxx' entries by their actual values
-func (r *Runtime) Eval(template map[string]interface{}) (map[string]interface{}, error) {
+func (r *Runtime) Eval(template map[string]any) (map[string]any, error) {
 	expand, err := r.prepare()
 	if err != nil {
 		return nil, err
@@ -430,12 +430,12 @@ func (r *Runtime) Get(code string) (string, error) {
 	return ret, nil
 }
 
-func cloneMap(m map[string]interface{}) map[string]interface{} {
+func cloneMap(m map[string]any) map[string]any {
 	bs, err := yaml.Marshal(m)
 	if err != nil {
 		panic(err)
 	}
-	out := map[string]interface{}{}
+	out := map[string]any{}
 	if err := yaml.Unmarshal(bs, &out); err != nil {
 		panic(err)
 	}
@@ -496,7 +496,7 @@ type Options struct {
 
 var unsafeCharRegexp = regexp.MustCompile(`[^\w@%+=:,./-]`)
 
-func env(template map[string]interface{}, quote bool, o ...Options) ([]string, error) {
+func env(template map[string]any, quote bool, o ...Options) ([]string, error) {
 	m, err := Eval(template, o...)
 	if err != nil {
 		return nil, err
@@ -519,8 +519,8 @@ func env(template map[string]interface{}, quote bool, o ...Options) ([]string, e
 	return env, nil
 }
 
-func applyEnvWithQuote(quote bool) func(map[string]interface{}, ...Options) ([]string, error) {
-	return func(template map[string]interface{}, o ...Options) ([]string, error) {
+func applyEnvWithQuote(quote bool) func(map[string]any, ...Options) ([]string, error) {
+	return func(template map[string]any, o ...Options) ([]string, error) {
 		return env(template, quote, o...)
 	}
 }
@@ -545,7 +545,7 @@ type ExecConfig struct {
 	InheritEnv bool
 }
 
-func Exec(template map[string]interface{}, args []string, config ...ExecConfig) error {
+func Exec(template map[string]any, args []string, config ...ExecConfig) error {
 	var c ExecConfig
 	if len(config) > 0 {
 		c = config[0]
@@ -597,20 +597,20 @@ func Exec(template map[string]interface{}, args []string, config ...ExecConfig) 
 func EvalNodes(nodes []yaml.Node, c Options) ([]yaml.Node, error) {
 	var res []yaml.Node
 	for _, node := range nodes {
-		var nodeValue interface{}
+		var nodeValue any
 		err := node.Decode(&nodeValue)
 		if err != nil {
 			return nil, err
 		}
 
-		var evalResult interface{}
+		var evalResult any
 		switch v := nodeValue.(type) {
-		case map[string]interface{}:
+		case map[string]any:
 			evalResult, err = Eval(v, c)
 			if err != nil {
 				return nil, err
 			}
-		case []interface{}:
+		case []any:
 			evalResult, err = evalArray(v, c)
 			if err != nil {
 				return nil, err
@@ -632,17 +632,17 @@ func EvalNodes(nodes []yaml.Node, c Options) ([]yaml.Node, error) {
 	return res, nil
 }
 
-func evalArray(arr []interface{}, c Options) ([]interface{}, error) {
-	var res []interface{}
+func evalArray(arr []any, c Options) ([]any, error) {
+	var res []any
 	for _, item := range arr {
 		switch v := item.(type) {
-		case map[string]interface{}:
+		case map[string]any:
 			evalResult, err := Eval(v, c)
 			if err != nil {
 				return nil, err
 			}
 			res = append(res, evalResult)
-		case []interface{}:
+		case []any:
 			evalResult, err := evalArray(v, c)
 			if err != nil {
 				return nil, err
@@ -655,7 +655,7 @@ func evalArray(arr []interface{}, c Options) ([]interface{}, error) {
 	return res, nil
 }
 
-func Eval(template map[string]interface{}, o ...Options) (map[string]interface{}, error) {
+func Eval(template map[string]any, o ...Options) (map[string]any, error) {
 	opts := Options{}
 	if len(o) > 0 {
 		opts = o[0]
@@ -844,7 +844,8 @@ func Load(conf api.StaticConfig, opt ...Option) (map[string]interface{}, error) 
 			return nil, err
 		}
 		getMap := func(path string) (map[string]interface{}, error) {
-			if format == FormatYAML {
+			switch format {
+			case FormatYAML:
 				str, err := pp.GetString(path)
 				if err != nil {
 					return nil, fmt.Errorf("get string map: %v", err)
@@ -854,10 +855,11 @@ func Load(conf api.StaticConfig, opt ...Option) (map[string]interface{}, error) 
 					return nil, fmt.Errorf("get string map: %v", err)
 				}
 				return res, nil
-			} else if format == FormatRaw || format == "" {
+			case FormatRaw, "":
 				return p.GetStringMap(path)
+			default:
+				return nil, fmt.Errorf("unsupported strategy: %s", format)
 			}
-			return nil, fmt.Errorf("unsupported strategy: %s", format)
 		}
 		buildMapFromKeys := func(keys []string) (map[string]interface{}, error) {
 			res := map[string]interface{}{}

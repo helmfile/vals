@@ -186,6 +186,6 @@ func countChildNodes(node *jsonquery.Node) int {
 	return count
 }
 
-func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
+func (p *provider) GetStringMap(key string) (map[string]any, error) {
 	return nil, fmt.Errorf("we should not be in the GetStringMap method")
 }

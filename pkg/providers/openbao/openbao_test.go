@@ -3,6 +3,7 @@ package openbao
 import (
 	"encoding/base64"
 	"encoding/json"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -21,7 +22,7 @@ const testBar = "bar"
 // the internal UI mounts endpoint.
 type fakeOpenBao struct {
 	server  *httptest.Server
-	data    map[string]interface{}
+	data    map[string]any
 	version string // "1" or "2"
 
 	requests        []string
@@ -31,7 +32,7 @@ type fakeOpenBao struct {
 	mu sync.Mutex
 }
 
-func newFakeOpenBao(t *testing.T, version string, data map[string]interface{}) *fakeOpenBao {
+func newFakeOpenBao(t *testing.T, version string, data map[string]any) *fakeOpenBao {
 	t.Helper()
 	fb := &fakeOpenBao{version: version, data: data}
 	fb.server = httptest.NewServer(http.HandlerFunc(fb.handle))
@@ -53,7 +54,7 @@ func (fb *fakeOpenBao) handle(w http.ResponseWriter, r *http.Request) {
 	if strings.HasPrefix(r.URL.Path, "/v1/sys/internal/ui/mounts/") {
 		fb.uiMountRequests.Add(1)
 		w.WriteHeader(http.StatusForbidden)
-		_ = enc.Encode(map[string]interface{}{
+		_ = enc.Encode(map[string]any{
 			"errors": []string{"permission denied to internal UI mounts endpoint"},
 		})
 		return
@@ -70,14 +71,14 @@ func (fb *fakeOpenBao) handle(w http.ResponseWriter, r *http.Request) {
 
 	payload := fb.data
 	if fb.version == "2" {
-		payload = map[string]interface{}{
+		payload = map[string]any{
 			"data": fb.data,
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"version": 1,
 			},
 		}
 	}
-	_ = enc.Encode(map[string]interface{}{"data": payload})
+	_ = enc.Encode(map[string]any{"data": payload})
 }
 
 func (fb *fakeOpenBao) recordedRequests() []string {
@@ -88,17 +89,15 @@ func (fb *fakeOpenBao) recordedRequests() []string {
 	return copied
 }
 
-func newTestProvider(t *testing.T, addr string, extra map[string]interface{}) *provider {
+func newTestProvider(t *testing.T, addr string, extra map[string]any) *provider {
 	t.Helper()
 	t.Setenv("BAO_TOKEN", "test-token")
-	m := map[string]interface{}{
+	m := map[string]any{
 		"address":     addr,
 		"auth_method": "token",
 		"token_env":   "BAO_TOKEN",
 	}
-	for k, v := range extra {
-		m[k] = v
-	}
+	maps.Copy(m, extra)
 	cfg := config.MapConfig{M: m}
 	return New(log.New(log.Config{Output: nil}), cfg)
 }
@@ -106,7 +105,7 @@ func newTestProvider(t *testing.T, addr string, extra map[string]interface{}) *p
 // TestGetString_KVv2_StandardDataPath verifies that secrets are retrieved via the standard
 // KV v2 secret engine data path ("/v1/<mount>/data/<path>") without hitting UI mount endpoints.
 func TestGetString_KVv2_StandardDataPath(t *testing.T) {
-	fb := newFakeOpenBao(t, "2", map[string]interface{}{"username": "alice"})
+	fb := newFakeOpenBao(t, "2", map[string]any{"username": "alice"})
 	p := newTestProvider(t, fb.server.URL, nil)
 
 	val, err := p.GetString("secret/myapp/username")
@@ -135,7 +134,7 @@ func TestGetString_KVv2_StandardDataPath(t *testing.T) {
 // accessing a secret like "my-kv/services/example.com/creds" must generate request URL
 // "/v1/my-kv/data/services/example.com/creds" and must not touch "/v1/sys/internal/ui/mounts/...".
 func TestIssue1293_OpenBao_TargetPathNotUIMounts(t *testing.T) {
-	fb := newFakeOpenBao(t, "2", map[string]interface{}{
+	fb := newFakeOpenBao(t, "2", map[string]any{
 		"username": "myusername",
 		"password": "mypassword",
 	})
@@ -168,7 +167,7 @@ func TestIssue1293_OpenBao_TargetPathNotUIMounts(t *testing.T) {
 // TestGetStringMap_AlreadyContainsDataSegment guards against duplicating the data segment
 // when a user provides a path that already includes "data".
 func TestGetStringMap_AlreadyContainsDataSegment(t *testing.T) {
-	fb := newFakeOpenBao(t, "2", map[string]interface{}{"foo": testBar})
+	fb := newFakeOpenBao(t, "2", map[string]any{"foo": testBar})
 	p := newTestProvider(t, fb.server.URL, nil)
 
 	res, err := p.GetStringMap("mykv/data/myapp")
@@ -191,7 +190,7 @@ func TestGetStringMap_AlreadyContainsDataSegment(t *testing.T) {
 
 // TestGetStringMap_LeadingSlashes verifies clean handling of leading slashes.
 func TestGetStringMap_LeadingSlashes(t *testing.T) {
-	fb := newFakeOpenBao(t, "2", map[string]interface{}{"username": "myusername"})
+	fb := newFakeOpenBao(t, "2", map[string]any{"username": "myusername"})
 	p := newTestProvider(t, fb.server.URL, nil)
 
 	res, err := p.GetStringMap("/my-kv/services/example.com/creds")
@@ -211,8 +210,8 @@ func TestGetStringMap_LeadingSlashes(t *testing.T) {
 
 // TestGetStringMap_CustomMountPath tests custom mount configuration.
 func TestGetStringMap_CustomMountPath(t *testing.T) {
-	fb := newFakeOpenBao(t, "2", map[string]interface{}{"key": "val"})
-	p := newTestProvider(t, fb.server.URL, map[string]interface{}{
+	fb := newFakeOpenBao(t, "2", map[string]any{"key": "val"})
+	p := newTestProvider(t, fb.server.URL, map[string]any{
 		"mount_path": "custom/mount",
 	})
 
@@ -233,8 +232,8 @@ func TestGetStringMap_CustomMountPath(t *testing.T) {
 
 // TestGetStringMap_KVv2_WithVersion tests version query parameter propagation.
 func TestGetStringMap_KVv2_WithVersion(t *testing.T) {
-	fb := newFakeOpenBao(t, "2", map[string]interface{}{"foo": testBar})
-	p := newTestProvider(t, fb.server.URL, map[string]interface{}{
+	fb := newFakeOpenBao(t, "2", map[string]any{"foo": testBar})
+	p := newTestProvider(t, fb.server.URL, map[string]any{
 		"version": "2",
 	})
 
@@ -255,8 +254,8 @@ func TestGetStringMap_KVv2_WithVersion(t *testing.T) {
 
 // TestGetStringMap_KVv1_Explicit tests explicit KV v1 configuration.
 func TestGetStringMap_KVv1_Explicit(t *testing.T) {
-	fb := newFakeOpenBao(t, "1", map[string]interface{}{"foo": testBar})
-	p := newTestProvider(t, fb.server.URL, map[string]interface{}{
+	fb := newFakeOpenBao(t, "1", map[string]any{"foo": testBar})
+	p := newTestProvider(t, fb.server.URL, map[string]any{
 		"kv_version": "1",
 	})
 
@@ -277,7 +276,7 @@ func TestGetStringMap_KVv1_Explicit(t *testing.T) {
 
 // TestGetStringMap_KVv1_Fallback tests falling back to KV v1 when KV v2 data path returns 404.
 func TestGetStringMap_KVv1_Fallback(t *testing.T) {
-	fb := newFakeOpenBao(t, "1", map[string]interface{}{"foo": testBar})
+	fb := newFakeOpenBao(t, "1", map[string]any{"foo": testBar})
 	p := newTestProvider(t, fb.server.URL, nil)
 
 	res, err := p.GetStringMap("kv/myapp")
@@ -303,14 +302,14 @@ func TestGetStringMap_KVv1_Fallback(t *testing.T) {
 // TestGetStringMap_ConcurrentDedup ensures concurrent callers for the same key collapse
 // into a single API read.
 func TestGetStringMap_ConcurrentDedup(t *testing.T) {
-	fb := newFakeOpenBao(t, "2", map[string]interface{}{"foo": testBar})
+	fb := newFakeOpenBao(t, "2", map[string]any{"foo": testBar})
 	p := newTestProvider(t, fb.server.URL, nil)
 
 	const n = 20
 	var wg sync.WaitGroup
 	errs := make([]error, n)
-	results := make([]map[string]interface{}, n)
-	for i := 0; i < n; i++ {
+	results := make([]map[string]any, n)
+	for i := range n {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
@@ -335,7 +334,7 @@ func TestGetStringMap_ConcurrentDedup(t *testing.T) {
 
 // TestGetStringMap_ReturnsIndependentCopies guards against mutation leakage.
 func TestGetStringMap_ReturnsIndependentCopies(t *testing.T) {
-	fb := newFakeOpenBao(t, "2", map[string]interface{}{"foo": testBar})
+	fb := newFakeOpenBao(t, "2", map[string]any{"foo": testBar})
 	p := newTestProvider(t, fb.server.URL, nil)
 
 	first, err := p.GetStringMap("secret/myapp")
@@ -356,8 +355,8 @@ func TestGetStringMap_ReturnsIndependentCopies(t *testing.T) {
 // TestGetString_DecodeBase64 tests decoding base64-encoded secrets.
 func TestGetString_DecodeBase64(t *testing.T) {
 	encoded := base64.StdEncoding.EncodeToString([]byte("hello world"))
-	fb := newFakeOpenBao(t, "2", map[string]interface{}{"payload": encoded})
-	p := newTestProvider(t, fb.server.URL, map[string]interface{}{
+	fb := newFakeOpenBao(t, "2", map[string]any{"payload": encoded})
+	p := newTestProvider(t, fb.server.URL, map[string]any{
 		"decode": "base64",
 	})
 

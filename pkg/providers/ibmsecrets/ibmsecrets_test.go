@@ -98,9 +98,9 @@ func Test_parseKey(t *testing.T) {
 }
 
 func Test_getValueByPath(t *testing.T) {
-	obj := map[string]interface{}{
+	obj := map[string]any{
 		"apikey": "the-key",
-		"nested": map[string]interface{}{
+		"nested": map[string]any{
 			"inner": "inner-value",
 		},
 	}

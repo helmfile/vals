@@ -20,12 +20,12 @@ var server *httptest.Server
 func setup() {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Define the JSON data
-		data := []map[string]interface{}{
+		data := []map[string]any{
 			{
 				"name": "chartify",
 				"id":   251296379,
-				"status": map[string]interface{}{
-					"database": map[string]interface{}{
+				"status": map[string]any{
+					"database": map[string]any{
 						"DBNodes": []string{
 							"chartify.database1.io",
 							"chartify.database2.io",
@@ -35,7 +35,7 @@ func setup() {
 						},
 					},
 				},
-				"owner": map[string]interface{}{
+				"owner": map[string]any{
 					"login": "helmfile",
 					"id":    8319146,
 				},
@@ -43,8 +43,8 @@ func setup() {
 			{
 				"name": "go-yaml",
 				"id":   597918420,
-				"status": map[string]interface{}{
-					"database": map[string]interface{}{
+				"status": map[string]any{
+					"database": map[string]any{
 						"DBNodes": []string{
 							"go-yaml.database1.io",
 							"go-yaml.database2.io",
@@ -54,7 +54,7 @@ func setup() {
 						},
 					},
 				},
-				"owner": map[string]interface{}{
+				"owner": map[string]any{
 					"login": "helmfile",
 					"id":    83191469,
 				},
@@ -86,14 +86,14 @@ func teardown() {
 
 func createProvider(providerPath string, inlineValue string, floatAsInt string) config2.MapConfig {
 	// Construct the configuration map with the provided values
-	config := map[string]interface{}{
-		"provider": map[string]interface{}{
+	config := map[string]any{
+		"provider": map[string]any{
 			"name":       "httpjson",
 			"path":       providerPath,
 			"floatAsInt": floatAsInt,
 			"insecure":   "true",
 		},
-		"inline": map[string]interface{}{
+		"inline": map[string]any{
 			"value": inlineValue,
 		},
 	}

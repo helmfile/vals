@@ -18,7 +18,7 @@ const fakeTFStateJSON = `{"version":4,"terraform_version":"1.5.7","serial":1,"li
 func TestNew(t *testing.T) {
 	tests := []struct {
 		name        string
-		cfg         map[string]interface{}
+		cfg         map[string]any
 		backend     string
 		wantBackend string
 		wantUser    string
@@ -27,13 +27,13 @@ func TestNew(t *testing.T) {
 	}{
 		{
 			name:        "gitlab default config",
-			cfg:         map[string]interface{}{},
+			cfg:         map[string]any{},
 			backend:     "gitlab",
 			wantBackend: "gitlab",
 		},
 		{
 			name:        "gitlab reads credentials and scheme from config",
-			cfg:         map[string]interface{}{"gitlab_user": "alice", "gitlab_token": "cfgtoken", "gitlab_scheme": "http"},
+			cfg:         map[string]any{"gitlab_user": "alice", "gitlab_token": "cfgtoken", "gitlab_scheme": "http"},
 			backend:     "gitlab",
 			wantBackend: "gitlab",
 			wantUser:    "alice",
@@ -42,7 +42,7 @@ func TestNew(t *testing.T) {
 		},
 		{
 			name:        "s3 backend reads aws_profile",
-			cfg:         map[string]interface{}{"aws_profile": "prof", "az_subscription_id": "sub"},
+			cfg:         map[string]any{"aws_profile": "prof", "az_subscription_id": "sub"},
 			backend:     "s3",
 			wantBackend: "s3",
 		},
@@ -78,7 +78,7 @@ func TestBuildGitLabURL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := New(config.MapConfig{M: map[string]interface{}{"gitlab_scheme": tt.scheme}}, "gitlab")
+			p := New(config.MapConfig{M: map[string]any{"gitlab_scheme": tt.scheme}}, "gitlab")
 			got, err := p.buildGitLabURL(hostPath)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.want, got)
@@ -91,7 +91,7 @@ func TestBuildGitLabURL(t *testing.T) {
 func TestResolveGitLabCreds(t *testing.T) {
 	tests := []struct {
 		name      string
-		cfg       map[string]interface{}
+		cfg       map[string]any
 		envUser   string
 		envToken  string
 		wantUser  string
@@ -99,7 +99,7 @@ func TestResolveGitLabCreds(t *testing.T) {
 	}{
 		{
 			name:      "config credentials",
-			cfg:       map[string]interface{}{"gitlab_user": "alice", "gitlab_token": "cfgtoken"},
+			cfg:       map[string]any{"gitlab_user": "alice", "gitlab_token": "cfgtoken"},
 			wantUser:  "alice",
 			wantToken: "cfgtoken",
 		},
@@ -112,7 +112,7 @@ func TestResolveGitLabCreds(t *testing.T) {
 		},
 		{
 			name:      "config takes precedence over env",
-			cfg:       map[string]interface{}{"gitlab_user": "alice", "gitlab_token": "cfgtoken"},
+			cfg:       map[string]any{"gitlab_user": "alice", "gitlab_token": "cfgtoken"},
 			envUser:   "bob",
 			envToken:  "envtoken",
 			wantUser:  "alice",
@@ -158,7 +158,7 @@ func TestReadGitLab_SuccessSendsBasicAuthAndParsesState(t *testing.T) {
 	defer srv.Close()
 
 	host := strings.TrimPrefix(srv.URL, "http://")
-	cfg := config.MapConfig{M: map[string]interface{}{
+	cfg := config.MapConfig{M: map[string]any{
 		"gitlab_user": "alice", "gitlab_token": "tok", "gitlab_scheme": "http",
 	}}
 	p := New(cfg, "gitlab")
@@ -177,7 +177,7 @@ func TestReadGitLab_UnauthorizedSurfacesClearErrorWithoutToken(t *testing.T) {
 	defer srv.Close()
 
 	host := strings.TrimPrefix(srv.URL, "http://")
-	cfg := config.MapConfig{M: map[string]interface{}{
+	cfg := config.MapConfig{M: map[string]any{
 		"gitlab_user": "alice", "gitlab_token": "WRONG", "gitlab_scheme": "http",
 	}}
 	p := New(cfg, "gitlab")
@@ -199,7 +199,7 @@ func TestReadGitLab_MissingCredentialsYieldsClearError(t *testing.T) {
 	t.Setenv("GITLAB_TOKEN", "")
 
 	host := strings.TrimPrefix(srv.URL, "http://")
-	p := New(config.MapConfig{M: map[string]interface{}{"gitlab_scheme": "http"}}, "gitlab")
+	p := New(config.MapConfig{M: map[string]any{"gitlab_scheme": "http"}}, "gitlab")
 
 	_, err := p.readGitLab(context.Background(), host+"/api/v4/projects/1/terraform/state/s")
 	assert.Error(t, err)
@@ -208,7 +208,7 @@ func TestReadGitLab_MissingCredentialsYieldsClearError(t *testing.T) {
 }
 
 func TestProvider_GetStringMap(t *testing.T) {
-	cfg := config.MapConfig{M: map[string]interface{}{}}
+	cfg := config.MapConfig{M: map[string]any{}}
 	p := New(cfg, "gitlab")
 
 	_, err := p.GetStringMap("test/path")

@@ -9,7 +9,7 @@ import (
 
 type ExpandRegexMatch struct {
 	Target *regexp.Regexp
-	Lookup func(string) (interface{}, error)
+	Lookup func(string) (any, error)
 	Only   []string
 }
 
@@ -121,7 +121,7 @@ func (e *ExpandRegexMatch) InString(s string) (string, error) {
 // InValue expands matches in the given string value.
 // If the entire string matches the regex, it expands and preserves the type.
 // If only part of the string matches, it expands as a string.
-func (e *ExpandRegexMatch) InValue(s string) (interface{}, error) {
+func (e *ExpandRegexMatch) InValue(s string) (any, error) {
 	resolved, err := e.resolveInnerRefs(s, 0)
 	if err != nil {
 		return nil, err
@@ -151,8 +151,8 @@ func (e *ExpandRegexMatch) InValue(s string) (interface{}, error) {
 	}
 }
 
-func (e *ExpandRegexMatch) InMap(target map[string]interface{}) (map[string]interface{}, error) {
-	ret, err := ModifyStringValues(target, func(p string) (interface{}, error) {
+func (e *ExpandRegexMatch) InMap(target map[string]any) (map[string]any, error) {
+	ret, err := ModifyStringValues(target, func(p string) (any, error) {
 		ret, err := e.InValue(p)
 		if err != nil {
 			return nil, err
@@ -164,7 +164,7 @@ func (e *ExpandRegexMatch) InMap(target map[string]interface{}) (map[string]inte
 	}
 
 	switch ret := ret.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		return ret, nil
 	default:
 		return nil, fmt.Errorf("unexpected type: %v: %T", ret, ret)

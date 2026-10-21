@@ -48,14 +48,14 @@ func (p *provider) GetString(key string) (string, error) {
 	return res, nil
 }
 
-func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
+func (p *provider) GetStringMap(key string) (map[string]any, error) {
 	key = strings.TrimSuffix(key, "/")
 	bs, err := p.fileReader(key)
 	if err != nil {
 		return nil, err
 	}
 
-	m := map[string]interface{}{}
+	m := map[string]any{}
 	if err := yaml.Unmarshal(bs, &m); err != nil {
 		return nil, err
 	}

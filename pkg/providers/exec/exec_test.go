@@ -3,6 +3,7 @@ package exec
 import (
 	"context"
 	"fmt"
+	"slices"
 	"testing"
 
 	"github.com/helmfile/vals/pkg/config"
@@ -71,7 +72,7 @@ func Test_parseCommand(t *testing.T) {
 func Test_provider_GetString(t *testing.T) {
 	tests := []struct {
 		name    string
-		conf    map[string]interface{}
+		conf    map[string]any
 		key     string
 		stdout  string
 		stderr  string
@@ -81,55 +82,55 @@ func Test_provider_GetString(t *testing.T) {
 	}{
 		{
 			name:   "Simple command returns stdout",
-			conf:   map[string]interface{}{},
+			conf:   map[string]any{},
 			key:    "echo/hello",
 			stdout: "hello\n",
 			want:   "hello",
 		},
 		{
 			name:   "Trim disabled",
-			conf:   map[string]interface{}{"trim": "false"},
+			conf:   map[string]any{"trim": "false"},
 			key:    "echo/hello",
 			stdout: "hello\n",
 			want:   "hello\n",
 		},
 		{
 			name:   "Command with path args",
-			conf:   map[string]interface{}{},
+			conf:   map[string]any{},
 			key:    "bw/get/password",
 			stdout: "my-secret",
 			want:   "my-secret",
 		},
 		{
 			name:   "Command with query args",
-			conf:   map[string]interface{}{"args": "--key,my-secret"},
+			conf:   map[string]any{"args": "--key,my-secret"},
 			key:    "my-script.sh",
 			stdout: "result",
 			want:   "result",
 		},
 		{
 			name:   "Mixed path and query args",
-			conf:   map[string]interface{}{"args": "--format,json"},
+			conf:   map[string]any{"args": "--format,json"},
 			key:    "tool/get",
 			stdout: "output",
 			want:   "output",
 		},
 		{
 			name:   "Absolute path command",
-			conf:   map[string]interface{}{},
+			conf:   map[string]any{},
 			key:    "/usr/local/bin/tool",
 			stdout: "result",
 			want:   "result",
 		},
 		{
 			name:    "Empty command",
-			conf:    map[string]interface{}{},
+			conf:    map[string]any{},
 			key:     "",
 			wantErr: true,
 		},
 		{
 			name:    "Command failure with stderr",
-			conf:    map[string]interface{}{},
+			conf:    map[string]any{},
 			key:     "failing-cmd",
 			stderr:  "something went wrong",
 			execErr: fmt.Errorf("exit status 1"),
@@ -137,7 +138,7 @@ func Test_provider_GetString(t *testing.T) {
 		},
 		{
 			name:    "Command failure without stderr",
-			conf:    map[string]interface{}{},
+			conf:    map[string]any{},
 			key:     "failing-cmd",
 			execErr: fmt.Errorf("exit status 1"),
 			wantErr: true,
@@ -168,7 +169,7 @@ func Test_provider_GetString_args_passing(t *testing.T) {
 
 	tests := []struct {
 		name         string
-		conf         map[string]interface{}
+		conf         map[string]any
 		key          string
 		wantName     string
 		wantArgs     string
@@ -176,28 +177,28 @@ func Test_provider_GetString_args_passing(t *testing.T) {
 	}{
 		{
 			name:     "Path args only",
-			conf:     map[string]interface{}{},
+			conf:     map[string]any{},
 			key:      "bw/get/password",
 			wantName: "bw",
 			wantArgs: "[get password]",
 		},
 		{
 			name:     "Query args only",
-			conf:     map[string]interface{}{"args": "--key,secret"},
+			conf:     map[string]any{"args": "--key,secret"},
 			key:      "my-tool",
 			wantName: "my-tool",
 			wantArgs: "[--key secret]",
 		},
 		{
 			name:     "Path and query args combined",
-			conf:     map[string]interface{}{"args": "--format,json"},
+			conf:     map[string]any{"args": "--format,json"},
 			key:      "tool/get",
 			wantName: "tool",
 			wantArgs: "[get --format json]",
 		},
 		{
 			name:         "Env vars passed",
-			conf:         map[string]interface{}{"env_API_TOKEN": "xyz"},
+			conf:         map[string]any{"env_API_TOKEN": "xyz"},
 			key:          "my-tool",
 			wantName:     "my-tool",
 			wantArgs:     "[]",
@@ -225,13 +226,7 @@ func Test_provider_GetString_args_passing(t *testing.T) {
 				t.Errorf("command args = %v, want %v", capturedArgs, tt.wantArgs)
 			}
 			if tt.wantEnvEntry != "" {
-				found := false
-				for _, e := range capturedEnv {
-					if e == tt.wantEnvEntry {
-						found = true
-						break
-					}
-				}
+				found := slices.Contains(capturedEnv, tt.wantEnvEntry)
 				if !found {
 					t.Errorf("env vars %v missing expected entry %q", capturedEnv, tt.wantEnvEntry)
 				}
@@ -248,7 +243,7 @@ func Test_provider_GetString_timeout(t *testing.T) {
 		return []byte("ok"), nil, nil
 	}
 
-	conf := map[string]interface{}{"timeout": "5"}
+	conf := map[string]any{"timeout": "5"}
 	p := New(nil, config.MapConfig{M: conf})
 	p.executor = executor
 
@@ -266,7 +261,7 @@ func Test_provider_GetString_timeout(t *testing.T) {
 
 func Test_provider_GetStringMap(t *testing.T) {
 	tests := []struct {
-		want    map[string]interface{}
+		want    map[string]any
 		name    string
 		stdout  string
 		wantErr bool
@@ -274,8 +269,8 @@ func Test_provider_GetStringMap(t *testing.T) {
 		{
 			name:   "Valid YAML output",
 			stdout: "foo:\n  bar: baz\n",
-			want: map[string]interface{}{
-				"foo": map[string]interface{}{
+			want: map[string]any{
+				"foo": map[string]any{
 					"bar": "baz",
 				},
 			},
@@ -283,7 +278,7 @@ func Test_provider_GetStringMap(t *testing.T) {
 		{
 			name:   "Valid JSON output",
 			stdout: `{"key": "value"}`,
-			want: map[string]interface{}{
+			want: map[string]any{
 				"key": "value",
 			},
 		},
@@ -296,7 +291,7 @@ func Test_provider_GetStringMap(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := New(nil, config.MapConfig{M: map[string]interface{}{}})
+			p := New(nil, config.MapConfig{M: map[string]any{}})
 			p.executor = mockExecutor(tt.stdout, "", nil)
 
 			got, err := p.GetStringMap("my-tool")

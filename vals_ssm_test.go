@@ -21,20 +21,20 @@ func TestValues_SSM_String(t *testing.T) {
 	}
 
 	type testcase struct {
-		config map[string]interface{}
+		config map[string]any
 	}
 
-	commonInline := map[string]interface{}{
+	commonInline := map[string]any{
 		"foo": testKey,
-		"bar": map[string]interface{}{
+		"bar": map[string]any{
 			"baz": testKey,
 		},
 	}
 
 	testcases := []testcase{
 		{
-			config: map[string]interface{}{
-				"provider": map[string]interface{}{
+			config: map[string]any{
+				"provider": map[string]any{
 					"name":   "ssm",
 					"type":   "string",
 					"path":   "/mykv/foo",
@@ -44,8 +44,8 @@ func TestValues_SSM_String(t *testing.T) {
 			},
 		},
 		{
-			config: map[string]interface{}{
-				"provider": map[string]interface{}{
+			config: map[string]any{
+				"provider": map[string]any{
 					"name": "ssm",
 					// implies type=string
 					"path":   "/mykv/foo",
@@ -55,9 +55,9 @@ func TestValues_SSM_String(t *testing.T) {
 			},
 		},
 		{
-			config: map[string]interface{}{
+			config: map[string]any{
 				// implies name=ssm and type=string
-				"ssm": map[string]interface{}{
+				"ssm": map[string]any{
 					"path":   "/mykv/foo",
 					"region": "ap-northeast-1",
 				},
@@ -87,7 +87,7 @@ func TestValues_SSM_String(t *testing.T) {
 
 			{
 				switch bar := vals["bar"].(type) {
-				case map[string]interface{}:
+				case map[string]any:
 					expected := testValue
 					key := "baz"
 					actual := bar[key]
@@ -110,12 +110,12 @@ func TestValues_SSM_Map(t *testing.T) {
 	}
 
 	type testcase struct {
-		provider map[string]interface{}
+		provider map[string]any
 	}
 
 	testcases := []testcase{
 		{
-			provider: map[string]interface{}{
+			provider: map[string]any{
 				"name":   "ssm",
 				"type":   "map",
 				"path":   "/mykv",
@@ -123,7 +123,7 @@ func TestValues_SSM_Map(t *testing.T) {
 			},
 		},
 		{
-			provider: map[string]interface{}{
+			provider: map[string]any{
 				"name":   "ssm",
 				"type":   "map",
 				"format": "raw",
@@ -132,7 +132,7 @@ func TestValues_SSM_Map(t *testing.T) {
 			},
 		},
 		{
-			provider: map[string]interface{}{
+			provider: map[string]any{
 				"name": "ssm",
 				// implies type:map format:raw
 				"prefix": "/mykv",
@@ -144,11 +144,11 @@ func TestValues_SSM_Map(t *testing.T) {
 	for i := range testcases {
 		tc := testcases[i]
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			config := config2.Map(map[string]interface{}{
+			config := config2.Map(map[string]any{
 				"provider": tc.provider,
-				"inline": map[string]interface{}{
+				"inline": map[string]any{
 					"foo": "foo",
-					"bar": map[string]interface{}{
+					"bar": map[string]any{
 						"baz": "foo",
 					},
 				},
@@ -161,7 +161,7 @@ func TestValues_SSM_Map(t *testing.T) {
 
 			{
 				switch foo := vals["foo"].(type) {
-				case map[string]interface{}:
+				case map[string]any:
 					key := testKey
 					actual, ok := foo[key]
 					if !ok {
@@ -178,9 +178,9 @@ func TestValues_SSM_Map(t *testing.T) {
 
 			{
 				switch bar := vals["bar"].(type) {
-				case map[string]interface{}:
+				case map[string]any:
 					switch baz := bar["baz"].(type) {
-					case map[string]interface{}:
+					case map[string]any:
 						key := testKey
 						actual, ok := baz[key]
 						if !ok {
@@ -209,12 +209,12 @@ func TestValues_SSM_Map_Raw(t *testing.T) {
 	}
 
 	type testcase struct {
-		provider map[string]interface{}
+		provider map[string]any
 	}
 
 	testcases := []testcase{
 		{
-			provider: map[string]interface{}{
+			provider: map[string]any{
 				"name":    "ssm",
 				"type":    "map",
 				"path":    "/mykv",
@@ -223,7 +223,7 @@ func TestValues_SSM_Map_Raw(t *testing.T) {
 			},
 		},
 		{
-			provider: map[string]interface{}{
+			provider: map[string]any{
 				"name": "ssm",
 				// implies
 				//"type":    "map",
@@ -238,11 +238,11 @@ func TestValues_SSM_Map_Raw(t *testing.T) {
 		tc := testcases[i]
 
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			config := config2.Map(map[string]interface{}{
+			config := config2.Map(map[string]any{
 				"provider": tc.provider,
-				"inline": map[string]interface{}{
+				"inline": map[string]any{
 					"foo": "foo",
-					"bar": map[string]interface{}{
+					"bar": map[string]any{
 						"baz": "foo",
 					},
 				},
@@ -255,7 +255,7 @@ func TestValues_SSM_Map_Raw(t *testing.T) {
 
 			{
 				switch foo := vals["foo"].(type) {
-				case map[string]interface{}:
+				case map[string]any:
 					key := testKey
 					actual, ok := foo[key]
 					if !ok {
@@ -272,9 +272,9 @@ func TestValues_SSM_Map_Raw(t *testing.T) {
 
 			{
 				switch bar := vals["bar"].(type) {
-				case map[string]interface{}:
+				case map[string]any:
 					switch baz := bar["baz"].(type) {
-					case map[string]interface{}:
+					case map[string]any:
 						key := testKey
 						actual, ok := baz[key]
 						if !ok {
@@ -314,11 +314,11 @@ func TestValues_SSM_Map_YAML(t *testing.T) {
 	}
 
 	type testcase struct {
-		provider map[string]interface{}
+		provider map[string]any
 		dataKey  string
 	}
 
-	provider1 := map[string]interface{}{
+	provider1 := map[string]any{
 		"name":   "ssm",
 		"type":   "map",
 		"path":   "/mykv/yamltest",
@@ -326,7 +326,7 @@ func TestValues_SSM_Map_YAML(t *testing.T) {
 		"format": "yaml",
 	}
 
-	provider2 := map[string]interface{}{
+	provider2 := map[string]any{
 		"name": "ssm",
 		// implies `type: map`
 		"path":   "/mykv/yamltest",
@@ -356,9 +356,9 @@ func TestValues_SSM_Map_YAML(t *testing.T) {
 	for i := range testcases {
 		tc := testcases[i]
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			config := config2.Map(map[string]interface{}{
+			config := config2.Map(map[string]any{
 				"provider": tc.provider,
-				"inline": map[string]interface{}{
+				"inline": map[string]any{
 					"bar": tc.dataKey,
 				},
 			})
@@ -370,9 +370,9 @@ func TestValues_SSM_Map_YAML(t *testing.T) {
 
 			{
 				switch bar := vals["bar"].(type) {
-				case map[string]interface{}:
+				case map[string]any:
 					switch baz := bar["baz"].(type) {
-					case map[string]interface{}:
+					case map[string]any:
 						key := testKey
 						actual, ok := baz[key]
 						if !ok {
@@ -412,12 +412,12 @@ func TestValues_SSM_Map_YAML_Root(t *testing.T) {
 	}
 
 	type provider struct {
-		config map[string]interface{}
+		config map[string]any
 	}
 	testcases := []provider{
 		{
-			config: map[string]interface{}{
-				"provider": map[string]interface{}{
+			config: map[string]any{
+				"provider": map[string]any{
 					"name":   "ssm",
 					"type":   "map",
 					"path":   "/mykv/yamltest/myyaml",
@@ -427,8 +427,8 @@ func TestValues_SSM_Map_YAML_Root(t *testing.T) {
 			},
 		},
 		{
-			config: map[string]interface{}{
-				"provider": map[string]interface{}{
+			config: map[string]any{
+				"provider": map[string]any{
 					"name":   "ssm",
 					"type":   "map",
 					"path":   "/mykv/yamltest/myjson",
@@ -438,8 +438,8 @@ func TestValues_SSM_Map_YAML_Root(t *testing.T) {
 			},
 		},
 		{
-			config: map[string]interface{}{
-				"provider": map[string]interface{}{
+			config: map[string]any{
+				"provider": map[string]any{
 					"name": "ssm",
 					// implies format:yaml and type:map
 					"path":   "/mykv/yamltest/myyaml",
@@ -448,8 +448,8 @@ func TestValues_SSM_Map_YAML_Root(t *testing.T) {
 			},
 		},
 		{
-			config: map[string]interface{}{
-				"provider": map[string]interface{}{
+			config: map[string]any{
+				"provider": map[string]any{
 					"name": "ssm",
 					// implies format:yaml and type:map
 					"path":   "/mykv/yamltest/myjson",
@@ -458,9 +458,9 @@ func TestValues_SSM_Map_YAML_Root(t *testing.T) {
 			},
 		},
 		{
-			config: map[string]interface{}{
+			config: map[string]any{
 				// implies name:vault
-				"ssm": map[string]interface{}{
+				"ssm": map[string]any{
 					// implies format:yaml and type:map
 					"path":   "/mykv/yamltest/myjson",
 					"region": "ap-northeast-1",
@@ -481,7 +481,7 @@ func TestValues_SSM_Map_YAML_Root(t *testing.T) {
 
 			{
 				switch baz := vals["baz"].(type) {
-				case map[string]interface{}:
+				case map[string]any:
 					key := testKey
 					actual, ok := baz[key]
 					if !ok {
@@ -518,10 +518,10 @@ func TestValues_SSM_Map_Raw_Root(t *testing.T) {
 	}
 
 	type testcase struct {
-		config map[string]interface{}
+		config map[string]any
 	}
 
-	provider1 := map[string]interface{}{
+	provider1 := map[string]any{
 		"name":   "ssm",
 		"type":   "map",
 		"path":   "/mykv/foo",
@@ -529,7 +529,7 @@ func TestValues_SSM_Map_Raw_Root(t *testing.T) {
 		"format": "raw",
 	}
 
-	provider2 := map[string]interface{}{
+	provider2 := map[string]any{
 		"name": "ssm",
 		// implies format:raw
 		"prefix": "/mykv/foo",
@@ -538,19 +538,19 @@ func TestValues_SSM_Map_Raw_Root(t *testing.T) {
 
 	testcases := []testcase{
 		{
-			config: map[string]interface{}{
+			config: map[string]any{
 				"provider": provider1,
 			},
 		},
 		{
-			config: map[string]interface{}{
+			config: map[string]any{
 				"provider": provider2,
 			},
 		},
 		{
-			config: map[string]interface{}{
+			config: map[string]any{
 				// implies name:ssm
-				"ssm": map[string]interface{}{
+				"ssm": map[string]any{
 					// implies format:raw
 					"prefix":  "/mykv/foo",
 					"address": "http://127.0.0.1:8200",
@@ -558,9 +558,9 @@ func TestValues_SSM_Map_Raw_Root(t *testing.T) {
 			},
 		},
 		{
-			config: map[string]interface{}{
+			config: map[string]any{
 				// implies name:ssm
-				"ssm": map[string]interface{}{
+				"ssm": map[string]any{
 					// implies format:raw
 					"prefix": "/mykv/foo",
 					"keys":   []string{testKey},
@@ -569,9 +569,9 @@ func TestValues_SSM_Map_Raw_Root(t *testing.T) {
 			},
 		},
 		{
-			config: map[string]interface{}{
+			config: map[string]any{
 				// implies name:ssm
-				"ssm": map[string]interface{}{
+				"ssm": map[string]any{
 					// implies format:raw
 					"paths":  []string{"/mykv/foo/mykey"},
 					"region": "ap-northeast-1",

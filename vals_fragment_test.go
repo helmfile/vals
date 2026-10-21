@@ -21,18 +21,18 @@ func TestFragment_Issue114_FileProvider(t *testing.T) {
 	ref := "ref+file://" + jsonFile
 
 	cases := []struct {
-		want interface{}
+		want any
 		name string
 		frag string
 	}{
 		{name: "int", frag: "#/key", want: 123},
 		{name: "float", frag: "#/ratio", want: 1.5},
-		{name: "object", frag: "#/obj", want: map[string]interface{}{"a": 1}},
+		{name: "object", frag: "#/obj", want: map[string]any{"a": 1}},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			res, err := Eval(map[string]interface{}{"v": ref + tc.frag}, Options{})
+			res, err := Eval(map[string]any{"v": ref + tc.frag}, Options{})
 			require.NoError(t, err)
 			require.Equal(t, tc.want, res["v"])
 		})
@@ -54,7 +54,7 @@ func TestFragment_ScalarTypes(t *testing.T) {
 			"flag: true\n"), 0o600))
 	ref := "ref+file://" + f
 
-	res, err := Eval(map[string]interface{}{
+	res, err := Eval(map[string]any{
 		"ratio": ref + "#/ratio",
 		"neg":   ref + "#/neg",
 		"big":   ref + "#/big",
@@ -87,17 +87,17 @@ func TestFragment_NestedObjectAndArray(t *testing.T) {
 	ref := "ref+file://" + f
 
 	t.Run("object", func(t *testing.T) {
-		res, err := Eval(map[string]interface{}{"v": ref + "#/obj"}, Options{})
+		res, err := Eval(map[string]any{"v": ref + "#/obj"}, Options{})
 		require.NoError(t, err)
-		require.Equal(t, map[string]interface{}{"a": 1, "b": "two"}, res["v"])
+		require.Equal(t, map[string]any{"a": 1, "b": "two"}, res["v"])
 	})
 	t.Run("array", func(t *testing.T) {
-		res, err := Eval(map[string]interface{}{"v": ref + "#/list"}, Options{})
+		res, err := Eval(map[string]any{"v": ref + "#/list"}, Options{})
 		require.NoError(t, err)
-		require.Equal(t, []interface{}{"x", "y"}, res["v"])
+		require.Equal(t, []any{"x", "y"}, res["v"])
 	})
 	t.Run("nested-leaf", func(t *testing.T) {
-		res, err := Eval(map[string]interface{}{"v": ref + "#/obj/a"}, Options{})
+		res, err := Eval(map[string]any{"v": ref + "#/obj/a"}, Options{})
 		require.NoError(t, err)
 		require.Equal(t, 1, res["v"])
 	})
@@ -112,9 +112,9 @@ func TestFragment_IntermediateInterfaceMap(t *testing.T) {
 
 	hash := fmt.Sprintf("%x", md5.Sum([]byte("echo")))
 	r.providers[hash] = &mockProvider{
-		getStringMapFunc: func(key string) (map[string]interface{}, error) {
-			return map[string]interface{}{
-				"outer": map[interface{}]interface{}{
+		getStringMapFunc: func(key string) (map[string]any, error) {
+			return map[string]any{
+				"outer": map[any]any{
 					"inner": "deep",
 				},
 			}, nil
@@ -139,19 +139,19 @@ func TestFragment_MissingKeyAndNil(t *testing.T) {
 	ref := "ref+file://" + f
 
 	t.Run("absent-key-fails", func(t *testing.T) {
-		_, err := Eval(map[string]interface{}{"v": ref + "#/absent"}, Options{FailOnMissingKeyInMap: true})
+		_, err := Eval(map[string]any{"v": ref + "#/absent"}, Options{FailOnMissingKeyInMap: true})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "no value found for key")
 	})
 	t.Run("absent-nested-key-fails", func(t *testing.T) {
 		// A key missing deeper in the path errors cleanly ("no value found"),
 		// not with the confusing "unsupported type" of the pre-fix code.
-		_, err := Eval(map[string]interface{}{"v": ref + "#/obj/missing"}, Options{FailOnMissingKeyInMap: true})
+		_, err := Eval(map[string]any{"v": ref + "#/obj/missing"}, Options{FailOnMissingKeyInMap: true})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "no value found for key")
 	})
 	t.Run("present-null-is-nil", func(t *testing.T) {
-		res, err := Eval(map[string]interface{}{"v": ref + "#/empty"}, Options{FailOnMissingKeyInMap: true})
+		res, err := Eval(map[string]any{"v": ref + "#/empty"}, Options{FailOnMissingKeyInMap: true})
 		require.NoError(t, err)
 		require.Nil(t, res["v"])
 	})

@@ -59,7 +59,7 @@ func (p *provider) GetString(varId string) (string, error) {
 	return string(secretValue), nil
 }
 
-func (p *provider) GetStringMap(path string) (map[string]interface{}, error) {
+func (p *provider) GetStringMap(path string) (map[string]any, error) {
 	return nil, fmt.Errorf("this provider does not support values from URI fragments")
 }
 

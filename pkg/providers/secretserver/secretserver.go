@@ -55,13 +55,13 @@ func (p *provider) GetString(key string) (string, error) {
 	}
 }
 
-func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
+func (p *provider) GetStringMap(key string) (map[string]any, error) {
 	secret, err := p.getSecret(key)
 	if err != nil {
 		return nil, err
 	}
 
-	secretMap := map[string]interface{}{}
+	secretMap := map[string]any{}
 	for _, item := range secret.Fields {
 		secretMap[item.FieldName] = item.ItemValue
 		secretMap[item.Slug] = item.ItemValue

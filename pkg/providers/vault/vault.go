@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
@@ -181,12 +182,12 @@ func (p *provider) decodeString(key, s string) (string, error) {
 	}
 }
 
-func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
+func (p *provider) GetStringMap(key string) (map[string]any, error) {
 	// singleflight collapses a burst of concurrent reads for the same path into
 	// a single Vault read, so vals-operator's parallel callers spend one token
 	// use instead of one per goroutine (#1204). Reads are not cached between
 	// calls, so rotated secrets are always picked up on the next read.
-	v, err, _ := p.sfRead.Do(key, func() (interface{}, error) {
+	v, err, _ := p.sfRead.Do(key, func() (any, error) {
 		return p.readSecretMap(key)
 	})
 	if err != nil {
@@ -198,17 +199,15 @@ func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
 	// corrupt another caller's view. The copy is shallow — nested map/slice
 	// values are still shared — which is fine for the typical string-valued KV
 	// secret.
-	secrets := v.(map[string]interface{})
-	res := make(map[string]interface{}, len(secrets))
-	for k, val := range secrets {
-		res[k] = val
-	}
+	secrets := v.(map[string]any)
+	res := make(map[string]any, len(secrets))
+	maps.Copy(res, secrets)
 
 	return res, nil
 }
 
 // readSecretMap performs a single, uncached Vault read for key.
-func (p *provider) readSecretMap(key string) (map[string]interface{}, error) {
+func (p *provider) readSecretMap(key string) (map[string]any, error) {
 	cli, err := p.ensureClient()
 	if err != nil {
 		return nil, fmt.Errorf("Cannot create Vault Client: %v", err)
@@ -245,7 +244,7 @@ func (p *provider) readSecretMap(key string) (map[string]interface{}, error) {
 	// Vault KV Version 2
 	if v2 {
 		if _, ok := secret.Data["data"]; ok {
-			if m, ok := secret.Data["data"].(map[string]interface{}); ok {
+			if m, ok := secret.Data["data"].(map[string]any); ok {
 				secrets = m
 			}
 		}
@@ -264,7 +263,7 @@ func (p *provider) resolveKVVersion(key string, cli *vault.Client) (string, bool
 		return res.mountPath, res.v2, nil
 	}
 
-	v, err, _ := p.sfVersion.Do(key, func() (interface{}, error) {
+	v, err, _ := p.sfVersion.Do(key, func() (any, error) {
 		// Another flight may have populated the cache while this one waited.
 		if res, ok := p.lookupKVVersion(key); ok {
 			return res, nil
@@ -391,7 +390,7 @@ func (p *provider) ensureClient() (*vault.Client, error) {
 				}
 			}
 		case "approle":
-			data := map[string]interface{}{
+			data := map[string]any{
 				"role_id":   p.RoleId,
 				"secret_id": p.SecretId,
 			}
@@ -431,7 +430,7 @@ func (p *provider) ensureClient() (*vault.Client, error) {
 				return nil, fmt.Errorf("unable to read service account token file %q: %w", tokenPath, err)
 			}
 
-			data := map[string]interface{}{
+			data := map[string]any{
 				"jwt":  string(jwt),
 				"role": p.RoleId,
 			}
@@ -471,7 +470,7 @@ func (p *provider) ensureClient() (*vault.Client, error) {
 				return nil, fmt.Errorf("password missing for userpass authentication")
 			}
 
-			data := map[string]interface{}{
+			data := map[string]any{
 				"password": password,
 			}
 

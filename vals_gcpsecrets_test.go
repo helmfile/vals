@@ -21,124 +21,124 @@ func TestValues_GCPSecretsManager(t *testing.T) {
 	}
 	tests := []struct {
 		secrets map[string]string
-		config  map[string]interface{}
-		want    map[string]interface{}
+		config  map[string]any
+		want    map[string]any
 		name    string
 	}{
 		{
 			map[string]string{"valstestvar": "foo: bar"},
-			map[string]interface{}{
-				"provider": map[string]interface{}{
+			map[string]any{
+				"provider": map[string]any{
 					"name":    "gcpsecrets",
 					"version": "latest",
 					"type":    "string",
 					"path":    projectId,
 				},
-				"inline": map[string]interface{}{
+				"inline": map[string]any{
 					"valstestvar": "valstestvar",
 				},
 			},
-			map[string]interface{}{"valstestvar": "foo: bar"},
+			map[string]any{"valstestvar": "foo: bar"},
 			"latest string",
 		},
 		{
 			map[string]string{"valstestvar": "foo: bar"},
-			map[string]interface{}{
-				"provider": map[string]interface{}{
+			map[string]any{
+				"provider": map[string]any{
 					"name":    "gcpsecrets",
 					"version": "latest",
 					"type":    "string",
 					"path":    "",
 				},
-				"inline": map[string]interface{}{
+				"inline": map[string]any{
 					"valstestvar": "valstestvar",
 				},
 			},
-			map[string]interface{}{"valstestvar": "foo: bar"},
+			map[string]any{"valstestvar": "foo: bar"},
 			"latest string",
 		},
 		{
 			map[string]string{},
-			map[string]interface{}{
-				"provider": map[string]interface{}{
+			map[string]any{
+				"provider": map[string]any{
 					"name":           "gcpsecrets",
 					"version":        "latest",
 					"type":           "string",
 					"path":           projectId,
 					"fallback_value": "default-value",
 				},
-				"inline": map[string]interface{}{
+				"inline": map[string]any{
 					"missingvar": "missingvar",
 				},
 			},
-			map[string]interface{}{"missingvar": "default-value"},
+			map[string]any{"missingvar": "default-value"},
 			"fallback string",
 		},
 		{
 			map[string]string{},
-			map[string]interface{}{
-				"provider": map[string]interface{}{
+			map[string]any{
+				"provider": map[string]any{
 					"name":           "gcpsecrets",
 					"version":        "latest",
 					"type":           "string",
 					"path":           projectId,
 					"fallback_value": "",
 				},
-				"inline": map[string]interface{}{
+				"inline": map[string]any{
 					"missingvar": "missingvar",
 				},
 			},
-			map[string]interface{}{"missingvar": ""},
+			map[string]any{"missingvar": ""},
 			"empty fallback string",
 		},
 		{
 			map[string]string{"valstestvar": "foo: bar"},
-			map[string]interface{}{
-				"provider": map[string]interface{}{
+			map[string]any{
+				"provider": map[string]any{
 					"name":    "gcpsecrets",
 					"version": "1",
 					"type":    "string",
 					"path":    projectId,
 				},
-				"inline": map[string]interface{}{
+				"inline": map[string]any{
 					"valstestvar": "valstestvar",
 				},
 			},
-			map[string]interface{}{"valstestvar": "foo: bar"},
+			map[string]any{"valstestvar": "foo: bar"},
 			"v1 string",
 		},
 		{
 			map[string]string{},
-			map[string]interface{}{
-				"provider": map[string]interface{}{
+			map[string]any{
+				"provider": map[string]any{
 					"name":     "gcpsecrets",
 					"version":  "1",
 					"type":     "string",
 					"path":     projectId,
 					"optional": true,
 				},
-				"inline": map[string]interface{}{
+				"inline": map[string]any{
 					"missingvar": "",
 				},
 			},
-			map[string]interface{}{"missingvar": ""},
+			map[string]any{"missingvar": ""},
 			"optional string",
 		},
 		{
 			map[string]string{"valstestvar": "foo: bar"},
-			map[string]interface{}{
-				"provider": map[string]interface{}{
+			map[string]any{
+				"provider": map[string]any{
 					"name":    "gcpsecrets",
 					"version": "1",
 					"type":    "map",
 					"path":    projectId,
 				},
-				"inline": map[string]interface{}{
+				"inline": map[string]any{
 					"valstestvar": "valstestvar",
 				},
 			},
-			map[string]interface{}{
-				"valstestvar": map[string]interface{}{
+			map[string]any{
+				"valstestvar": map[string]any{
 					"foo": "bar",
 				},
 			},
@@ -146,19 +146,19 @@ func TestValues_GCPSecretsManager(t *testing.T) {
 		},
 		{
 			map[string]string{"valstestvar": "foo: bar"},
-			map[string]interface{}{
-				"provider": map[string]interface{}{
+			map[string]any{
+				"provider": map[string]any{
 					"name":    "gcpsecrets",
 					"version": "latest",
 					"type":    "map",
 					"path":    projectId,
 				},
-				"inline": map[string]interface{}{
+				"inline": map[string]any{
 					"valstestvar": "valstestvar",
 				},
 			},
-			map[string]interface{}{
-				"valstestvar": map[string]interface{}{
+			map[string]any{
+				"valstestvar": map[string]any{
 					"foo": "bar",
 				},
 			},
@@ -166,19 +166,19 @@ func TestValues_GCPSecretsManager(t *testing.T) {
 		},
 		{
 			map[string]string{"valstestvar": "foo: bar\n"},
-			map[string]interface{}{
-				"provider": map[string]interface{}{
+			map[string]any{
+				"provider": map[string]any{
 					"name":    "gcpsecrets",
 					"version": "latest",
 					"type":    "string",
 					"path":    projectId,
 					"trim_nl": true,
 				},
-				"inline": map[string]interface{}{
+				"inline": map[string]any{
 					"valstestvar": "valstestvar",
 				},
 			},
-			map[string]interface{}{"valstestvar": "foo: bar"},
+			map[string]any{"valstestvar": "foo: bar"},
 			"trim_nl string",
 		},
 	}

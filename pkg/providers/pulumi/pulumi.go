@@ -144,7 +144,7 @@ func (p *provider) GetString(key string) (string, error) {
 	return attributeValue, nil
 }
 
-func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
+func (p *provider) GetStringMap(key string) (map[string]any, error) {
 	return nil, fmt.Errorf("path fragment is not supported for pulumi provider")
 }
 

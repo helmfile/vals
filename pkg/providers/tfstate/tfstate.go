@@ -161,7 +161,7 @@ func (p *provider) ReadTFState(f, k string) (*tfstate.TFState, error) {
 	}
 }
 
-func (p *provider) GetStringMap(key string) (map[string]interface{}, error) {
+func (p *provider) GetStringMap(key string) (map[string]any, error) {
 	return nil, fmt.Errorf("path fragment is not supported for tfstate provider")
 }
 
