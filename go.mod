@@ -42,8 +42,8 @@ require (
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.37
 	github.com/stretchr/testify v1.12.1
 	github.com/tidwall/gjson v1.19.0
-	github.com/yandex-cloud/go-genproto v0.122.0
-	github.com/yandex-cloud/go-sdk v0.36.0
+	github.com/yandex-cloud/go-genproto v0.135.0
+	github.com/yandex-cloud/go-sdk v0.44.0
 	golang.org/x/oauth2 v0.37.0
 	golang.org/x/sync v0.23.0
 	google.golang.org/api v0.299.0
