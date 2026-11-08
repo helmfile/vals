@@ -8,8 +8,11 @@ import (
 	"strings"
 
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/lockbox/v1"
-	sdk "github.com/yandex-cloud/go-sdk"
-	"github.com/yandex-cloud/go-sdk/iamkey"
+	ycsdk "github.com/yandex-cloud/go-sdk/v2"
+	"github.com/yandex-cloud/go-sdk/v2/credentials"
+	"github.com/yandex-cloud/go-sdk/v2/pkg/iamkey"
+	"github.com/yandex-cloud/go-sdk/v2/pkg/options"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/helmfile/vals/pkg/api"
 	"github.com/helmfile/vals/pkg/log"
@@ -20,10 +23,14 @@ const (
 	ENDPOINT_ENV = "YC_LOCKBOX_ENDPOINT"
 )
 
+// payloadServiceGet identifies the Lockbox PayloadService.Get RPC used by the
+// SDK to resolve the endpoint and connection for the generated gRPC client.
+var payloadServiceGet = protoreflect.FullName("yandex.cloud.lockbox.v1.PayloadService.Get")
+
 // Format: ref+yclockbox://SECRET_ID[?version_id=VERSION_ID][#KEY]
 type provider struct {
 	logger    *log.Logger
-	client    lockbox.PayloadServiceClient
+	sdk       *ycsdk.SDK
 	versionId string
 }
 
@@ -34,17 +41,17 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 		return nil
 	}
 
-	config := sdk.Config{
-		Credentials: creds,
+	sdkOpts := []options.Option{
+		options.WithCredentials(creds),
 	}
 
 	if endpoint := os.Getenv(ENDPOINT_ENV); endpoint != "" {
-		config.Endpoint = endpoint
+		sdkOpts = append(sdkOpts, options.WithDiscoveryEndpoint(endpoint))
 	}
 
-	sdk, err := sdk.Build(
+	sdk, err := ycsdk.Build(
 		context.TODO(),
-		config,
+		sdkOpts...,
 	)
 
 	if err != nil {
@@ -54,7 +61,7 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 
 	p := &provider{
 		logger: l,
-		client: sdk.LockboxPayload().Payload(),
+		sdk:    sdk,
 	}
 
 	if v := cfg.String("version_id"); cfg.Exists("version_id") {
@@ -64,7 +71,7 @@ func New(l *log.Logger, cfg api.StaticConfig) *provider {
 	return p
 }
 
-func getCredentialsFromEnv() (sdk.Credentials, error) {
+func getCredentialsFromEnv() (credentials.Credentials, error) {
 	token, ok := os.LookupEnv(TOKEN_ENV)
 	if !ok {
 		return nil, fmt.Errorf("yclockbox: missing %s environment variable", TOKEN_ENV)
@@ -76,14 +83,14 @@ func getCredentialsFromEnv() (sdk.Credentials, error) {
 		if err != nil {
 			return nil, fmt.Errorf("yclockbox: invalid authorized key in %s: %w", TOKEN_ENV, err)
 		}
-		creds, err := sdk.ServiceAccountKey(key)
+		creds, err := credentials.ServiceAccountKey(key)
 		if err != nil {
 			return nil, fmt.Errorf("yclockbox: failed to use authorized key from %s: %w", TOKEN_ENV, err)
 		}
 		return creds, nil
 	}
 
-	return sdk.NewIAMTokenCredentials(trimmed), nil
+	return credentials.IAMToken(trimmed), nil
 }
 
 func (p *provider) GetString(key string) (string, error) {
@@ -111,7 +118,14 @@ func (p *provider) GetStringMap(key string) (map[string]any, error) {
 	if p == nil {
 		return nil, fmt.Errorf("yclockbox: provider is nil")
 	}
-	secret, err := p.client.Get(
+
+	conn, err := p.sdk.GetConnection(context.Background(), payloadServiceGet)
+	if err != nil {
+		p.logger.Debugf("yclockbox: %s", err)
+		return nil, err
+	}
+
+	secret, err := lockbox.NewPayloadServiceClient(conn).Get(
 		context.Background(),
 		&lockbox.GetPayloadRequest{
 			SecretId:  key,
