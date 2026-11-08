@@ -17,8 +17,8 @@ require (
 	github.com/IBM/go-sdk-core/v5 v5.25.0
 	github.com/IBM/secrets-manager-go-sdk/v2 v2.0.22
 	github.com/a8m/envsubst v1.4.3
-	github.com/antchfx/jsonquery v1.3.7
-	github.com/antchfx/xpath v1.3.8
+	github.com/antchfx/jsonquery v1.3.8
+	github.com/antchfx/xpath v1.3.9
 	github.com/aws/aws-sdk-go v1.55.8
 	github.com/aws/aws-sdk-go-v2 v1.47.6
 	github.com/aws/aws-sdk-go-v2/config v1.33.9
