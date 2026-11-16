@@ -44,7 +44,7 @@ require (
 	github.com/tidwall/gjson v1.19.0
 	github.com/yandex-cloud/go-genproto v0.136.0
 	github.com/yandex-cloud/go-sdk/v2 v2.188.0
-	golang.org/x/oauth2 v0.37.0
+	golang.org/x/oauth2 v0.38.0
 	golang.org/x/sync v0.24.0
 	google.golang.org/api v0.304.0
 	google.golang.org/protobuf v1.36.12
