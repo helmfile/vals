@@ -33,6 +33,7 @@ require (
 	github.com/getsops/sops/v3 v3.13.3
 	github.com/go-openapi/runtime v0.33.3
 	github.com/google/go-cmp v0.7.0
+	github.com/googleapis/gax-go/v2 v2.27.0
 	github.com/hashicorp/golang-lru v1.0.2
 	github.com/hashicorp/hcp-sdk-go v0.175.0
 	github.com/hashicorp/vault/api v1.23.0
@@ -169,7 +170,6 @@ require (
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.23 // indirect
-	github.com/googleapis/gax-go/v2 v2.27.0 // indirect
 	github.com/goware/prefixer v0.0.0-20160118172347-395022866408 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
