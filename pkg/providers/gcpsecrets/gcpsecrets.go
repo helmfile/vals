@@ -6,13 +6,54 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 
 	sm "cloud.google.com/go/secretmanager/apiv1"
 	smpb "cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
+	"github.com/googleapis/gax-go/v2"
 	"gopkg.in/yaml.v3"
 
 	"github.com/helmfile/vals/pkg/api"
 )
+
+// secretAccessor is the part of the Secret Manager client this provider uses.
+type secretAccessor interface {
+	AccessSecretVersion(context.Context, *smpb.AccessSecretVersionRequest, ...gax.CallOption) (*smpb.AccessSecretVersionResponse, error)
+}
+
+var (
+	clientMu sync.Mutex
+	client   secretAccessor
+	// newClient is replaced in tests.
+	newClient = func(ctx context.Context) (secretAccessor, error) {
+		return sm.NewClient(ctx)
+	}
+)
+
+// sharedClient returns the one Secret Manager client that all gcpsecrets reads
+// in the process share, and creates it on first use.
+//
+// A client carries its own credentials, token cache and gRPC connection, so a
+// client per read costs a token fetch and a TLS handshake per secret (with
+// workload identity federation, an STS exchange and an impersonation call).
+// The client is package-level because providers are cached per query string:
+// refs that pin different versions get different providers.
+//
+// A failed creation is not kept, so the next read tries again.
+func sharedClient() (secretAccessor, error) {
+	clientMu.Lock()
+	defer clientMu.Unlock()
+	if client == nil {
+		// The client outlives the read that creates it, so it does not take
+		// that read's context.
+		c, err := newClient(context.Background())
+		if err != nil {
+			return nil, err
+		}
+		client = c
+	}
+	return client, nil
+}
 
 // Format: ref+gcpsecrets://project/mykey[?version=VERSION][&fallback=valuewhenkeyisnotfound][&optional=true][&trim_nl=true]#/yaml_or_json_key/in/secret
 type provider struct {
@@ -65,7 +106,7 @@ func (p *provider) GetStringMap(key string) (map[string]any, error) {
 }
 
 func (p *provider) getSecret(ctx context.Context, key string) ([]byte, error) {
-	c, err := sm.NewClient(ctx)
+	c, err := sharedClient()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to connect: %s", err)
 		return nil, err
