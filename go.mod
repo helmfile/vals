@@ -27,7 +27,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.114.7
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.50.4
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.76.0
-	github.com/aws/aws-sdk-go-v2/service/sts v1.51.8
+	github.com/aws/aws-sdk-go-v2/service/sts v1.52.0
 	github.com/cyberark/conjur-api-go v0.16.1
 	github.com/fujiwara/tfstate-lookup v1.12.1
 	github.com/getsops/sops/v3 v3.13.3
@@ -95,10 +95,10 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.22.34 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.5.12 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.8.12 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/v4a v1.5.10 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.24 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/v4a v1.5.12 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.25 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.11.10 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.14.10 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.14.12 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.20.9 // indirect
 	github.com/aws/aws-sdk-go-v2/service/signin v1.12.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.39.3 // indirect
