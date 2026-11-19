@@ -131,6 +131,7 @@ Available Commands:
   eval          Evaluate a JSON/YAML document and replace any template expressions in it and prints the result
   exec          Populates the environment variables and executes the command
   env           Renders environment variables to be consumed by eval or a tool like direnv
+  flatten       Read any text file and resolve ref+ expressions in it, preserving the original format
   get           Evaluate a string value passed as the first argument and replace any expressiosn in it and prints the result
   ksdecode      Decode YAML document(s) by converting Secret resources' "data" to "stringData" for use with "vals eval"
   version       Print vals version
@@ -174,6 +175,24 @@ Save the YAML content to `x.vals.yaml` and running `vals eval -f x.vals.yaml` do
 ```yaml
 foo: myvalue
 ```
+
+### Text files
+
+`vals flatten` resolves refs in any text file and keeps everything else as is, so it works for SQL, `.env`, config files and templates:
+
+```console
+$ echo "CREATE USER app IDENTIFIED BY 'ref+vault://secret/data/db#/password+';" > user.sql
+$ vals flatten -f user.sql
+CREATE USER app IDENTIFIED BY 'mypassword';
+```
+
+To render a whole directory, pass it to `-f` together with `-output-dir`:
+
+```console
+$ vals flatten -f sql -output-dir rendered
+```
+
+Every regular file under `sql` is rendered to the same relative path under `rendered`. All files are rendered with one runtime, so they share its cache of resolved refs instead of fetching them again for each file. The output directory must be outside of the input directory and either missing or empty; its parent must exist. Rendered files are created with mode `0600` and new directories with `0700`, symlinks and other non-regular files are skipped. The first error stops the run and names the file; files rendered before it are left in the output directory.
 
 ### Helm
 
