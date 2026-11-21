@@ -146,37 +146,7 @@ func main() {
 
 		writeOrFail(o, res)
 	case CmdFlatten:
-		flattenCmd := flag.NewFlagSet(CmdFlatten, flag.ExitOnError)
-		f := flattenCmd.String("f", "-", "Text file to be flattened. When set to \"-\", vals reads from STDIN")
-		silent := flattenCmd.Bool("s", false, "Silent mode")
-		e := flattenCmd.Bool("exclude-secret", false, "Leave secretref+<uri> as-is and only replace ref+<uri>")
-		err := flattenCmd.Parse(os.Args[2:])
-		if err != nil {
-			fatal("%v", err)
-		}
-
-		var logOut io.Writer = os.Stderr
-		if *silent {
-			logOut = io.Discard
-		}
-
-		text, err := vals.TextInput(*f)
-		if err != nil {
-			fatal("%v", err)
-		}
-
-		result, err := vals.Get(text, vals.Options{
-			ExcludeSecret: *e,
-			LogOutput:     logOut,
-		})
-		if err != nil {
-			fatal("%v", err)
-		}
-
-		_, err = os.Stdout.WriteString(result)
-		if err != nil {
-			fatal("%v", err)
-		}
+		runFlatten(os.Args[2:])
 	case CmdGet:
 		getCmd := flag.NewFlagSet(CmdGet, flag.ExitOnError)
 		silent := getCmd.Bool("s", false, "Silent mode")
