@@ -3,7 +3,7 @@ module github.com/helmfile/vals
 go 1.27.3
 
 require (
-	cloud.google.com/go/kms v1.35.0
+	cloud.google.com/go/kms v1.37.0
 	cloud.google.com/go/secretmanager v1.24.0
 	cloud.google.com/go/storage v1.70.0
 	filippo.io/age v1.3.2
@@ -63,7 +63,7 @@ require (
 	cloud.google.com/go/auth/oauth2adapt v0.3.0 // indirect
 	cloud.google.com/go/compute/metadata v0.10.0 // indirect
 	cloud.google.com/go/iam v1.14.0 // indirect
-	cloud.google.com/go/longrunning v1.3.0 // indirect
+	cloud.google.com/go/longrunning v1.5.0 // indirect
 	cloud.google.com/go/monitoring v1.30.0 // indirect
 	filippo.io/edwards25519 v1.2.0 // indirect
 	filippo.io/hpke v0.4.0 // indirect
