@@ -94,6 +94,7 @@ The tool supports these ref+ URI schemes:
 - `ref+awssecrets://` -- AWS Secrets Manager
 - `ref+s3://` -- AWS S3
 - `ref+gcpsecrets://` -- GCP Secret Manager
+- `ref+gcpparams://` -- GCP Parameter Manager
 - `ref+azurekeyvault://` -- Azure Key Vault
 - `ref+k8s://` -- Kubernetes secrets
 - Plus 18+ more cloud and service providers

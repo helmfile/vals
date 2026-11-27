@@ -65,6 +65,7 @@ const (
 	ProviderExec               = "exec"
 	ProviderFile               = "file"
 	ProviderGCPSecretManager   = "gcpsecrets"
+	ProviderGCPParamManager    = "gcpparams"
 	ProviderGoogleSheets       = "googlesheets"
 	ProviderTFState            = "tfstate"
 	ProviderTFStateGS          = "tfstategs"
@@ -450,6 +451,7 @@ var KnownValuesTypes = []string{
 	ProviderSecretsManager,
 	ProviderSOPS,
 	ProviderGCPSecretManager,
+	ProviderGCPParamManager,
 	ProviderGoogleSheets,
 	ProviderTFState,
 	ProviderFile,
