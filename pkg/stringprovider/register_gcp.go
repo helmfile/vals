@@ -5,6 +5,7 @@ package stringprovider
 import (
 	"github.com/helmfile/vals/pkg/api"
 	"github.com/helmfile/vals/pkg/log"
+	"github.com/helmfile/vals/pkg/providers/gcpparams"
 	"github.com/helmfile/vals/pkg/providers/gcpsecrets"
 	"github.com/helmfile/vals/pkg/providers/gcs"
 	"github.com/helmfile/vals/pkg/providers/gkms"
@@ -17,6 +18,9 @@ func init() {
 	})
 	registry.RegisterStringProvider("gcpsecrets", func(_ *log.Logger, provider api.StaticConfig, _ string) (api.LazyLoadedStringProvider, error) {
 		return gcpsecrets.New(provider), nil
+	})
+	registry.RegisterStringProvider("gcpparams", func(_ *log.Logger, provider api.StaticConfig, _ string) (api.LazyLoadedStringProvider, error) {
+		return gcpparams.New(provider), nil
 	})
 	registry.RegisterStringProvider("gkms", func(l *log.Logger, provider api.StaticConfig, _ string) (api.LazyLoadedStringProvider, error) {
 		return gkms.New(l, provider), nil

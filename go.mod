@@ -4,6 +4,7 @@ go 1.27.3
 
 require (
 	cloud.google.com/go/kms v1.35.0
+	cloud.google.com/go/parametermanager v1.2.1
 	cloud.google.com/go/secretmanager v1.24.0
 	cloud.google.com/go/storage v1.70.0
 	filippo.io/age v1.3.2

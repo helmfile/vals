@@ -6,6 +6,7 @@ import (
 	"github.com/helmfile/vals/pkg/api"
 	"github.com/helmfile/vals/pkg/config"
 	"github.com/helmfile/vals/pkg/log"
+	"github.com/helmfile/vals/pkg/providers/gcpparams"
 	"github.com/helmfile/vals/pkg/providers/gcpsecrets"
 	"github.com/helmfile/vals/pkg/providers/gcs"
 	"github.com/helmfile/vals/pkg/providers/gkms"
@@ -19,6 +20,9 @@ func init() {
 	})
 	registry.RegisterProvider(ProviderGCPSecretManager, func(_ *log.Logger, conf config.MapConfig, _ string) (api.Provider, error) {
 		return gcpsecrets.New(conf), nil
+	})
+	registry.RegisterProvider(ProviderGCPParamManager, func(_ *log.Logger, conf config.MapConfig, _ string) (api.Provider, error) {
+		return gcpparams.New(conf), nil
 	})
 	registry.RegisterProvider(ProviderGKMS, func(l *log.Logger, conf config.MapConfig, _ string) (api.Provider, error) {
 		return gkms.New(l, conf), nil

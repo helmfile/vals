@@ -9,6 +9,7 @@ It supports various backends including:
 - AWS Secrets Manager
 - AWS S3
 - GCP Secrets Manager
+- GCP Parameter Manager
 - GCP KMS
 - [Google Sheets](#google-sheets)
 - [SOPS](https://github.com/getsops/sops)-encrypted files
@@ -327,6 +328,7 @@ Please see the [relevant unit test cases](https://github.com/helmfile/vals/blob/
       - [AWS KMS](#aws-kms)
       - [Google GCS](#google-gcs)
     - [GCP Secrets Manager](#gcp-secrets-manager)
+    - [GCP Parameter Manager](#gcp-parameter-manager)
     - [GCP KMS](#gcp-kms)
     - [Google Sheets](#google-sheets)
     - [Terraform (tfstate)](#terraform-tfstate)
@@ -617,6 +619,44 @@ If `GCP_PROJECT` environment variable is set, the project name can be omitted fr
 
 - `ref+gcpsecrets://mysecret`
 - `ref+gcpsecrets://mysecret?version=3`
+
+### GCP Parameter Manager
+
+- `ref+gcpparams://PROJECT/PARAMETER[?version=VERSION][&location=LOCATION]`
+- `ref+gcpparams://PROJECT/PARAMETER[?version=VERSION][&location=LOCATION]#/yaml_or_json_key/in/parameter`
+- `ref+gcpparams://PROJECT/PARAMETER[?version=VERSION][&location=LOCATION][&render=false][&fallback_value=valuewhenkeyisnotfound][&optional=true][&trim_nl=true]#/yaml_or_json_key/in/parameter`
+
+Parameters:
+
+- `version`: the parameter version ID, `latest` by default.
+- `location`: `global` by default, or the region of a regional parameter, such as `europe-west1`.
+- `render`: `true` by default, which replaces the references to Secret Manager secrets in the parameter version with the values of the secrets. Set it to `false` to get the payload as it is stored, with the references unresolved.
+
+Examples:
+
+- `ref+gcpparams://myproject/myparam`
+- `ref+gcpparams://myproject/myparam?version=v3`
+- `ref+gcpparams://myproject/myparam?version=v3#/yaml_or_json_key/in/parameter`
+- `ref+gcpparams://myproject/myparam?location=europe-west1`
+
+Required permissions, granted on the parameter or on its project:
+
+| Read                                      | Permissions                                                                                | Predefined role                            |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------ |
+| rendered (default)                        | `parametermanager.parameterVersions.render`                                                | `roles/parametermanager.parameterAccessor` |
+| `render=false` with an explicit `version` | `parametermanager.parameterVersions.get`                                                   | `roles/parametermanager.parameterViewer`   |
+| `render=false` with `version=latest`      | `parametermanager.parameterVersions.get`, `parametermanager.parameterVersions.list`        | `roles/parametermanager.parameterViewer`   |
+
+`roles/parametermanager.parameterAccessor` allows only rendering, so it is not enough for `render=false`.
+
+A rendered parameter that references Secret Manager secrets also needs `secretmanager.versions.access` (`roles/secretmanager.secretAccessor`) on those secrets, granted to the IAM principal of the parameter itself, as shown by `gcloud parametermanager parameters describe PARAMETER --location=LOCATION --format='value(policyMember.iamPolicyUidPrincipal)'`, not to the identity that runs vals.
+
+The `latest` version alias is supported by the API only for rendering. With `render=false` and `version=latest`, vals lists the versions of the parameter and reads the newest enabled one.
+
+If `GCP_PROJECT` environment variable is set, the project name can be omitted from the URI, like:
+
+- `ref+gcpparams://myparam`
+- `ref+gcpparams://myparam?version=v3`
 
 ### GCP KMS
 
